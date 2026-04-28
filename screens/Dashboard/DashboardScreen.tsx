@@ -1,75 +1,20 @@
 import { useAuthContext } from "@/context/AuthProvider";
 import { db } from "@/lib/firebase";
 import { PrayerCollection } from "@/types";
-import { Feather, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
-import { doc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Dimensions, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import DailyVerseCard from "./Components/DailyVerseCard";
+import UpcomingPrayerCard from "./Components/UpcomingPrayerCard";
 
 dayjs.extend(isBetween);
 
 const { width } = Dimensions.get("window");
 
 // --- SMALL COMPONENTS ---
-
-/**
- * Card for the upcoming prayer with a countdown and progress bar.
- */
-const UpcomingPrayerCard = ({ name, time, nextTime }: { name: string; time: string; nextTime?: string }) => {
-  const [timeLeft, setTimeLeft] = useState("");
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const calculate = () => {
-      const now = dayjs();
-      const prayerTime = dayjs(`${now.format("YYYY-MM-DD")} ${time}`);
-
-      // If prayer has passed, it might be for tomorrow (not handled here for simplicity)
-      const diffMin = prayerTime.diff(now, "minute");
-
-      if (diffMin > 0) {
-        setTimeLeft(`IN ${diffMin} MIN`);
-        // Mock progress for visual appeal
-        setProgress(Math.max(0, 100 - (diffMin / 60) * 100));
-      } else {
-        setTimeLeft("NOW");
-        setProgress(100);
-      }
-    };
-
-    calculate();
-    const interval = setInterval(calculate, 60000);
-    return () => clearInterval(interval);
-  }, [time]);
-
-  return (
-    <View className="bg-[#141d17] border border-[#dbb142]/20 rounded-[32px] p-6 mb-8 shadow-2xl">
-      <View className="flex-row justify-between items-center mb-2">
-        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Upcoming Prayer</Text>
-        <View className="bg-[#dbb142]/10 px-3 py-1 rounded-full border border-[#dbb142]/20">
-          <Text className="text-[#dbb142] text-[10px] font-bold">{timeLeft}</Text>
-        </View>
-      </View>
-
-      <Text className="text-white text-4xl font-semibold mb-2" style={{ fontFamily: 'serif' }}>{name}</Text>
-
-      <View className="flex-row items-center mb-6">
-        <Ionicons name="time-outline" size={16} color="#dbb142" />
-        <Text className="text-[#dbb142] ml-2 font-medium">{time}</Text>
-      </View>
-
-      {/* Progress Bar */}
-      <View className="h-[2px] bg-white/5 rounded-full overflow-hidden">
-        <View
-          className="h-full bg-[#dbb142]"
-          style={{ width: `${progress}%` }}
-        />
-      </View>
-    </View>
-  );
-};
 
 /**
  * Individual prayer time card in the horizontal row.
@@ -112,29 +57,6 @@ const QuickActionCard = ({ title, value, subtext, icon, type, buttonText }: any)
 );
 
 /**
- * Daily Verse card.
- */
-const DailyVerseCard = () => (
-  <View className="bg-[#1a231d] border border-white/5 rounded-[32px] p-6 mb-8 relative overflow-hidden">
-    <FontAwesome5 name="quote-right" size={40} color="rgba(255,255,255,0.03)" className="absolute right-6 top-6" />
-    <Text className="text-white/80 text-[15px] leading-7 italic mb-6">
-      "And seek help through patience and prayer, and indeed, it is difficult except for the humbly submissive [to Allah]."
-    </Text>
-    <View className="flex-row justify-between items-center">
-      <Text className="text-[#dbb142] text-[11px] font-bold uppercase tracking-widest">Surah Al-Baqarah 2:45</Text>
-      <View className="flex-row">
-        <TouchableOpacity className="mr-4">
-          <Feather name="share-2" size={16} color="white" className="opacity-40" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Feather name="bookmark" size={16} color="#dbb142" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-);
-
-/**
  * Adhkar item component.
  */
 const AdhkarItem = ({ name, status, icon, isCompleted }: any) => (
@@ -159,10 +81,29 @@ const AdhkarItem = ({ name, status, icon, isCompleted }: any) => (
 // --- MAIN SCREEN ---
 
 export default function DashboardScreen() {
-  const { user } = useAuthContext();
+  const { user, logout } = useAuthContext();
   const [userData, setUserData] = useState<PrayerCollection | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!user?.uid) return;
+
+    // One-time fetch for refresh, though we have onSnapshot
+    const today = dayjs().format("YYYY-MM-DD");
+    const profileSnap = await getDoc(doc(db, "users", user.uid));
+    const prayerSnap = await getDoc(doc(db, "users", user.uid, "prayerTimes", today));
+
+    if (profileSnap.exists()) setProfile(profileSnap.data());
+    if (prayerSnap.exists()) setUserData(prayerSnap.data() as PrayerCollection);
+  }, [user?.uid]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, [fetchData]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -201,14 +142,48 @@ export default function DashboardScreen() {
 
   // Find next prayer
   const currentInfo = useMemo(() => {
-    const now = dayjs();
-    const next = prayerList.find(p => dayjs(`${now.format("YYYY-MM-DD")} ${p.time}`).isAfter(now));
-    const last = [...prayerList].reverse().find(p => dayjs(`${now.format("YYYY-MM-DD")} ${p.time}`).isBefore(now));
+    if (prayerList.length === 0) return null;
 
-    return {
-      upcoming: next || prayerList[0], // Fallback to first prayer if all passed
-      active: last || prayerList[0]
-    };
+    const now = dayjs();
+    const today = now.format("YYYY-MM-DD");
+
+    // Convert prayer times to dayjs objects
+    const times = prayerList.map(p => ({
+      ...p,
+      dateTime: dayjs(`${today} ${p.time}`)
+    }));
+
+    // Find the one that is currently active (last one that passed)
+    // We reverse the list and find the first one that is before or same as now
+    const active = [...times].reverse().find(p => p.dateTime.isBefore(now) || p.dateTime.isSame(now));
+
+    // Find the upcoming one
+    let upcoming = times.find(p => p.dateTime.isAfter(now));
+
+    // Handle wrap around (if all prayers for today passed, next is tomorrow's first prayer)
+    const nextDayFirst = times[0].dateTime.add(1, 'day');
+    const targetTime = upcoming ? upcoming.dateTime : nextDayFirst;
+
+    // Logic: If active exists and it's within 20 minutes, show it as current
+    const BUFFER_MINS = 20;
+    const isWithinBuffer = active && now.diff(active.dateTime, 'minute') < BUFFER_MINS;
+
+    if (isWithinBuffer && active) {
+      return {
+        title: "Current Prayer",
+        name: active.name,
+        time: active.time,
+        countdownTarget: targetTime.toISOString(),
+      };
+    } else {
+      const displayUpcoming = upcoming || times[0];
+      return {
+        title: "Upcoming Prayer",
+        name: displayUpcoming.name,
+        time: displayUpcoming.time,
+        countdownTarget: targetTime.toISOString(),
+      };
+    }
   }, [prayerList]);
 
   const completedCount = prayerList.filter(p => p.completed).length;
@@ -227,6 +202,9 @@ export default function DashboardScreen() {
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 60, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#dbb142" />
+        }
       >
         {/* Header Header */}
         <View className="flex-row justify-between items-center mb-8">
@@ -234,16 +212,25 @@ export default function DashboardScreen() {
             <Text className="text-white/40 text-[11px] font-bold uppercase tracking-widest">Assalamu Alaikum</Text>
             <Text className="text-white text-xl font-bold">{profile?.name || "User"}</Text>
           </View>
-          <TouchableOpacity className="bg-white/5 p-2 rounded-full">
-            <Ionicons name="notifications-outline" size={20} color="white" />
-          </TouchableOpacity>
+          <View className="flex-row items-center">
+            <TouchableOpacity className="bg-white/5 p-2 rounded-full mr-3">
+              <Ionicons name="notifications-outline" size={20} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={logout} className="bg-white/5 p-2 rounded-full">
+              <Ionicons name="log-out-outline" size={20} color="#ff4d4d" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Upcoming Card */}
-        <UpcomingPrayerCard
-          name={currentInfo.upcoming?.name || "Fajr"}
-          time={currentInfo.upcoming?.time || "--:--"}
-        />
+        {currentInfo && (
+          <UpcomingPrayerCard
+            title={currentInfo.title}
+            name={currentInfo.name}
+            time={currentInfo.time}
+            countdownTarget={currentInfo.countdownTarget}
+          />
+        )}
 
         {/* Today's Times Row */}
         <View className="mb-8">
@@ -254,7 +241,7 @@ export default function DashboardScreen() {
                 key={i}
                 name={p.name}
                 time={p.time}
-                isActive={currentInfo.upcoming?.name === p.name}
+                isActive={currentInfo?.name === p.name}
               />
             ))}
           </ScrollView>
