@@ -7,6 +7,8 @@ import isBetween from "dayjs/plugin/isBetween";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { usePrayerLock } from "@/hooks/usePrayerLock";
+import PrayerOverlayScreen from "../PrayerOverlayScreen";
 import DailyVerseCard from "./Components/DailyVerseCard";
 import UpcomingPrayerCard from "./Components/UpcomingPrayerCard";
 
@@ -86,6 +88,8 @@ export default function DashboardScreen() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+  const [overlayPrayerName, setOverlayPrayerName] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!user?.uid) return;
@@ -188,6 +192,31 @@ export default function DashboardScreen() {
 
   const completedCount = prayerList.filter(p => p.completed).length;
 
+  // --- Prayer Lock ---
+  const { markPrayerComplete, markPrayerSkipped, snoozeFor2Minutes } = usePrayerLock({
+    uid: user?.uid ?? null,
+    prayers: prayerList,
+    onShowOverlay: (prayerName) => {
+      setOverlayPrayerName(prayerName);
+      setOverlayVisible(true);
+    },
+  });
+
+  const handlePray = async () => {
+    setOverlayVisible(false);
+    await markPrayerComplete(overlayPrayerName);
+  };
+
+  const handleSnooze = async () => {
+    setOverlayVisible(false);
+    await snoozeFor2Minutes();
+  };
+
+  const handleSkip = async () => {
+    setOverlayVisible(false);
+    await markPrayerSkipped(overlayPrayerName);
+  };
+
   if (loading) {
     return (
       <View className="flex-1 bg-[#0d1410] items-center justify-center">
@@ -198,6 +227,15 @@ export default function DashboardScreen() {
 
   return (
     <View className="flex-1 bg-[#0d1410]">
+      {/* Prayer Lock Overlay */}
+      <PrayerOverlayScreen
+        visible={overlayVisible}
+        prayerName={overlayPrayerName}
+        prayerTime={prayerList.find(p => p.name === overlayPrayerName)?.time ?? ""}
+        onPray={handlePray}
+        onSnooze={handleSnooze}
+        onSkip={handleSkip}
+      />
       <ScrollView
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 60, paddingBottom: 100 }}

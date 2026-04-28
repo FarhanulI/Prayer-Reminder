@@ -1,0 +1,11 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="expo.modules.prayerlock" >
+4
+5    <uses-sdk android:minSdkVersion="24" />
+6
+7    <application>
+7-->C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:4:3-5:19
+8    </application>
+9
+10</manifest>

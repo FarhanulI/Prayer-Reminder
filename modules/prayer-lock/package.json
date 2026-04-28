@@ -1,0 +1,13 @@
+{
+  "name": "prayer-lock",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "expo": {
+    "name": "prayer-lock",
+    "platforms": ["android"],
+    "android": {
+      "modules": ["expo.modules.prayerlock.PrayerLockModule"]
+    }
+  }
+}

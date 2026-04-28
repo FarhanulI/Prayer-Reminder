@@ -1,0 +1,7 @@
+{
+  "name": "prayer-lock",
+  "platforms": ["android"],
+  "android": {
+    "modules": ["expo.modules.prayerlock.PrayerLockModule"]
+  }
+}
