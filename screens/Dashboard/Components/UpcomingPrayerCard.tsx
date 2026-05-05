@@ -6,16 +6,16 @@ import { Text, View } from "react-native";
 /**
  * Card for the upcoming or current prayer with a countdown and progress bar.
  */
-const UpcomingPrayerCard = ({ 
-    title, 
-    name, 
-    time, 
-    countdownTarget 
-}: { 
-    title: string; 
-    name: string; 
-    time: string; 
-    countdownTarget: string 
+const UpcomingPrayerCard = ({
+    title,
+    name,
+    time,
+    countdownTarget
+}: {
+    title: string;
+    name: string;
+    time: string;
+    countdownTarget: string
 }) => {
     const [timeLeft, setTimeLeft] = useState("");
     const [progress, setProgress] = useState(0);
@@ -24,7 +24,7 @@ const UpcomingPrayerCard = ({
         const calculate = () => {
             const now = dayjs();
             const target = dayjs(countdownTarget);
-            
+
             const diffSec = target.diff(now, "second");
 
             if (diffSec > 0) {
@@ -33,7 +33,7 @@ const UpcomingPrayerCard = ({
                 const s = String(diffSec % 60).padStart(2, '0');
 
                 setTimeLeft(`${h}:${m}:${s}`);
-                
+
                 // Progress based on total duration (mocked to 1 hour if not provided, but here we just show remaining)
                 // For a more accurate progress, we'd need the start time too.
                 setProgress(Math.max(0, 100 - (diffSec / 3600) * 100));

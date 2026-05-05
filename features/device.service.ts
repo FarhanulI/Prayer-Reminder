@@ -3,7 +3,7 @@ import { DateInfo, OnboardingData, PrayerTimesMethodResponse, Timings } from "@/
 import dayjs from "dayjs";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
-import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
 
 export const getDeviceToken = async () => {
@@ -28,6 +28,8 @@ export const fetchPrayerTimes = async (latitude: number | undefined, longitude: 
         // 2. Format today's date (DD-MM-YYYY)
         const date = new Date();
         const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+
+        console.log({ formattedDate, latitude, longitude });
 
         // 3. Call AlAdhan API
         // Method 3 = Muslim World League (common standard)
@@ -101,14 +103,19 @@ export const saveDailyPrayerTimes = async (uid: string, timings: Timings) => {
         const today = dayjs().format("YYYY-MM-DD");
         const prayerTimesRef = doc(db, "users", uid, "prayerTimes", today);
 
+        const docSnap = await getDoc(prayerTimesRef);
+        if (docSnap.exists()) {
+            return;
+        }
+
         await setDoc(
             prayerTimesRef,
             {
-                fajr: { done: false, time: timings.Fajr },
-                dhuhr: { done: false, time: timings.Dhuhr },
-                asr: { done: false, time: timings.Asr },
-                maghrib: { done: false, time: timings.Maghrib },
-                isha: { done: false, time: timings.Isha },
+                fajr: { done: false, time: timings.Fajr, end: timings.Sunrise },
+                dhuhr: { done: false, time: timings.Dhuhr, end: timings.Asr },
+                asr: { done: false, time: timings.Asr, end: timings.Sunset },
+                maghrib: { done: false, time: timings.Maghrib, end: timings.Isha },
+                isha: { done: false, time: timings.Isha, end: timings.Midnight },
             },
             { merge: true }
         );
@@ -130,4 +137,41 @@ export const saveOnboardingData = async (uid: string, data: OnboardingData) => {
         console.error("Error saving onboarding data:", error);
         throw error;
     }
-};
+};
+
+/**
+ * Refreshes the full application state for a user by:
+ * 1. Updating the device token
+ * 2. Getting the current location
+ * 3. Fetching fresh prayer times from the API
+ * 4. Saving everything back to Firestore
+ */
+export const refreshApplicationData = async (uid: string) => {
+    try {
+        const [deviceToken, location] = await Promise.all([
+            getDeviceToken(),
+            getLocation(),
+        ]);
+
+        const prayerTimes = await fetchPrayerTimes(location?.coords.latitude, location?.coords.longitude);
+
+        await saveUserDeviceInfo(uid, {
+            deviceToken,
+            location: location?.coords || null,
+            date: prayerTimes?.date || null,
+            sunTimings: {
+                sunrise: prayerTimes?.prayerTimings.Sunrise || null,
+                sunset: prayerTimes?.prayerTimings.Sunset || null,
+            }
+        });
+
+        if (prayerTimes?.prayerTimings) {
+            await saveDailyPrayerTimes(uid, prayerTimes.prayerTimings);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Failed to refresh application data:", error);
+        throw error;
+    }
+};

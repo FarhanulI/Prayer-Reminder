@@ -112,6 +112,7 @@ export interface ForbiddenWindow {
 export interface PrayerStatus {
     done: boolean;
     time: string;
+    end: string;
 }
 
 export interface PrayerCollection {

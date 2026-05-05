@@ -5,11 +5,11 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 
 import { useAuthContext } from "../context/AuthProvider";
-import DashboardScreen from "../screens/Dashboard/DashboardScreen";
 import LoginScreen from "../screens/LoginScreen";
 import OnBoardingScreen from "../screens/OnBoardingScreen";
 import PrayerLockSetupScreen from "../screens/PrayerLockSetupScreen";
 import SignupScreen from "../screens/SignupScreen";
+import MainTabNavigator from "./MainTabNavigator";
 
 const Stack = createNativeStackNavigator();
 const SETUP_DONE_KEY = "prayer_lock_setup_done";
@@ -52,7 +52,7 @@ export default function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>
-            <Stack.Screen name="Dashboard" component={DashboardScreen} />
+            <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen name="OnBoarding" component={OnBoardingScreen} />
           </>
         ) : (

@@ -6,7 +6,7 @@ import {
 } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
-import { fetchPrayerTimes, getDeviceToken, getLocation, saveDailyPrayerTimes, saveUserDeviceInfo } from '../device.service';
+import { refreshApplicationData } from '../device.service';
 
 /**
  * Logs a user into the application using Firebase Authentication.
@@ -32,31 +32,8 @@ export const loginUser = async (
 
   try {
     // Attempt to sync the latest device token and location upon successful login
-    const [deviceToken, location] = await Promise.all([
-      getDeviceToken(),
-      getLocation(),
-    ]);
-
-    const prayerTimes = await fetchPrayerTimes(location?.coords.latitude, location?.coords.longitude)
-
-
-    await saveUserDeviceInfo(user.uid, {
-      deviceToken,
-      location: location?.coords || null,
-      date: prayerTimes?.date || null,
-      sunTimings: {
-        sunrise: prayerTimes?.prayerTimings.Sunrise || null,
-        sunset: prayerTimes?.prayerTimings.Sunset || null,
-
-      }
-    });
-
-    if (prayerTimes?.prayerTimings) {
-      await saveDailyPrayerTimes(user.uid, prayerTimes.prayerTimings);
-    }
+    await refreshApplicationData(user.uid);
   } catch (err) {
-    // We only log this error instead of throwing because device sync
-    // should not block the user from logging in successfully.
     console.log("Device setup failed on login:", err);
   }
 
@@ -99,28 +76,8 @@ export const signupUser = async (
       createdAt: serverTimestamp(),
     });
 
-    // Step 3: Gather device characteristics (Push token + Geolocation)
-    const [deviceToken, location] = await Promise.all([
-      getDeviceToken(),
-      getLocation(),
-    ]);
-
-    const prayerTimes = await fetchPrayerTimes(location?.coords.latitude, location?.coords.longitude);
-
-    // Step 4: Attach the device info to the newly created profile
-    await saveUserDeviceInfo(user.uid, {
-      deviceToken,
-      location: location?.coords || null,
-      date: prayerTimes?.date || null,
-      sunTimings: {
-        sunrise: prayerTimes?.prayerTimings.Sunrise || null,
-        sunset: prayerTimes?.prayerTimings.Sunset || null,
-      }
-    });
-
-    if (prayerTimes?.prayerTimings) {
-      await saveDailyPrayerTimes(user.uid, prayerTimes.prayerTimings);
-    }
+    // Step 3: Gather device characteristics (Push token + Geolocation) and fetch prayer times
+    await refreshApplicationData(user.uid);
   } catch (err: any) {
     console.error("Signup device sync error:", err);
 

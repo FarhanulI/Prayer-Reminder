@@ -1,5 +1,6 @@
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cssInterop } from 'nativewind';
 import React from 'react';
 import { View } from 'react-native';
@@ -25,14 +26,18 @@ cssInterop(MaterialCommunityIcons, {
 
 
 
+const queryClient = new QueryClient();
+
 export default function App() {
     return (
-        <View style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+            <View style={{ flex: 1 }}>
             <AuthProvider>
                 <DeviceSync />
                 <AppNavigator />
                 <Toast />
             </AuthProvider>
-        </View>
+            </View>
+        </QueryClientProvider>
     );
 }
