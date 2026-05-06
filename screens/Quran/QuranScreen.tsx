@@ -4,37 +4,33 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import DropdownSecion from "./components/DropdownSecion";
+import VerseList from "./components/VerseList";
 
-const VerseCard = ({ number, arabic, english }: { number: number, arabic: string, english: string }) => (
-  <View className="bg-[#141d17] border border-white/5 rounded-2xl p-5 mb-4">
-    <View className="bg-[#1a291f] w-7 h-7 rounded items-center justify-center mb-4">
-      <Text className="text-[#dbb142] text-[11px] font-bold">{number}</Text>
-    </View>
-
-    <View className="mb-6">
-      <Text className="text-white text-right text-[26px]" style={{ fontFamily: 'serif', lineHeight: 44 }}>{arabic}</Text>
-    </View>
-
-    <Text className="text-white/60 text-sm italic leading-6">{english}</Text>
-  </View>
-);
+import { useRef } from "react";
 
 export default function QuranScreen() {
+  const scrollRef = useRef<ScrollView>(null);
   const [currentSurah, setCurrentSurah] = useState<DropdownOption>();
   const { data: surah, isLoading, isError } = useGetSurah({ id: currentSurah?.id })
 
   return (
     <View className="flex-1 bg-[#0d1410]">
-      <ScrollView
-        className="flex-1 px-6"
-        contentContainerStyle={{ paddingTop: 60, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="flex-row items-center mb-8">
+      <View className="px-6 pt-14 pb-2 bg-[#0d1410] z-50 border-b border-white/5">
+        {/* Header Section */}
+        <View className="flex-row items-center mb-6">
           <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Al-Quran</Text>
         </View>
-        {/* Top Dropdowns Row */}
+
+        {/* Dropdowns Section */}
         <DropdownSecion onSelectSurah={(item) => setCurrentSurah(item)} />
+      </View>
+
+      <ScrollView
+        ref={scrollRef}
+        className="flex-1 px-6"
+        contentContainerStyle={{ paddingTop: 20, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Action Buttons Row */}
         {/* <View className="flex-row mb-6">
@@ -80,22 +76,16 @@ export default function QuranScreen() {
           </View>
         ) : (
           <View className="bg-[#141d17] border border-white/5 rounded-2xl p-8 mb-6 items-center justify-center opacity-50">
-             <Ionicons name="book-outline" size={32} color="#dbb142" />
-             <Text className="text-white/40 mt-2 text-xs uppercase tracking-widest font-bold">Select a surah to begin</Text>
+            <Ionicons name="book-outline" size={32} color="#dbb142" />
+            <Text className="text-white/40 mt-2 text-xs uppercase tracking-widest font-bold">Select a surah to begin</Text>
           </View>
         )}
 
         {/* Verses List */}
-        <View className="mb-6">
-          {surah?.verses?.map((v) => (
-            <VerseCard
-              key={v.id}
-              number={v.id}
-              arabic={v.text}
-              english={v.translation}
-            />
-          ))}
-        </View>
+        <VerseList
+          surah={surah}
+          onPageChange={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+        />
       </ScrollView>
     </View>
   );

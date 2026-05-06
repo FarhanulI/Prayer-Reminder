@@ -1,7 +1,7 @@
 import Dropdown, { DropdownOption } from '@/components/Dropdown';
 import { useSurahsLists } from '@/hooks/Quran/use-surah-list';
 import { useIsFocused } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 
 const languageList = [
@@ -19,14 +19,6 @@ const DropdownSecion = ({ onSelectSurah }: DropdownSecionProps): React.ReactNode
     const [surah, setSurah] = useState<DropdownOption>();
 
     const { data: surahsList, isLoading } = useSurahsLists({ lang: language.key, enabled: isFocused })
-
-    useEffect(() => {
-        return () => {
-            setLanguage(languageList[0]);
-            setSurah(undefined)
-        }
-    }, [isFocused])
-
 
     return (
         <View className="flex-row justify-between mb-4">

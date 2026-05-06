@@ -6,20 +6,29 @@ import { useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { PrayerCollection } from '@/types';
 
+/**
+ * Custom hook to fetch and sync dashboard data (profile and prayer times).
+ * Combines TanStack Query for initial fetch/caching and Firebase onSnapshot for real-time updates.
+ */
 export function useDashboardData(uid: string | null | undefined) {
   const queryClient = useQueryClient();
 
+  // 1. Initial Data Fetching via TanStack Query
   const query = useQuery({
     queryKey: ['dashboard', uid],
     queryFn: async () => {
+      // Safety check: if no UID, return null structure
       if (!uid) return { profile: null, userData: null, yesterdayData: null };
 
       const today = dayjs().format('YYYY-MM-DD');
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
-      const profileSnap = await getDoc(doc(db, 'users', uid));
-      const prayerSnap = await getDoc(doc(db, 'users', uid, 'prayerTimes', today));
-      const yesterdaySnap = await getDoc(doc(db, 'users', uid, 'prayerTimes', yesterday));
+      // Execute fetches in parallel for better performance
+      const [profileSnap, prayerSnap, yesterdaySnap] = await Promise.all([
+        getDoc(doc(db, 'users', uid)),
+        getDoc(doc(db, 'users', uid, 'prayerTimes', today)),
+        getDoc(doc(db, 'users', uid, 'prayerTimes', yesterday))
+      ]);
 
       return {
         profile: profileSnap.exists() ? profileSnap.data() : null,
@@ -27,16 +36,21 @@ export function useDashboardData(uid: string | null | undefined) {
         yesterdayData: yesterdaySnap.exists() ? (yesterdaySnap.data() as PrayerCollection) : null,
       };
     },
+    // Only run the query if a UID is provided
     enabled: !!uid,
+    // Optional: set a staleTime so it doesn't refetch on every window focus
+    staleTime: Infinity,
   });
 
-  // Maintain real-time Firebase sync into React Query cache
+  // 2. Real-time Firebase Synchronization
+  // This effect listens for remote changes and manually updates the React Query cache
   useEffect(() => {
     if (!uid) return;
 
     const today = dayjs().format('YYYY-MM-DD');
     const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
+    // Listener for User Profile updates
     const unsubProfile = onSnapshot(doc(db, 'users', uid), (snap) => {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
@@ -46,6 +60,7 @@ export function useDashboardData(uid: string | null | undefined) {
       }
     });
 
+    // Listener for Today's Prayer data
     const unsubPrayers = onSnapshot(doc(db, 'users', uid, 'prayerTimes', today), (snap) => {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
@@ -55,6 +70,7 @@ export function useDashboardData(uid: string | null | undefined) {
       }
     });
 
+    // Listener for Yesterday's Prayer data (useful for daily transitions/streaks)
     const unsubYesterday = onSnapshot(doc(db, 'users', uid, 'prayerTimes', yesterday), (snap) => {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
@@ -64,6 +80,7 @@ export function useDashboardData(uid: string | null | undefined) {
       }
     });
 
+    // Cleanup: Unsubscribe from all listeners when the component unmounts or UID changes
     return () => {
       unsubProfile();
       unsubPrayers();
