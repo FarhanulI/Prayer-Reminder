@@ -26,8 +26,8 @@ export function useDashboardData(uid: string | null | undefined) {
       // Execute fetches in parallel for better performance
       const [profileSnap, prayerSnap, yesterdaySnap] = await Promise.all([
         getDoc(doc(db, 'users', uid)),
-        getDoc(doc(db, 'users', uid, 'prayerTimes', today)),
-        getDoc(doc(db, 'users', uid, 'prayerTimes', yesterday))
+        getDoc(doc(db, 'users', uid, 'prayer_logs', today)),
+        getDoc(doc(db, 'users', uid, 'prayer_logs', yesterday))
       ]);
 
       return {
@@ -61,7 +61,7 @@ export function useDashboardData(uid: string | null | undefined) {
     });
 
     // Listener for Today's Prayer data
-    const unsubPrayers = onSnapshot(doc(db, 'users', uid, 'prayerTimes', today), (snap) => {
+    const unsubPrayers = onSnapshot(doc(db, 'users', uid, 'prayer_logs', today), (snap) => {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
           ...oldData,
@@ -71,7 +71,7 @@ export function useDashboardData(uid: string | null | undefined) {
     });
 
     // Listener for Yesterday's Prayer data (useful for daily transitions/streaks)
-    const unsubYesterday = onSnapshot(doc(db, 'users', uid, 'prayerTimes', yesterday), (snap) => {
+    const unsubYesterday = onSnapshot(doc(db, 'users', uid, 'prayer_logs', yesterday), (snap) => {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
           ...oldData,

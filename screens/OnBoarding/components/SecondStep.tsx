@@ -1,0 +1,119 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo } from 'react';
+import {
+    Platform,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+interface SecondStepProps {
+    prayerFreq: string;
+    opportunities: number;
+    setCurrentStep: (step: number) => void;
+}
+
+const SecondStep = ({
+    prayerFreq,
+    opportunities,
+    setCurrentStep
+}: SecondStepProps) => {
+    const getDynamicContent = (freq: string) => {
+        const count = parseInt(freq) || 0;
+
+        if (count >= 5) {
+            return {
+                message: (
+                    <Text className="text-white/80 text-center text-lg leading-7">
+                        <Text className="text-[#dbb142] font-bold">Ma sha Allah!</Text> Keep up this consistency and inspire others!
+                    </Text>
+                ),
+                subText: "Your dedication is a light for those around you. Stay firm.",
+                verse: "“And those who strictly guard their prayers... These are the inheritors.”",
+                reference: "SURAH AL-MU'MINUN 23:9-10"
+            };
+        }
+
+        if (count === 4) {
+            return {
+                message: (
+                    <Text className="text-white/80 text-center text-lg leading-7">
+                        You are praying <Text className="text-[#dbb142] font-bold">4 times</Text> a day 🤲
+                    </Text>
+                ),
+                subText: "You're so close! Just one more prayer to complete your day. You have the strength; let this last one be your light.",
+                verse: "“Guard strictly your prayers and [especially] the middle prayer.”",
+                reference: "SURAH AL-BAQARAH 2:238"
+            };
+        }
+
+        // Default for 0-3 prayers
+        return {
+            message: (
+                <Text className="text-white/80 text-center text-lg leading-7">
+                    You're praying around <Text className="text-[#dbb142] font-bold">{count} a day</Text> 🤲
+                </Text>
+            ),
+            subText: `That means you have ${5 - count} opportunities daily to grow closer to Allah.`,
+            verse: "“Indeed, Allah will not change the condition of a people until they change what is in themselves.”",
+            reference: "SURAH AR-RA'D 13:11"
+        };
+    };
+
+    const content = useMemo(() => getDynamicContent(prayerFreq), [prayerFreq]);
+    return (
+        <View>
+            <View className="items-center mb-10">
+                <View className="bg-[#dbb142]/10 p-5 rounded-full mb-6 border border-[#dbb142]/20">
+                    <Ionicons
+                        name={Number(prayerFreq) >= 5 ? "star" : "heart-outline"}
+                        size={40}
+                        color="#dbb142"
+                    />
+                </View>
+                <Text
+                    className="text-white text-3xl text-center mb-4 px-4"
+                    style={{ fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif' }}
+                >
+                    {Number(prayerFreq) >= 5 ? "Excellent Progress" : "Let's improve together"}
+                </Text>
+
+                <View className="bg-[#141d17] p-8 rounded-[40px] border border-white/5 w-full">
+                    {content.message}
+
+                    <Text className="text-white/60 text-center text-[15px] leading-6 italic mt-4">
+                        "{content.subText}"
+                    </Text>
+                </View>
+            </View>
+
+            <View className="items-center mb-8 px-4">
+                <Text
+                    className="text-white/80 text-center text-[15px] leading-6 italic"
+                    style={{ fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif' }}
+                >
+                    {content.verse}
+                </Text>
+                <Text className="text-[#dbb142] text-[11px] font-bold mt-2 tracking-widest">
+                    {content.reference}
+                </Text>
+            </View>
+
+            <TouchableOpacity
+                onPress={() => setCurrentStep(2)}
+                className="bg-[#dbb142] py-4 rounded-full items-center mb-4 active:opacity-90"
+            >
+                <Text className="text-[#101a15] font-bold tracking-widest text-[12px]">MY COMMITMENT</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                onPress={() => setCurrentStep(0)}
+                className="py-2 items-center"
+            >
+                <Text className="text-white/30 text-[12px]">Back to reflection</Text>
+            </TouchableOpacity>
+        </View>
+    );
+};
+
+export default SecondStep;

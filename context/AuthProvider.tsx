@@ -62,8 +62,8 @@ export const AuthProvider = ({ children }: any) => {
         setUser(null);
         await AsyncStorage.removeItem(SESSION_KEY);
       }
+      setLoading(false);
     });
-    setLoading(false);
 
     return unsubscribe;
   }, []);

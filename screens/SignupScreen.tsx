@@ -13,7 +13,7 @@ import {
 import Toast from 'react-native-toast-message';
 // Icons: Ensure @expo/vector-icons is installed
 import { signupUser } from '@/features/auth/auth.service';
-import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 
 const FONT_FAMILIES = {
   serif: Platform.OS === 'ios' ? 'Georgia' : 'serif', // Simple serif fallback
@@ -70,7 +70,7 @@ const SignUpScreen = ({ navigation }: any) => {
     try {
       await signupUser(email.trim(), password, fullName.trim());
       Toast.show({ type: 'success', text1: 'Account Created! 🎉' });
-      navigation.navigate('OnBoarding');
+      navigation.replace('OnBoarding');
 
     } catch (err: any) {
       const message =
@@ -171,7 +171,7 @@ const SignUpScreen = ({ navigation }: any) => {
             </View>
 
             {/* Terms */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               className="flex-row mb-6 pr-2"
               onPress={() => setAgreedToTerms(!agreedToTerms)}
             >
@@ -185,7 +185,7 @@ const SignUpScreen = ({ navigation }: any) => {
                 <Text className="text-[#dbb142]">Terms of Service</Text> and{' '}
                 <Text className="text-[#dbb142]">Privacy Policy</Text>.
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Create Account Button */}
             <TouchableOpacity

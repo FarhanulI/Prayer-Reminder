@@ -110,9 +110,13 @@ export interface ForbiddenWindow {
 
 
 export interface PrayerStatus {
-    done: boolean;
+    isPrayed: boolean;
     time: string;
     end: string;
+    skipped?: boolean;
+    status?: "completed" | "skipped" | null;
+    completedAt?: any;
+    skippedAt?: any;
 }
 
 export interface PrayerCollection {

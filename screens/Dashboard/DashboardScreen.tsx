@@ -97,6 +97,7 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayPrayerName, setOverlayPrayerName] = useState("");
+  const [overlayEndTime, setOverlayEndTime] = useState("");
   const [compassVisible, setCompassVisible] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -116,11 +117,11 @@ export default function DashboardScreen() {
   const prayerList = useMemo(() => {
     if (!userData) return [];
     return [
-      { name: "Fajr", time: userData.fajr?.time, end: userData.fajr?.end, completed: userData.fajr?.done },
-      { name: "Dhuhr", time: userData.dhuhr?.time, end: userData.dhuhr?.end, completed: userData.dhuhr?.done },
-      { name: "Asr", time: userData.asr?.time, end: userData.asr?.end, completed: userData.asr?.done },
-      { name: "Maghrib", time: userData.maghrib?.time, end: userData.maghrib?.end, completed: userData.maghrib?.done },
-      { name: "Isha", time: userData.isha?.time, end: userData.isha?.end, completed: userData.isha?.done },
+      { name: "Fajr", time: userData.fajr?.time, end: userData.fajr?.end, isPrayed: userData.fajr?.isPrayed, skipped: userData.fajr?.skipped },
+      { name: "Dhuhr", time: userData.dhuhr?.time, end: userData.dhuhr?.end, isPrayed: userData.dhuhr?.isPrayed, skipped: userData.dhuhr?.skipped },
+      { name: "Asr", time: userData.asr?.time, end: userData.asr?.end, isPrayed: userData.asr?.isPrayed, skipped: userData.asr?.skipped },
+      { name: "Maghrib", time: userData.maghrib?.time, end: userData.maghrib?.end, isPrayed: userData.maghrib?.isPrayed, skipped: userData.maghrib?.skipped },
+      { name: "Isha", time: userData.isha?.time, end: userData.isha?.end, isPrayed: userData.isha?.isPrayed, skipped: userData.isha?.skipped },
     ];
   }, [userData]);
 
@@ -140,7 +141,8 @@ export default function DashboardScreen() {
         name: "Isha",
         time: yesterdayData.isha.time,
         end: yesterdayData.isha.end,
-        completed: yesterdayData.isha.done,
+        isPrayed: yesterdayData.isha.isPrayed,
+        skipped: yesterdayData.isha.skipped,
         dateTime: dayjs(`${yesterday} ${yesterdayData.isha.time}`),
         isYesterday: true,
       });
@@ -166,13 +168,8 @@ export default function DashboardScreen() {
     const nextDayFirst = times[0].dateTime.add(1, 'day');
     const targetTime = upcoming ? upcoming.dateTime : nextDayFirst;
 
-    // The user wants:
-    // 1. If there's an active prayer (already started) and it's NOT completed:
-    //    Show it as "Current Prayer" and countdown to the NEXT prayer's start time (its "last time").
-    // 2. If the active prayer IS completed (or no prayer active yet):
-    //    Show the "Upcoming Prayer" and countdown to its start time.
-
-    if (active && !active.completed) {
+    // The user wants to see the active prayer until it ends, even if completed/skipped.
+    if (active) {
       // For current prayer, countdown to its END time
       // If it's yesterday's Isha, its end time (e.g. Midnight or later) falls on 'today'.
       let endDayStr = today;
@@ -197,6 +194,8 @@ export default function DashboardScreen() {
           time: active.time,
           countdownTarget: adjustedEnd.toISOString(),
           isYesterday: active.isYesterday,
+          isPrayed: !!active.isPrayed,
+          isSkipped: !!active.skipped,
         };
       }
     }
@@ -209,24 +208,30 @@ export default function DashboardScreen() {
       time: displayUpcoming.time,
       countdownTarget: displayUpcoming.dateTime.toISOString(),
       isYesterday: false,
+      isPrayed: false,
+      isSkipped: false,
     };
   }, [prayerList]);
 
-  const completedCount = prayerList.filter(p => p.completed).length;
+  const completedCount = prayerList.filter(p => p.isPrayed).length;
 
   // --- Prayer Lock ---
   const { markPrayerComplete, markPrayerSkipped, snoozeFor2Minutes } = usePrayerLock({
     uid: user?.uid ?? null,
     prayers: prayerList,
-    onShowOverlay: (prayerName) => {
+    onShowOverlay: (prayerName, prayerEnd) => {
+      console.log(`[Dashboard] Triggering overlay for: ${prayerName} until ${prayerEnd}`);
       setOverlayPrayerName(prayerName);
+      setOverlayEndTime(prayerEnd);
       setOverlayVisible(true);
     },
   });
 
-  const handlePray = async () => {
+  const handlePray = async (name: string) => {
+    const finalName = name || overlayPrayerName;
+    console.log(`[Dashboard] Finalizing prayer completion for: ${finalName}`);
     setOverlayVisible(false);
-    await markPrayerComplete(overlayPrayerName);
+    await markPrayerComplete(finalName);
   };
 
   const handleSnooze = async () => {
@@ -254,6 +259,7 @@ export default function DashboardScreen() {
         visible={overlayVisible}
         prayerName={overlayPrayerName}
         prayerTime={prayerList.find(p => p.name === overlayPrayerName)?.time ?? ""}
+        endTime={overlayEndTime}
         onPray={handlePray}
         onSnooze={handleSnooze}
         onSkip={handleSkip}
@@ -276,6 +282,8 @@ export default function DashboardScreen() {
             name={currentInfo.name}
             time={currentInfo.time}
             countdownTarget={currentInfo.countdownTarget}
+            isPrayed={currentInfo.isPrayed}
+            isSkipped={currentInfo.isSkipped}
           />
         )}
 

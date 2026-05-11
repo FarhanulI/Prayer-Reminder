@@ -42,11 +42,11 @@ export default function StreaksScreen() {
 
   weekData.forEach((day) => {
     if (day.data) {
-      if (day.data.fajr?.done) totalCompleted++;
-      if (day.data.dhuhr?.done) totalCompleted++;
-      if (day.data.asr?.done) totalCompleted++;
-      if (day.data.maghrib?.done) totalCompleted++;
-      if (day.data.isha?.done) totalCompleted++;
+      if (day.data.fajr?.isPrayed) totalCompleted++;
+      if (day.data.dhuhr?.isPrayed) totalCompleted++;
+      if (day.data.asr?.isPrayed) totalCompleted++;
+      if (day.data.maghrib?.isPrayed) totalCompleted++;
+      if (day.data.isha?.isPrayed) totalCompleted++;
     }
   });
 
@@ -122,11 +122,11 @@ export default function StreaksScreen() {
                 
                 let dailyCompleted = 0;
                 if (day.data) {
-                  if (day.data.fajr?.done) dailyCompleted++;
-                  if (day.data.dhuhr?.done) dailyCompleted++;
-                  if (day.data.asr?.done) dailyCompleted++;
-                  if (day.data.maghrib?.done) dailyCompleted++;
-                  if (day.data.isha?.done) dailyCompleted++;
+                  if (day.data.fajr?.isPrayed) dailyCompleted++;
+                  if (day.data.dhuhr?.isPrayed) dailyCompleted++;
+                  if (day.data.asr?.isPrayed) dailyCompleted++;
+                  if (day.data.maghrib?.isPrayed) dailyCompleted++;
+                  if (day.data.isha?.isPrayed) dailyCompleted++;
                 }
 
                 return (
@@ -202,7 +202,7 @@ export default function StreaksScreen() {
                   {/* 7 dots for the 7 days of the week */}
                   <View className="flex-row items-center">
                     {weekData.map((day, dIdx) => {
-                      const isDone = day.data?.[prayerKey]?.done;
+                      const isDone = day.data?.[prayerKey]?.isPrayed;
                       return (
                         <View
                           key={dIdx}

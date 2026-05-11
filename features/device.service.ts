@@ -22,7 +22,9 @@ export const getDeviceToken = async () => {
 };
 
 
-export const fetchPrayerTimes = async (latitude: number | undefined, longitude: number | undefined): Promise<PrayerTimesMethodResponse | null> => {
+export const fetchPrayerTimes = async (
+    latitude: number | undefined,
+    longitude: number | undefined): Promise<PrayerTimesMethodResponse | null> => {
     if (!latitude || !longitude) return null;
     try {
         // 2. Format today's date (DD-MM-YYYY)
@@ -101,27 +103,28 @@ export const saveUserDeviceInfo = async (
 export const saveDailyPrayerTimes = async (uid: string, timings: Timings) => {
     try {
         const today = dayjs().format("YYYY-MM-DD");
-        const prayerTimesRef = doc(db, "users", uid, "prayerTimes", today);
+        // Using 'prayer_logs' as the single source of truth
+        const prayerLogsRef = doc(db, "users", uid, "prayer_logs", today);
 
-        const docSnap = await getDoc(prayerTimesRef);
+        const docSnap = await getDoc(prayerLogsRef);
         if (docSnap.exists()) {
             return;
         }
 
         await setDoc(
-            prayerTimesRef,
+            prayerLogsRef,
             {
-                fajr: { done: false, time: timings.Fajr, end: timings.Sunrise },
-                dhuhr: { done: false, time: timings.Dhuhr, end: timings.Asr },
-                asr: { done: false, time: timings.Asr, end: timings.Sunset },
-                maghrib: { done: false, time: timings.Maghrib, end: timings.Isha },
-                isha: { done: false, time: timings.Isha, end: timings.Midnight },
+                fajr: { isPrayed: false, time: timings.Fajr, end: timings.Sunrise, status: null, completedAt: null, skippedAt: null },
+                dhuhr: { isPrayed: false, time: timings.Dhuhr, end: timings.Asr, status: null, completedAt: null, skippedAt: null },
+                asr: { isPrayed: false, time: timings.Asr, end: timings.Sunset, status: null, completedAt: null, skippedAt: null },
+                maghrib: { isPrayed: false, time: timings.Maghrib, end: timings.Isha, status: null, completedAt: null, skippedAt: null },
+                isha: { isPrayed: false, time: timings.Isha, end: timings.Midnight, status: null, completedAt: null, skippedAt: null },
             },
             { merge: true }
         );
-        console.log("Daily prayer times initialized for:", today);
+        console.log("Daily prayer logs initialized for:", today);
     } catch (error) {
-        console.error("Error saving daily prayer times:", error);
+        console.error("Error saving daily prayer logs:", error);
     }
 };
 

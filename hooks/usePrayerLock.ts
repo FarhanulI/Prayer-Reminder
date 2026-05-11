@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import { db } from "../lib/firebase";
@@ -18,6 +18,7 @@ const BLOCKED_APPS = [
   "com.snapchat.android",
   "com.reddit.frontpage",
   "com.netflix.mediaclient",
+  "com.android.settings", // Added for simulator testing
 ];
 
 
@@ -28,13 +29,19 @@ const BLOCKED_APPS = [
 const OVERLAY_SNOOZED_KEY = "overlay_snoozed_until";
 
 /**
+ * AsyncStorage key used to determine if the prayer lock functionality is globally enabled.
+ */
+export const PRAYER_LOCK_ENABLED_KEY = "prayer_lock_enabled";
+
+/**
  * Represents a prayer with its name and scheduled time.
  */
 type Prayer = {
   name: string;
   time: string; // Expected format: "HH:mm"
   end: string;  // Expected format: "HH:mm"
-  completed?: boolean;
+  isPrayed?: boolean;
+  skipped?: boolean;
 };
 
 /**
@@ -43,7 +50,7 @@ type Prayer = {
 type UsePrayerLockOptions = {
   uid: string | null;            // Authenticated user ID
   prayers: Prayer[];             // List of prayer times for the day
-  onShowOverlay: (prayerName: string) => void; // Callback to trigger the UI overlay
+  onShowOverlay: (prayerName: string, prayerEnd: string) => void; // Callback to trigger the UI overlay
 };
 
 /**
@@ -57,7 +64,7 @@ function getActivePrayer(prayers: Prayer[]): Prayer | null {
   const today = now.format("YYYY-MM-DD");
 
   for (const prayer of prayers) {
-    if (!prayer.time || !prayer.end || prayer.completed) continue;
+    if (!prayer.time || !prayer.end || prayer.isPrayed || (prayer as any).skipped) continue;
 
     const startTime = dayjs(`${today} ${prayer.time}`);
     const endTime = dayjs(`${today} ${prayer.end}`);
@@ -142,38 +149,107 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
 
       // 4. Trigger the overlay if the foreground app is in our blocked list
       if (isBlockedApps) {
-        onShowOverlay(activePrayer.name);
+        onShowOverlay(activePrayer.name, activePrayer.end);
       }
     } catch (e) {
       console.warn("[PrayerLock] Could not get foreground app:", e);
     }
   }, [uid, prayers, onShowOverlay]);
 
-  // Handle polling and AppState changes
+  // Sync with Native Background Service
+  useEffect(() => {
+    if (Platform.OS !== "android" || !uid) return;
+
+    const syncWithService = async () => {
+      const { syncPrayers, startService, stopService } = await import("../modules/prayer-lock");
+
+      const enabledVal = await AsyncStorage.getItem(PRAYER_LOCK_ENABLED_KEY);
+      const isEnabled = enabledVal === null || enabledVal === "true";
+
+      if (!isEnabled) {
+        stopService();
+        return;
+      }
+
+      const granted = await checkPermissions();
+      if (!granted) {
+        stopService();
+        return;
+      }
+
+      // Format prayers for the native service
+      const formattedPrayers = prayers.map(p => ({
+        name: p.name,
+        time: p.time,
+        end: p.end,
+        isPrayed: p.isPrayed || false,
+        completed: p.isPrayed || false, // Support legacy native code
+        skipped: p.skipped || false
+      }));
+
+      syncPrayers(JSON.stringify(formattedPrayers));
+      startService();
+    };
+
+    syncWithService();
+  }, [uid, prayers, checkPermissions]);
+
+  // Handle foreground polling and AppState changes
   useEffect(() => {
     if (!uid) return;
 
-    const startPolling = async () => {
-      const granted = await checkPermissions();
+    const startPolling = async (triggerImmediately = false) => {
+      const enabledVal = await AsyncStorage.getItem(PRAYER_LOCK_ENABLED_KEY);
+      const isEnabled = enabledVal === null || enabledVal === "true"; // Default to true if not set
 
+      if (!isEnabled) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        return;
+      }
+
+      const granted = await checkPermissions();
       setPermissionsGranted(granted);
 
       // Only start the interval if we have the required native permissions
       if (!granted) return;
 
-      // Poll every 4 seconds for a balance between responsiveness and battery life
-      intervalRef.current = setInterval(checkAndTrigger, 4000);
+      // KEY FIX: When the app returns to foreground, fire the check immediately
+      // instead of waiting up to 4 seconds for the first interval tick.
+      // This ensures the overlay shows right away if the user was on a blocked app.
+      if (triggerImmediately) {
+        const { wasLaunchedFromOverlay } = await import("../modules/prayer-lock");
+        const activePrayer = getActivePrayer(prayers);
+
+        if (wasLaunchedFromOverlay() && activePrayer) {
+          onShowOverlay(activePrayer.name, activePrayer.end);
+        } else {
+          checkAndTrigger();
+        }
+      }
+
+      // Poll every 4 seconds for continued monitoring while in foreground
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(checkAndTrigger, 4000);
+      }
     };
 
     startPolling();
 
-    // Re-check/restart polling when the app comes back to the foreground
+    // Re-check/restart polling when the app comes back to the foreground.
+    // Pass triggerImmediately=true so the overlay fires at once if needed.
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        startPolling();
-      } else if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+        startPolling(true);
+      } else {
+        // Clear the interval when backgrounded — JS timers are paused anyway.
+        // The Native Service will take over monitoring in the background.
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
       }
     });
 
@@ -184,26 +260,65 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
   }, [uid, checkPermissions, checkAndTrigger]);
 
   /**
+   * Helper to immediately update the native service without waiting for Firestore.
+   * This prevents race conditions where the overlay might re-trigger during the DB update.
+   */
+  const syncImmediately = useCallback(async (updatedPrayers: Prayer[]) => {
+    if (Platform.OS !== "android") return;
+    try {
+      const { syncPrayers, startService } = await import("../modules/prayer-lock");
+      const formatted = updatedPrayers.map(p => ({
+        name: p.name,
+        time: p.time,
+        end: p.end,
+        isPrayed: p.isPrayed || false,
+        completed: p.isPrayed || false,
+        skipped: p.skipped || false
+      }));
+      syncPrayers(JSON.stringify(formatted));
+      startService();
+    } catch (e) {
+      console.warn("[usePrayerLock] Instant sync failed:", e);
+    }
+  }, []);
+
+  /**
    * Marks a prayer as completed in Firestore and clears any active snooze.
    */
   const markPrayerComplete = useCallback(
     async (prayerName: string) => {
-      if (!uid) return;
+      if (!uid || !prayerName) return;
+
+      // INSTANT SYNC: Update native service immediately to prevent re-trigger
+      const updatedPrayers = prayers.map(p => 
+        p.name === prayerName ? { ...p, isPrayed: true, skipped: false } : p
+      );
+      await syncImmediately(updatedPrayers);
+
       const today = dayjs().format("YYYY-MM-DD");
-      await setDoc(
-        doc(db, "users", uid, "prayer_logs", today),
-        { [prayerName.toLowerCase()]: { status: "completed", completedAt: serverTimestamp() } },
-        { merge: true }
-      );
-      // Also update the prayerTimes collection so the UI reflects the completion
-      await setDoc(
-        doc(db, "users", uid, "prayerTimes", today),
-        { [prayerName.toLowerCase()]: { done: true } },
-        { merge: true }
-      );
+      const prayerKey = prayerName.toLowerCase();
+      console.log(`[usePrayerLock] Marking ${prayerName} as COMPLETE for ${today}`);
+
+      try {
+        await updateDoc(
+          doc(db, "users", uid, "prayer_logs", today),
+          { 
+            [`${prayerKey}.isPrayed`]: true,
+            [`${prayerKey}.status`]: "completed",
+            [`${prayerKey}.completedAt`]: serverTimestamp(),
+            [`${prayerKey}.skippedAt`]: null
+          }
+        );
+      } catch (e) {
+        await setDoc(
+          doc(db, "users", uid, "prayer_logs", today),
+          { [prayerKey]: { isPrayed: true, status: "completed", completedAt: serverTimestamp(), skippedAt: null } },
+          { merge: true }
+        );
+      }
       await AsyncStorage.removeItem(OVERLAY_SNOOZED_KEY);
     },
-    [uid]
+    [uid, prayers, syncImmediately]
   );
 
   /**
@@ -211,22 +326,39 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
    */
   const markPrayerSkipped = useCallback(
     async (prayerName: string) => {
-      if (!uid) return;
+      if (!uid || !prayerName) return;
+
+      // INSTANT SYNC: Update native service immediately to prevent re-trigger
+      const updatedPrayers = prayers.map(p => 
+        p.name === prayerName ? { ...p, isPrayed: false, skipped: true } : p
+      );
+      await syncImmediately(updatedPrayers);
+
       const today = dayjs().format("YYYY-MM-DD");
-      await setDoc(
-        doc(db, "users", uid, "prayer_logs", today),
-        { [prayerName.toLowerCase()]: { status: "skipped", skippedAt: serverTimestamp() } },
-        { merge: true }
-      );
-      // Also update the prayerTimes collection so the UI reflects that this prayer is handled
-      await setDoc(
-        doc(db, "users", uid, "prayerTimes", today),
-        { [prayerName.toLowerCase()]: { done: true } },
-        { merge: true }
-      );
+      const prayerKey = prayerName.toLowerCase();
+      console.log(`[usePrayerLock] Marking ${prayerName} as SKIPPED for ${today}`);
+
+      try {
+        await updateDoc(
+          doc(db, "users", uid, "prayer_logs", today),
+          { 
+            [`${prayerKey}.skipped`]: true,
+            [`${prayerKey}.isPrayed`]: false,
+            [`${prayerKey}.status`]: "skipped",
+            [`${prayerKey}.skippedAt`]: serverTimestamp(),
+            [`${prayerKey}.completedAt`]: null
+          }
+        );
+      } catch (e) {
+        await setDoc(
+          doc(db, "users", uid, "prayer_logs", today),
+          { [prayerKey]: { isPrayed: false, skipped: true, status: "skipped", skippedAt: serverTimestamp(), completedAt: null } },
+          { merge: true }
+        );
+      }
       await AsyncStorage.removeItem(OVERLAY_SNOOZED_KEY);
     },
-    [uid]
+    [uid, prayers, syncImmediately]
   );
 
   /**

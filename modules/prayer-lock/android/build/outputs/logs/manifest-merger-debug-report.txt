@@ -1,14 +1,40 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:1:1-7:12
-INJECTED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:1:1-7:12
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:1:1-14:12
+INJECTED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:1:1-14:12
 	package
-		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:2:3-36
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:3:3-36
 		INJECTED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml
+	xmlns:tools
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:2:3-49
 	xmlns:android
 		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.SYSTEM_ALERT_WINDOW
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:5:3-76
+	android:name
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:5:20-73
+uses-permission#android.permission.PACKAGE_USAGE_STATS
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:6:3-112
+	tools:ignore
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:6:74-109
+	android:name
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:6:20-73
+uses-permission#android.permission.FOREGROUND_SERVICE
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:7:3-75
+	android:name
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:7:20-72
+uses-permission#android.permission.FOREGROUND_SERVICE_SPECIAL_USE
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:8:3-87
+	android:name
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:8:20-84
 application
-ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:4:3-5:19
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:10:3-12:17
+service#expo.modules.prayerlock.PrayerLockService
+ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:11:5-93
+	android:foregroundServiceType
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:11:48-90
+	android:name
+		ADDED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml:11:14-47
 uses-sdk
 INJECTED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\Farhanul Islam\Desktop\prayer-reminder-locker\modules\prayer-lock\android\src\main\AndroidManifest.xml

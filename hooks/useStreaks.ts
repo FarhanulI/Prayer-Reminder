@@ -20,7 +20,7 @@ export function useStreaks(uid: string | null | undefined, currentDate: dayjs.Da
       const promises = [];
       for (let i = 0; i < 7; i++) {
         const dateStr = startOfWeek.add(i, 'day').format('YYYY-MM-DD');
-        promises.push(getDoc(doc(db, 'users', uid, 'prayerTimes', dateStr)));
+        promises.push(getDoc(doc(db, 'users', uid, 'prayer_logs', dateStr)));
       }
 
       const snaps = await Promise.all(promises);

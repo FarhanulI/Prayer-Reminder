@@ -30,3 +30,6 @@ export const getForbiddenTimes = (sunTimings: { sunrise: string | null, sunset: 
         }
     ];
 };
+
+
+// eas build --platform android --profile development

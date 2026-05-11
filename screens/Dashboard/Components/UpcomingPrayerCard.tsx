@@ -10,12 +10,16 @@ const UpcomingPrayerCard = ({
     title,
     name,
     time,
-    countdownTarget
+    countdownTarget,
+    isPrayed,
+    isSkipped
 }: {
     title: string;
     name: string;
     time: string;
-    countdownTarget: string
+    countdownTarget: string;
+    isPrayed?: boolean;
+    isSkipped?: boolean;
 }) => {
     const [timeLeft, setTimeLeft] = useState("");
     const [progress, setProgress] = useState(0);
@@ -52,8 +56,22 @@ const UpcomingPrayerCard = ({
         <View className="bg-[#141d17] border border-[#dbb142]/20 rounded-[32px] p-6 mb-8 shadow-2xl">
             <View className="flex-row justify-between items-center mb-2">
                 <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest">{title}</Text>
-                <View className="bg-[#dbb142]/10 px-3 py-1 rounded-full border border-[#dbb142]/20">
-                    <Text className="text-[#dbb142] text-[10px] font-bold">{timeLeft}</Text>
+                <View className="flex-row items-center">
+                    {isPrayed && (
+                        <View className="bg-green-500/20 px-2 py-1 rounded-full mr-2 flex-row items-center">
+                            <Ionicons name="checkmark-circle" size={10} color="#4ade80" />
+                            <Text className="text-[#4ade80] text-[9px] font-bold ml-1">DONE</Text>
+                        </View>
+                    )}
+                    {isSkipped && (
+                        <View className="bg-white/10 px-2 py-1 rounded-full mr-2 flex-row items-center">
+                            <Ionicons name="close-circle" size={10} color="rgba(255,255,255,0.4)" />
+                            <Text className="text-white/40 text-[9px] font-bold ml-1">SKIPPED</Text>
+                        </View>
+                    )}
+                    <View className="bg-[#dbb142]/10 px-3 py-1 rounded-full border border-[#dbb142]/20">
+                        <Text className="text-[#dbb142] text-[10px] font-bold">{timeLeft}</Text>
+                    </View>
                 </View>
             </View>
 

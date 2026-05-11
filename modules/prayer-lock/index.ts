@@ -26,3 +26,19 @@ export function triggerOverlay(): void {
   PrayerLock.triggerOverlay();
 }
 
+export function syncPrayers(prayersJson: String): void {
+  PrayerLock.syncPrayers(prayersJson);
+}
+
+export function startService(): void {
+  PrayerLock.startService();
+}
+
+export function stopService(): void {
+  PrayerLock.stopService();
+}
+
+export function wasLaunchedFromOverlay(): boolean {
+  return PrayerLock.wasLaunchedFromOverlay();
+}
+
