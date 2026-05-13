@@ -40,6 +40,7 @@ type Props = {
   onPray: (name: string) => void;
   onSnooze: () => void;
   onSkip: () => void;
+  isSkipReminder?: boolean;
 };
 
 export default function PrayerOverlayScreen({
@@ -50,8 +51,11 @@ export default function PrayerOverlayScreen({
   onPray,
   onSnooze,
   onSkip,
+  isSkipReminder,
 }: Props) {
-  const [hadith] = useState(HADITHS[Math.floor(Math.random() * HADITHS.length)]);
+  const [hadith] = useState(
+    HADITHS[Math.floor(Math.random() * HADITHS.length)],
+  );
   const translateX = useRef(new Animated.Value(0)).current;
   const [remainingTime, setRemainingTime] = useState("");
   const opacity = useRef(new Animated.Value(0)).current;
@@ -122,15 +126,31 @@ export default function PrayerOverlayScreen({
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(opacity, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }).start();
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.08, duration: 800, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-        ])
+          Animated.timing(pulseAnim, {
+            toValue: 1.08,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
       ).start();
     } else {
-      Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
     }
   }, [visible]);
 
@@ -145,10 +165,14 @@ export default function PrayerOverlayScreen({
       },
       onPanResponderRelease: (_, gestureState) => {
         const currentName = prayerNameRef.current;
-        console.log(`[PrayerOverlay] Released at dx: ${gestureState.dx.toFixed(1)} (Threshold: ${SWIPE_THRESHOLD.toFixed(1)})`);
+        console.log(
+          `[PrayerOverlay] Released at dx: ${gestureState.dx.toFixed(1)} (Threshold: ${SWIPE_THRESHOLD.toFixed(1)})`,
+        );
         if (gestureState.dx >= SWIPE_THRESHOLD) {
           Vibration.vibrate(60);
-          console.log(`[PrayerOverlay] Swipe success for "${currentName}", calling onPray`);
+          console.log(
+            `[PrayerOverlay] Swipe success for "${currentName}", calling onPray`,
+          );
           Animated.timing(translateX, {
             toValue: SCREEN_WIDTH,
             duration: 250,
@@ -167,7 +191,7 @@ export default function PrayerOverlayScreen({
           }).start();
         }
       },
-    })
+    }),
   ).current;
 
   return (
@@ -187,58 +211,120 @@ export default function PrayerOverlayScreen({
       >
         <StatusBar barStyle="light-content" backgroundColor="#080d0a" />
 
-        <View style={{ flex: 1, justifyContent: "space-between", paddingHorizontal: 28, paddingBottom: 60 }}>
-
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "space-between",
+            paddingHorizontal: 28,
+            paddingBottom: 60,
+          }}
+        >
           {/* Top Section */}
           <View style={{ alignItems: "center" }}>
             {/* Mosque Icon */}
-            <View style={{
-              backgroundColor: "rgba(219,177,66,0.1)",
-              borderWidth: 1,
-              borderColor: "rgba(219,177,66,0.2)",
-              borderRadius: 999,
-              padding: 24,
-              marginBottom: 20,
-            }}>
+            <View
+              style={{
+                backgroundColor: "rgba(219,177,66,0.1)",
+                borderWidth: 1,
+                borderColor: "rgba(219,177,66,0.2)",
+                borderRadius: 999,
+                padding: 24,
+                marginBottom: 20,
+              }}
+            >
               <Ionicons name="moon" size={48} color="#dbb142" />
             </View>
 
             {/* Prayer Name */}
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: "700", letterSpacing: 4, textTransform: "uppercase", marginBottom: 6 }}>
-              Prayer Time
+            <Text
+              style={{
+                color: "rgba(255,255,255,0.4)",
+                fontSize: 11,
+                fontWeight: "700",
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                marginBottom: 6,
+              }}
+            >
+              {isSkipReminder ? "30-Min Reminder" : "Prayer Time"}
             </Text>
-            <Text style={{ color: "#fff", fontSize: 48, fontWeight: "600", fontFamily: Platform.OS === "ios" ? "Georgia" : "serif", marginBottom: 4 }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 48,
+                fontWeight: "600",
+                fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+                marginBottom: 4,
+              }}
+            >
               {prayerName}
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
               <Ionicons name="time-outline" size={14} color="#dbb142" />
-              <Text style={{ color: "#dbb142", marginLeft: 6, fontWeight: "600" }}>{prayerTime}</Text>
+              <Text
+                style={{ color: "#dbb142", marginLeft: 6, fontWeight: "600" }}
+              >
+                {prayerTime}
+              </Text>
             </View>
-            <View style={{
-              backgroundColor: "rgba(219,177,66,0.1)",
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              borderRadius: 8,
-              marginBottom: 32
-            }}>
-              <Text style={{ color: "#dbb142", fontSize: 12, fontWeight: "700" }}>
+            <View
+              style={{
+                backgroundColor: "rgba(219,177,66,0.1)",
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 8,
+                marginBottom: 32,
+              }}
+            >
+              <Text
+                style={{ color: "#dbb142", fontSize: 12, fontWeight: "700" }}
+              >
                 Ends in: {remainingTime}
               </Text>
             </View>
 
             {/* Hadith */}
-            <View style={{
-              backgroundColor: "#141d17",
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.06)",
-              borderRadius: 24,
-              padding: 24,
-            }}>
-              <Ionicons name="chatbubble-ellipses-outline" size={20} color="rgba(255,255,255,0.15)" style={{ marginBottom: 12 }} />
-              <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 16, lineHeight: 26, fontStyle: "italic", marginBottom: 12 }}>
+            <View
+              style={{
+                backgroundColor: "#141d17",
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.06)",
+                borderRadius: 24,
+                padding: 24,
+              }}
+            >
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={20}
+                color="rgba(255,255,255,0.15)"
+                style={{ marginBottom: 12 }}
+              />
+              <Text
+                style={{
+                  color: "rgba(255,255,255,0.75)",
+                  fontSize: 16,
+                  lineHeight: 26,
+                  fontStyle: "italic",
+                  marginBottom: 12,
+                }}
+              >
                 "{hadith.text}"
               </Text>
-              <Text style={{ color: "#dbb142", fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 2 }}>
+              <Text
+                style={{
+                  color: "#dbb142",
+                  fontSize: 11,
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: 2,
+                }}
+              >
                 — {hadith.source}
               </Text>
             </View>
@@ -247,8 +333,14 @@ export default function PrayerOverlayScreen({
           {/* Bottom Actions */}
           <View style={{ alignItems: "center" }}>
             {/* Swipe to Pray */}
-            <Animated.View style={{ transform: [{ scale: pulseAnim }], width: "100%", marginBottom: 16 }}>
-              <Animated.View 
+            <Animated.View
+              style={{
+                transform: [{ scale: pulseAnim }],
+                width: "100%",
+                marginBottom: 16,
+              }}
+            >
+              <Animated.View
                 {...panResponder.panHandlers}
                 style={{
                   backgroundColor: "#141d17",
@@ -262,20 +354,22 @@ export default function PrayerOverlayScreen({
                 }}
               >
                 {/* Progress Fill - Using ScaleX for Native Driver support */}
-                <Animated.View style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: "100%",
-                  backgroundColor: "#dbb142", // Keep base color gold
-                  opacity: 0.15,
-                  transform: [
-                    { translateX: -SCREEN_WIDTH / 2 }, // Center for scale
-                    { scaleX: progressScaleX },
-                    { translateX: SCREEN_WIDTH / 2 }   // Move back
-                  ],
-                }} />
+                <Animated.View
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: "100%",
+                    backgroundColor: "#dbb142", // Keep base color gold
+                    opacity: 0.15,
+                    transform: [
+                      { translateX: -SCREEN_WIDTH / 2 }, // Center for scale
+                      { scaleX: progressScaleX },
+                      { translateX: SCREEN_WIDTH / 2 }, // Move back
+                    ],
+                  }}
+                />
 
                 {/* Draggable Thumb */}
                 <Animated.View
@@ -286,31 +380,35 @@ export default function PrayerOverlayScreen({
                     zIndex: 10,
                   }}
                 >
-                  <Animated.View style={{
-                    width: 58,
-                    height: 58,
-                    borderRadius: 999,
-                    backgroundColor: "#dbb142", // Use fixed color for native driver compatibility
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}>
+                  <Animated.View
+                    style={{
+                      width: 58,
+                      height: 58,
+                      borderRadius: 999,
+                      backgroundColor: "#dbb142", // Use fixed color for native driver compatibility
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <Ionicons name="arrow-forward" size={26} color="#080d0a" />
                   </Animated.View>
                 </Animated.View>
 
-                <Animated.Text style={{ 
-                  color: "rgba(255,255,255,0.5)", 
-                  textAlign: "center", 
-                  fontSize: 13, 
-                  fontWeight: "700", 
-                  letterSpacing: 2, 
-                  textTransform: "uppercase",
-                  opacity: translateX.interpolate({
-                    inputRange: [0, SWIPE_THRESHOLD],
-                    outputRange: [1, 0],
-                    extrapolate: 'clamp'
-                  })
-                }}>
+                <Animated.Text
+                  style={{
+                    color: "rgba(255,255,255,0.5)",
+                    textAlign: "center",
+                    fontSize: 13,
+                    fontWeight: "700",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    opacity: translateX.interpolate({
+                      inputRange: [0, SWIPE_THRESHOLD],
+                      outputRange: [1, 0],
+                      extrapolate: "clamp",
+                    }),
+                  }}
+                >
                   Swipe to Pray
                 </Animated.Text>
               </Animated.View>
@@ -331,14 +429,31 @@ export default function PrayerOverlayScreen({
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: "rgba(255,255,255,0.6)", fontWeight: "700", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>
-                ⏰  Remind me in 2 mins
+              <Text
+                style={{
+                  color: "rgba(255,255,255,0.6)",
+                  fontWeight: "700",
+                  fontSize: 13,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                ⏰ Remind me in 2 mins
               </Text>
             </TouchableOpacity>
 
             {/* Skip — hidden below fold visually via low opacity */}
-            <TouchableOpacity onPress={onSkip} hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}>
-              <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 12, textDecorationLine: "underline" }}>
+            <TouchableOpacity
+              onPress={onSkip}
+              hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+            >
+              <Text
+                style={{
+                  color: "rgba(255,255,255,0.2)",
+                  fontSize: 12,
+                  textDecorationLine: "underline",
+                }}
+              >
                 Skip for now
               </Text>
             </TouchableOpacity>

@@ -1,10 +1,6 @@
 import { ForbiddenWindow, PrayerCollection } from "./types";
 
 export const getForbiddenTimes = (sunTimings: { sunrise: string | null, sunset: string | null }, prayerTimes: PrayerCollection): ForbiddenWindow[] | null => {
-    console.log({ prayerTimes });
-
-    // if (!sunTimings) return null
-
     const addMinutes = (time: string, mins: number) => {
         const [hr, mm] = time?.split(':').map(Number);
         const date = new Date();

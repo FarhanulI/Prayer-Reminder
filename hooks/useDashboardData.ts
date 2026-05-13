@@ -34,6 +34,7 @@ export function useDashboardData(uid: string | null | undefined) {
         profile: profileSnap.exists() ? profileSnap.data() : null,
         userData: prayerSnap.exists() ? (prayerSnap.data() as PrayerCollection) : null,
         yesterdayData: yesterdaySnap.exists() ? (yesterdaySnap.data() as PrayerCollection) : null,
+        streaks: profileSnap.exists() ? profileSnap.data()?.streaks : null,
       };
     },
     // Only run the query if a UID is provided
@@ -56,6 +57,7 @@ export function useDashboardData(uid: string | null | undefined) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
           ...oldData,
           profile: snap.data(),
+          streaks: snap.data()?.streaks || null,
         }));
       }
     });

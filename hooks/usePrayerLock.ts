@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
+import { updateUserStreaks } from "../features/streaks.service";
 import { db } from "../lib/firebase";
 
 /**
@@ -21,12 +22,18 @@ const BLOCKED_APPS = [
   "com.android.settings", // Added for simulator testing
 ];
 
-
-
 /**
  * AsyncStorage key used to store the timestamp until which the overlay is snoozed.
  */
 const OVERLAY_SNOOZED_KEY = "overlay_snoozed_until";
+
+/**
+ * AsyncStorage key used to store skip deadlines for each prayer.
+ * Format: { "prayerName": "ISO_TIMESTAMP" }
+ * When a prayer is skipped, it remains blocked for 30 minutes.
+ * After 30 minutes, if not prayed, it can be skipped again or prayed.
+ */
+const PRAYER_SKIP_DEADLINES_KEY = "prayer_skip_deadlines";
 
 /**
  * AsyncStorage key used to determine if the prayer lock functionality is globally enabled.
@@ -39,23 +46,24 @@ export const PRAYER_LOCK_ENABLED_KEY = "prayer_lock_enabled";
 type Prayer = {
   name: string;
   time: string; // Expected format: "HH:mm"
-  end: string;  // Expected format: "HH:mm"
+  end: string; // Expected format: "HH:mm"
   isPrayed?: boolean;
   skipped?: boolean;
+  date?: string; // Optional: "YYYY-MM-DD"
 };
 
 /**
  * Configuration options for the usePrayerLock hook.
  */
 type UsePrayerLockOptions = {
-  uid: string | null;            // Authenticated user ID
-  prayers: Prayer[];             // List of prayer times for the day
+  uid: string | null; // Authenticated user ID
+  prayers: Prayer[]; // List of prayer times for the day
   onShowOverlay: (prayerName: string, prayerEnd: string) => void; // Callback to trigger the UI overlay
 };
 
 /**
  * Determines if the current time falls within the restriction window of any prayer.
- * 
+ *
  * @param prayers - Array of prayer objects with times.
  * @returns The active Prayer object if within the window, otherwise null.
  */
@@ -64,19 +72,29 @@ function getActivePrayer(prayers: Prayer[]): Prayer | null {
   const today = now.format("YYYY-MM-DD");
 
   for (const prayer of prayers) {
-    if (!prayer.time || !prayer.end || prayer.isPrayed || (prayer as any).skipped) continue;
+    if (
+      !prayer.time ||
+      !prayer.end ||
+      prayer.isPrayed ||
+      (prayer as any).skipped
+    ) {
+      continue;
+    }
 
-    const startTime = dayjs(`${today} ${prayer.time}`);
-    const endTime = dayjs(`${today} ${prayer.end}`);
+    const baseDate = prayer.date || today;
+    const startTime = dayjs(`${baseDate} ${prayer.time}`);
+    const endTime = dayjs(`${baseDate} ${prayer.end}`);
 
-    // Handle cases where the end time is on the next day (e.g., Isha/Midnight)
     let adjustedEnd = endTime;
     if (endTime.isBefore(startTime)) {
       adjustedEnd = endTime.add(1, "day");
     }
 
-    // Check if current time is within the prayer window [startTime, adjustedEnd)
-    if (now.isSame(startTime) || (now.isAfter(startTime) && now.isBefore(adjustedEnd))) {
+    if (
+      now.isSame(startTime) ||
+      (now.isAfter(startTime) && now.isBefore(adjustedEnd))
+    ) {
+      console.log(`[usePrayerLock] Active prayer found: ${prayer.name} (${prayer.time} - ${prayer.end})`);
       return prayer;
     }
   }
@@ -87,10 +105,14 @@ function getActivePrayer(prayers: Prayer[]): Prayer | null {
  * A custom hook that monitors app usage during prayer times on Android.
  * It checks if a user is using a "blocked" app during a prayer window and
  * triggers an overlay if necessary.
- * 
+ *
  * @returns An object containing permission status and control methods.
  */
-export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOptions) {
+export function usePrayerLock({
+  uid,
+  prayers,
+  onShowOverlay,
+}: UsePrayerLockOptions) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
 
@@ -100,7 +122,8 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
   const checkPermissions = useCallback(async () => {
     if (Platform.OS !== "android") return false;
     try {
-      const { hasUsageStatsPermission, hasOverlayPermission } = await import("../modules/prayer-lock");
+      const { hasUsageStatsPermission, hasOverlayPermission } =
+        await import("../modules/prayer-lock");
       const UsageStatsPermission = await hasUsageStatsPermission();
       const OverlayPermission = await hasOverlayPermission();
 
@@ -116,8 +139,12 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
   const requestAllPermissions = useCallback(async () => {
     if (Platform.OS !== "android") return;
     try {
-      const { hasUsageStatsPermission, openUsageAccessSettings, hasOverlayPermission, requestOverlayPermission } =
-        await import("../modules/prayer-lock");
+      const {
+        hasUsageStatsPermission,
+        openUsageAccessSettings,
+        hasOverlayPermission,
+        requestOverlayPermission,
+      } = await import("../modules/prayer-lock");
 
       if (!hasUsageStatsPermission()) openUsageAccessSettings();
       if (!hasOverlayPermission()) requestOverlayPermission();
@@ -128,6 +155,7 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
 
   /**
    * The core logic to check if a blocked app is in the foreground during a prayer window.
+   * Also handles 30-minute reminders after skip.
    */
   const checkAndTrigger = useCallback(async () => {
     if (!uid || Platform.OS !== "android") return;
@@ -135,6 +163,38 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
     // 1. Check if the user has snoozed the overlay recently
     const snoozedUntil = await AsyncStorage.getItem(OVERLAY_SNOOZED_KEY);
     if (snoozedUntil && dayjs().isBefore(dayjs(snoozedUntil))) return;
+
+    // 1.5. Check for skip deadline reminders (30-minute reminders after skipping)
+    try {
+      const deadlines = await AsyncStorage.getItem(PRAYER_SKIP_DEADLINES_KEY);
+      if (deadlines) {
+        const deadlineObj = JSON.parse(deadlines);
+        const now = dayjs();
+
+        // Check each prayer's skip deadline
+        for (const [prayerName, deadline] of Object.entries(deadlineObj)) {
+          if (now.isAfter(dayjs(deadline as string))) {
+            // 30 minutes have passed since skip, show reminder
+            const prayer = prayers.find((p) => p.name === prayerName);
+            if (prayer && prayer.end) {
+              console.log(
+                `[usePrayerLock] 30-minute skip reminder triggered for ${prayerName}`,
+              );
+              onShowOverlay(prayerName, prayer.end);
+              // Clear this deadline after showing reminder
+              delete deadlineObj[prayerName];
+              await AsyncStorage.setItem(
+                PRAYER_SKIP_DEADLINES_KEY,
+                JSON.stringify(deadlineObj),
+              );
+              return; // Show only one reminder at a time
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[usePrayerLock] Error checking skip deadlines:", e);
+    }
 
     // 2. Identify if we are currently in a prayer restriction window
     const activePrayer = getActivePrayer(prayers);
@@ -144,11 +204,17 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
       // 3. Query the native module for the current foreground application
       const { getForegroundApp } = await import("../modules/prayer-lock");
       const foregroundApp = getForegroundApp();
+      
+      if (foregroundApp) {
+        console.log(`[usePrayerLock] Foreground app: ${foregroundApp}`);
+      }
 
-      const isBlockedApps = foregroundApp && BLOCKED_APPS.includes(foregroundApp)
+      const isBlockedApps =
+        foregroundApp && BLOCKED_APPS.includes(foregroundApp);
 
       // 4. Trigger the overlay if the foreground app is in our blocked list
       if (isBlockedApps) {
+        console.log(`[usePrayerLock] Blocking app: ${foregroundApp} for prayer: ${activePrayer.name}`);
         onShowOverlay(activePrayer.name, activePrayer.end);
       }
     } catch (e) {
@@ -161,7 +227,8 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
     if (Platform.OS !== "android" || !uid) return;
 
     const syncWithService = async () => {
-      const { syncPrayers, startService, stopService } = await import("../modules/prayer-lock");
+      const { syncPrayers, startService, stopService } =
+        await import("../modules/prayer-lock");
 
       const enabledVal = await AsyncStorage.getItem(PRAYER_LOCK_ENABLED_KEY);
       const isEnabled = enabledVal === null || enabledVal === "true";
@@ -178,13 +245,14 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
       }
 
       // Format prayers for the native service
-      const formattedPrayers = prayers.map(p => ({
+      const formattedPrayers = prayers.map((p) => ({
         name: p.name,
         time: p.time,
         end: p.end,
+        date: p.date || dayjs().format("YYYY-MM-DD"),
         isPrayed: p.isPrayed || false,
         completed: p.isPrayed || false, // Support legacy native code
-        skipped: p.skipped || false
+        skipped: p.skipped || false,
       }));
 
       syncPrayers(JSON.stringify(formattedPrayers));
@@ -220,7 +288,8 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
       // instead of waiting up to 4 seconds for the first interval tick.
       // This ensures the overlay shows right away if the user was on a blocked app.
       if (triggerImmediately) {
-        const { wasLaunchedFromOverlay } = await import("../modules/prayer-lock");
+        const { wasLaunchedFromOverlay } =
+          await import("../modules/prayer-lock");
         const activePrayer = getActivePrayer(prayers);
 
         if (wasLaunchedFromOverlay() && activePrayer) {
@@ -266,14 +335,16 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
   const syncImmediately = useCallback(async (updatedPrayers: Prayer[]) => {
     if (Platform.OS !== "android") return;
     try {
-      const { syncPrayers, startService } = await import("../modules/prayer-lock");
-      const formatted = updatedPrayers.map(p => ({
+      const { syncPrayers, startService } =
+        await import("../modules/prayer-lock");
+      const formatted = updatedPrayers.map((p) => ({
         name: p.name,
         time: p.time,
         end: p.end,
+        date: p.date || dayjs().format("YYYY-MM-DD"),
         isPrayed: p.isPrayed || false,
         completed: p.isPrayed || false,
-        skipped: p.skipped || false
+        skipped: p.skipped || false,
       }));
       syncPrayers(JSON.stringify(formatted));
       startService();
@@ -289,76 +360,120 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
     async (prayerName: string) => {
       if (!uid || !prayerName) return;
 
+      const prayer = prayers.find((p) => p.name === prayerName);
+      const targetDate = prayer?.date || dayjs().format("YYYY-MM-DD");
+
       // INSTANT SYNC: Update native service immediately to prevent re-trigger
-      const updatedPrayers = prayers.map(p => 
-        p.name === prayerName ? { ...p, isPrayed: true, skipped: false } : p
+      const updatedPrayers = prayers.map((p) =>
+        p.name === prayerName ? { ...p, isPrayed: true, skipped: false } : p,
       );
       await syncImmediately(updatedPrayers);
 
-      const today = dayjs().format("YYYY-MM-DD");
       const prayerKey = prayerName.toLowerCase();
-      console.log(`[usePrayerLock] Marking ${prayerName} as COMPLETE for ${today}`);
+      console.log(
+        `[usePrayerLock] Marking ${prayerName} as COMPLETE for ${targetDate}`,
+      );
 
       try {
-        await updateDoc(
-          doc(db, "users", uid, "prayer_logs", today),
-          { 
-            [`${prayerKey}.isPrayed`]: true,
-            [`${prayerKey}.status`]: "completed",
-            [`${prayerKey}.completedAt`]: serverTimestamp(),
-            [`${prayerKey}.skippedAt`]: null
-          }
-        );
-      } catch (e) {
+        await updateDoc(doc(db, "users", uid, "prayer_logs", targetDate), {
+          [`${prayerKey}.isPrayed`]: true,
+          [`${prayerKey}.status`]: "completed",
+          [`${prayerKey}.completedAt`]: serverTimestamp(),
+          [`${prayerKey}.skippedAt`]: null,
+        });
+      } catch (_e) {
         await setDoc(
-          doc(db, "users", uid, "prayer_logs", today),
-          { [prayerKey]: { isPrayed: true, status: "completed", completedAt: serverTimestamp(), skippedAt: null } },
-          { merge: true }
+          doc(db, "users", uid, "prayer_logs", targetDate),
+          {
+            [prayerKey]: {
+              isPrayed: true,
+              status: "completed",
+              completedAt: serverTimestamp(),
+              skippedAt: null,
+            },
+          },
+          { merge: true },
         );
       }
       await AsyncStorage.removeItem(OVERLAY_SNOOZED_KEY);
+      
+      // Update streaks logic
+      await updateUserStreaks(uid, targetDate);
     },
-    [uid, prayers, syncImmediately]
+    [uid, prayers, syncImmediately],
   );
 
   /**
-   * Marks a prayer as skipped in Firestore and clears any active snooze.
+   * Marks a prayer as skipped in Firestore and sets a 30-minute reminder.
+   * After 30 minutes, the overlay will show again to remind the user.
    */
   const markPrayerSkipped = useCallback(
     async (prayerName: string) => {
       if (!uid || !prayerName) return;
 
-      // INSTANT SYNC: Update native service immediately to prevent re-trigger
-      const updatedPrayers = prayers.map(p => 
-        p.name === prayerName ? { ...p, isPrayed: false, skipped: true } : p
+      const prayer = prayers.find((p) => p.name === prayerName);
+      const targetDate = prayer?.date || dayjs().format("YYYY-MM-DD");
+
+      // INSTANT SYNC: Update native service immediately to disable app blocking
+      const updatedPrayers = prayers.map((p) =>
+        p.name === prayerName ? { ...p, isPrayed: false, skipped: true } : p,
       );
       await syncImmediately(updatedPrayers);
 
-      const today = dayjs().format("YYYY-MM-DD");
       const prayerKey = prayerName.toLowerCase();
-      console.log(`[usePrayerLock] Marking ${prayerName} as SKIPPED for ${today}`);
+      console.log(
+        `[usePrayerLock] Marking ${prayerName} as SKIPPED for ${targetDate}`,
+      );
 
       try {
-        await updateDoc(
-          doc(db, "users", uid, "prayer_logs", today),
-          { 
-            [`${prayerKey}.skipped`]: true,
-            [`${prayerKey}.isPrayed`]: false,
-            [`${prayerKey}.status`]: "skipped",
-            [`${prayerKey}.skippedAt`]: serverTimestamp(),
-            [`${prayerKey}.completedAt`]: null
-          }
-        );
-      } catch (e) {
+        await updateDoc(doc(db, "users", uid, "prayer_logs", targetDate), {
+          [`${prayerKey}.skipped`]: true,
+          [`${prayerKey}.isPrayed`]: false,
+          [`${prayerKey}.status`]: "skipped",
+          [`${prayerKey}.skippedAt`]: serverTimestamp(),
+          [`${prayerKey}.completedAt`]: null,
+        });
+      } catch (_e) {
         await setDoc(
-          doc(db, "users", uid, "prayer_logs", today),
-          { [prayerKey]: { isPrayed: false, skipped: true, status: "skipped", skippedAt: serverTimestamp(), completedAt: null } },
-          { merge: true }
+          doc(db, "users", uid, "prayer_logs", targetDate),
+          {
+            [prayerKey]: {
+              isPrayed: false,
+              skipped: true,
+              status: "skipped",
+              skippedAt: serverTimestamp(),
+              completedAt: null,
+            },
+          },
+          { merge: true },
         );
       }
+
+      // Set 30-minute reminder
+      // This will allow blocked apps to be used now, but show the overlay again after 30 mins
+      const reminderTime = dayjs().add(30, "minute").toISOString();
+
+      // Clear any active snooze to ensure clean state
       await AsyncStorage.removeItem(OVERLAY_SNOOZED_KEY);
+
+      // Track skip deadlines for 30-minute reminders
+      try {
+        const deadlines = await AsyncStorage.getItem(PRAYER_SKIP_DEADLINES_KEY);
+        const deadlineObj = deadlines ? JSON.parse(deadlines) : {};
+        deadlineObj[prayerName] = reminderTime;
+        await AsyncStorage.setItem(
+          PRAYER_SKIP_DEADLINES_KEY,
+          JSON.stringify(deadlineObj),
+        );
+      } catch (e) {
+        console.warn("[usePrayerLock] Failed to set skip deadline:", e);
+      }
+
+      console.log(
+        `[usePrayerLock] 30-minute reminder set for ${prayerName}. Overlay will show at ${reminderTime}`,
+      );
     },
-    [uid, prayers, syncImmediately]
+    [uid, prayers, syncImmediately],
   );
 
   /**
@@ -370,10 +485,10 @@ export function usePrayerLock({ uid, prayers, onShowOverlay }: UsePrayerLockOpti
   }, []);
 
   return {
-    permissionsGranted,    // Whether Android permissions are currently active
+    permissionsGranted, // Whether Android permissions are currently active
     requestAllPermissions, // Function to trigger permission request screens
-    markPrayerComplete,    // Function to record successful prayer completion
-    markPrayerSkipped,     // Function to record a skipped prayer
-    snoozeFor2Minutes,     // Function to hide the overlay briefly
+    markPrayerComplete, // Function to record successful prayer completion
+    markPrayerSkipped, // Function to record a skipped prayer
+    snoozeFor2Minutes, // Function to hide the overlay briefly
   };
 }

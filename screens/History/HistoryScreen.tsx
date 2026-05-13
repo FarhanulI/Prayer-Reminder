@@ -1,26 +1,25 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import dayjs from "dayjs";
 import React, { useCallback, useState } from "react";
-import { Dimensions, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import Skeleton from "@/components/Skeleton";
-
 import { useAuthContext } from "@/context/AuthProvider";
 import { useStreaks } from "@/hooks/useStreaks";
 import { PrayerCollection } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
+import DateSelectorRow from "./components/DateSelectorRow";
+import { PRAYERS } from "./constants";
+import EditPrayerModal from "./modals/EditPrayerModal";
 
-const { width } = Dimensions.get("window");
-
-// Constants
-const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"] as const;
-type PrayerName = typeof PRAYERS[number];
-
-export default function StreaksScreen() {
+export default function HistoryScreen() {
   const { user } = useAuthContext();
 
   const [currentDate, setCurrentDate] = useState(dayjs());
   const { data: weekData = [], isLoading: loading, refetch } = useStreaks(user?.uid, currentDate);
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<any>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,54 +55,38 @@ export default function StreaksScreen() {
   const weekStartStr = weekData.length > 0 ? weekData[0].date.format('MMM DD').toUpperCase() : '';
   const weekEndStr = weekData.length > 0 ? weekData[6].date.format('MMM DD, YYYY').toUpperCase() : '';
 
-
-
   return (
     <View className="flex-1 bg-[#0d1410]">
       <ScrollView
         className="flex-1 px-6"
-        contentContainerStyle={{ paddingTop: 60, paddingBottom: 140 }}
+        contentContainerStyle={{ paddingTop: 10, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Navigation */}
-        <View className="flex-row items-center mb-8">
-          <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Streaks</Text>
-        </View>
-
         {/* Top Header Row */}
         <View className="flex-row justify-between items-center mb-6">
           <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Weekly Progress</Text>
           {loading ? (
-             <Skeleton width={80} height={20} borderRadius={4} />
+            <Skeleton width={80} height={20} borderRadius={4} />
           ) : (
             <Text className="text-[#dbb142] text-[12px] font-bold uppercase tracking-widest">{overallPercentage}% OVERALL</Text>
           )}
         </View>
 
-        {/* Date Selector Row */}
-        <View className="flex-row justify-between items-center bg-[#141d17] p-4 rounded-2xl mb-6 border border-white/5">
-          <TouchableOpacity onPress={handlePrevWeek}>
-            <Ionicons name="chevron-back" size={16} color="#dbb142" />
-          </TouchableOpacity>
-          {loading ? (
-            <Skeleton width={120} height={20} borderRadius={4} />
-          ) : (
-            <Text className="text-white font-bold text-sm tracking-widest">
-              {weekStartStr} – {weekEndStr}
-            </Text>
-          )}
-          <TouchableOpacity onPress={handleNextWeek}>
-            <Ionicons name="chevron-forward" size={16} color="#dbb142" />
-          </TouchableOpacity>
-        </View>
+        <DateSelectorRow
+          handlePrevWeek={handlePrevWeek}
+          handleNextWeek={handleNextWeek}
+          weekStartStr={weekStartStr}
+          weekEndStr={weekEndStr}
+          loading={loading}
+        />
 
         {/* Daily Progress Cards (Horizontal Scroll) */}
         <View className="mb-8">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
             {loading ? (
               [...Array(3)].map((_, index) => (
-                <View 
-                  key={index} 
+                <View
+                  key={index}
                   className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mr-4 items-center justify-center w-[110px]"
                 >
                   <Skeleton width={30} height={12} borderRadius={4} className="mb-1" />
@@ -119,7 +102,7 @@ export default function StreaksScreen() {
             ) : (
               weekData.map((day, index) => {
                 const isToday = day.date.isSame(dayjs(), 'day');
-                
+
                 let dailyCompleted = 0;
                 if (day.data) {
                   if (day.data.fajr?.isPrayed) dailyCompleted++;
@@ -137,6 +120,16 @@ export default function StreaksScreen() {
                     <Text className={`text-[12px] font-bold uppercase tracking-widest mb-1 ${isToday ? 'text-[#dbb142]' : 'text-white/60'}`}>
                       {day.date.format('ddd')}
                     </Text>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedDay(day);
+                        setEditModalVisible(true);
+                      }}
+                      className="absolute top-3 right-3 p-1 bg-white/5 rounded-full"
+                    >
+                      <Ionicons name="pencil" size={10} color="#dbb142" />
+                    </TouchableOpacity>
                     {isToday && (
                       <Text className="text-[#dbb142] text-[9px] font-bold uppercase tracking-widest mb-2">(TODAY)</Text>
                     )}
@@ -218,6 +211,14 @@ export default function StreaksScreen() {
         </View>
 
       </ScrollView>
+
+      <EditPrayerModal
+        editModalVisible={editModalVisible}
+        setEditModalVisible={setEditModalVisible}
+        selectedDay={selectedDay}
+        setSelectedDay={setSelectedDay}
+        refetch={refetch}
+      />
     </View>
   );
 }

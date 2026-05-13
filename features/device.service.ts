@@ -118,7 +118,7 @@ export const saveDailyPrayerTimes = async (uid: string, timings: Timings) => {
                 dhuhr: { isPrayed: false, time: timings.Dhuhr, end: timings.Asr, status: null, completedAt: null, skippedAt: null },
                 asr: { isPrayed: false, time: timings.Asr, end: timings.Sunset, status: null, completedAt: null, skippedAt: null },
                 maghrib: { isPrayed: false, time: timings.Maghrib, end: timings.Isha, status: null, completedAt: null, skippedAt: null },
-                isha: { isPrayed: false, time: timings.Isha, end: timings.Midnight, status: null, completedAt: null, skippedAt: null },
+                isha: { isPrayed: false, time: timings.Isha, end: timings.Fajr, status: null, completedAt: null, skippedAt: null },
             },
             { merge: true }
         );

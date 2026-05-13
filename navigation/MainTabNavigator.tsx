@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
+import MilestonesScreen from "@/screens/Milestones/MilestonesScreen";
 import DashboardScreen from "../screens/Dashboard/DashboardScreen";
 import QuranScreen from "../screens/Quran/QuranScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import StreaksScreen from "../screens/StreaksScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -95,7 +95,7 @@ export default function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen name="Quran" component={QuranScreen} />
-      <Tab.Screen name="Progress" component={StreaksScreen} />
+      <Tab.Screen name="Progress" component={MilestonesScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
