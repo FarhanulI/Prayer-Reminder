@@ -12,7 +12,9 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import java.util.*
+import java.text.SimpleDateFormat
 import org.json.JSONArray
+import org.json.JSONObject
 
 class PrayerLockService : Service() {
 
@@ -68,8 +70,49 @@ class PrayerLockService : Service() {
         handler.post(runnable!!)
     }
 
+    private fun isSnoozed(): Boolean {
+        val prefs = getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
+        val snoozedUntil = prefs.getString("overlay_snoozed_until", null) ?: return false
+
+        return try {
+            val snoozedTime = parseIso8601(snoozedUntil) ?: return false
+            val stillSnoozed = System.currentTimeMillis() < snoozedTime.time
+            if (!stillSnoozed) {
+                prefs.edit().remove("overlay_snoozed_until").apply()
+            }
+            stillSnoozed
+        } catch (e: Exception) {
+            Log.w("PrayerLockService", "Could not parse snooze time: $snoozedUntil", e)
+            false
+        }
+    }
+
+    private fun parseIso8601(value: String): Date? {
+        val formats = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+        )
+        for (pattern in formats) {
+            try {
+                val sdf = SimpleDateFormat(pattern, Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                return sdf.parse(value)
+            } catch (_: Exception) {
+                // try next format
+            }
+        }
+        return null
+    }
+
     private fun checkForegroundApp() {
-        if (!isPrayerTime()) return
+        val activePrayer = getActivePrayer() ?: return
+
+        if (isSnoozed()) {
+            Log.d("PrayerLockService", "Overlay snoozed — skipping trigger")
+            return
+        }
 
         val usageStatsManager =
             getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -103,17 +146,29 @@ class PrayerLockService : Service() {
 
         if (foregroundApp != null && BLOCKED_APPS.contains(foregroundApp)) {
             Log.d("PrayerLockService", "Blocked app detected: $foregroundApp")
-            triggerOverlay()
+            triggerOverlay(activePrayer)
         }
     }
 
-    private fun isPrayerTime(): Boolean {
+    private fun isSessionCompleted(prefs: android.content.SharedPreferences, name: String, date: String): Boolean {
+        val sessionKey = "$name|$date"
+        return try {
+            val completedKeys = JSONArray(prefs.getString("completed_prayer_keys", "[]") ?: "[]")
+            for (i in 0 until completedKeys.length()) {
+                if (completedKeys.getString(i) == sessionKey) return true
+            }
+            false
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun getActivePrayer(): JSONObject? {
         val prefs = getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
         val prayersJson = prefs.getString("prayers", "[]") ?: "[]"
 
         return try {
             val prayers = JSONArray(prayersJson)
-
             val now = Calendar.getInstance()
             val currentTimeInMins =
                 now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
@@ -121,11 +176,18 @@ class PrayerLockService : Service() {
             for (i in 0 until prayers.length()) {
                 val prayer = prayers.getJSONObject(i)
 
-                val isDone = prayer.optBoolean("isPrayed", false) || 
-                             prayer.optBoolean("completed", false) || 
-                             prayer.optBoolean("skipped", false)
+                val isDone = prayer.optBoolean("isPrayed", false) ||
+                             prayer.optBoolean("completed", false)
 
                 if (isDone) continue
+
+                if (prayer.optBoolean("skipped", false)) continue
+
+                val prayerDate = prayer.optString(
+                    "date",
+                    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                )
+                if (isSessionCompleted(prefs, prayer.optString("name", ""), prayerDate)) continue
 
                 val startParts = prayer.getString("time").split(":")
                 val endParts = prayer.getString("end").split(":")
@@ -135,29 +197,36 @@ class PrayerLockService : Service() {
                 val startMins = startParts[0].toInt() * 60 + startParts[1].toInt()
                 val endMins = endParts[0].toInt() * 60 + endParts[1].toInt()
 
-                if (endMins < startMins) {
-                    if (currentTimeInMins >= startMins || currentTimeInMins < endMins) {
-                        return true
-                    }
+                val inWindow = if (endMins < startMins) {
+                    currentTimeInMins >= startMins || currentTimeInMins < endMins
                 } else {
-                    if (currentTimeInMins in startMins until endMins) {
-                        return true
-                    }
+                    currentTimeInMins in startMins until endMins
                 }
+
+                if (inWindow) return prayer
             }
-            false
+            null
         } catch (e: Exception) {
             Log.e("PrayerLockService", "Error parsing prayers", e)
-            false
+            null
         }
     }
 
-    private fun triggerOverlay() {
+    private fun triggerOverlay(activePrayer: JSONObject) {
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
 
         launchIntent?.let {
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             it.putExtra("isPrayerOverlay", true)
+            it.putExtra("prayerName", activePrayer.optString("name", ""))
+            it.putExtra("prayerEnd", activePrayer.optString("end", ""))
+            it.putExtra(
+                "prayerDate",
+                activePrayer.optString(
+                    "date",
+                    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                )
+            )
             startActivity(it)
         }
     }

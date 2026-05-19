@@ -38,8 +38,7 @@ type Props = {
   prayerTime: string;
   endTime: string;
   onPray: (name: string) => void;
-  onSnooze: () => void;
-  onSkip: () => void;
+  onRemindAt: (targetTime: string, prayerEndTime: string) => void;
   isSkipReminder?: boolean;
 };
 
@@ -49,10 +48,10 @@ export default function PrayerOverlayScreen({
   prayerTime,
   endTime,
   onPray,
-  onSnooze,
-  onSkip,
+  onRemindAt,
   isSkipReminder,
 }: Props) {
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [hadith] = useState(
     HADITHS[Math.floor(Math.random() * HADITHS.length)],
   );
@@ -414,49 +413,106 @@ export default function PrayerOverlayScreen({
               </Animated.View>
             </Animated.View>
 
-            {/* Snooze */}
-            <TouchableOpacity
-              onPress={onSnooze}
-              style={{
-                backgroundColor: "rgba(255,255,255,0.05)",
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.1)",
-                borderRadius: 16,
-                paddingVertical: 14,
-                paddingHorizontal: 32,
-                marginBottom: 20,
-                width: "100%",
-                alignItems: "center",
-              }}
-            >
-              <Text
+            {/* Remind Me — Time Picker */}
+            {!showTimePicker ? (
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
                 style={{
-                  color: "rgba(255,255,255,0.6)",
-                  fontWeight: "700",
-                  fontSize: 13,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.1)",
+                  borderRadius: 16,
+                  paddingVertical: 14,
+                  paddingHorizontal: 32,
+                  marginBottom: 16,
+                  width: "100%",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "center",
                 }}
               >
-                ⏰ Remind me in 2 mins
-              </Text>
-            </TouchableOpacity>
+                <Ionicons name="alarm-outline" size={16} color="rgba(219,177,66,0.8)" style={{ marginRight: 8 }} />
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.6)",
+                    fontWeight: "700",
+                    fontSize: 13,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Remind me later
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: "#141d17",
+                  borderWidth: 1,
+                  borderColor: "rgba(219,177,66,0.2)",
+                  borderRadius: 20,
+                  padding: 16,
+                  marginBottom: 16,
+                  width: "100%",
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                  <Ionicons name="alarm-outline" size={16} color="#dbb142" />
+                  <Text style={{ color: "#dbb142", fontWeight: "700", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginLeft: 8 }}>
+                    Remind me at...
+                  </Text>
+                  {endTime ? (
+                    <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginLeft: "auto" }}>
+                      ends {endTime}
+                    </Text>
+                  ) : null}
+                </View>
 
-            {/* Skip — hidden below fold visually via low opacity */}
-            <TouchableOpacity
-              onPress={onSkip}
-              hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
-            >
-              <Text
-                style={{
-                  color: "rgba(255,255,255,0.2)",
-                  fontSize: 12,
-                  textDecorationLine: "underline",
-                }}
-              >
-                Skip for now
-              </Text>
-            </TouchableOpacity>
+                {/* Quick presets */}
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {[5, 10, 15, 20, 30].map((mins) => {
+                    const targetTime = dayjs().add(mins, "minute");
+                    // Cap display if beyond prayer end
+                    const endDayjs = endTime ? dayjs(`${dayjs().format("YYYY-MM-DD")} ${endTime}`) : null;
+                    const isBeyondEnd = endDayjs && targetTime.isAfter(endDayjs);
+                    if (isBeyondEnd) return null;
+
+                    return (
+                      <TouchableOpacity
+                        key={mins}
+                        onPress={() => {
+                          onRemindAt(targetTime.format("HH:mm"), endTime);
+                          setShowTimePicker(false);
+                        }}
+                        style={{
+                          backgroundColor: "rgba(219,177,66,0.12)",
+                          borderWidth: 1,
+                          borderColor: "rgba(219,177,66,0.3)",
+                          borderRadius: 12,
+                          paddingVertical: 10,
+                          paddingHorizontal: 16,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ color: "#dbb142", fontWeight: "700", fontSize: 13 }}>
+                          {mins}m
+                        </Text>
+                        <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>
+                          {targetTime.format("h:mm A")}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker(false)}
+                  style={{ marginTop: 12, alignItems: "center" }}
+                >
+                  <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </Animated.View>

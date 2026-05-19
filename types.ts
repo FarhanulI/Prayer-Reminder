@@ -119,6 +119,18 @@ export interface PrayerStatus {
     skippedAt?: any;
 }
 
+export interface PrayerLogDocument {
+    prayers: {
+        fajr: PrayerStatus;
+        dhuhr: PrayerStatus;
+        asr: PrayerStatus;
+        maghrib: PrayerStatus;
+        isha: PrayerStatus;
+    };
+    prayerCount: number;
+}
+
+// Keeping PrayerCollection for compatibility or as a sub-type
 export interface PrayerCollection {
     fajr: PrayerStatus;
     dhuhr: PrayerStatus;
@@ -129,7 +141,7 @@ export interface PrayerCollection {
 
 // If you are wrapping this in a parent object as shown in your JSON snippet:
 export interface PrayerTimesData {
-    prayerTimes: PrayerCollection;
+    prayerTimes: PrayerLogDocument;
 }
 
 export interface OnboardingData {

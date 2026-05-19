@@ -1,22 +1,27 @@
+/**
+ * Milestone tiers are unlocked by **consecutive straight calendar days** at the
+ * required prayer count (Perfect: 5/5, Strong: ≥4, Growth: ≥3). E.g. “Consistent”
+ * (7 days) means seven back-to-back days each meeting that track’s minimum — not 7 scattered days.
+ */
 export const STREAK_MILESTONES = {
   perfect: [
-    { days: 3, title: "Living with Salah", icon: "star", color: "#dbb142" },
-    { days: 7, title: "Disciplined Believer", icon: "trending-up", color: "#dbb142" },
-    { days: 14, title: "Walking the Straight Path", icon: "shield", color: "#dbb142" },
-    { days: 30, title: "Guarding the Obligation", icon: "flash", color: "#dbb142" },
-    { days: 60, title: "Steadfast Devotion", icon: "flame", color: "#dbb142" },
-    { days: 100, title: "Unwavering Faith", icon: "trophy", color: "#dbb142" },
+    { days: 3, title: "First Steps to Him", icon: "footsteps", color: "#dbb142", description: "Setting your intention. The first steps in establishing a lifelong bond with Allah." },
+    { days: 7, title: "Finding Steadfastness", icon: "anchor", color: "#dbb142", description: "Istiqamah (consistency). Your heart begins to find peace in the rhythm of the daily prayers." },
+    { days: 14, title: "A Heart Devoted", icon: "heart", color: "#dbb142", description: "Moving beyond habit. Prayer becomes a conversation with the Divine that you long for." },
+    { days: 30, title: "Disciplined", icon: "shield-checkmark", color: "#dbb142", description: "A month of devotion. Your character is being refined through the discipline of worship." },
+    { days: 60, title: "Unstoppable", icon: "flash", color: "#dbb142", description: "Spiritual resilience. The light of Salah protects your heart from the distractions of the Dunya." },
+    { days: 100, title: "Elite", icon: "trophy", color: "#dbb142", description: "Mu'min (The Believer). You have built a fortress of faith, finding true success through total submission." },
   ],
   strong: [
-    { days: 3, title: "Strengthening Your Salah", icon: "barbell", color: "#4ade80" },
-    { days: 7, title: "Becoming Consistent", icon: "eye", color: "#4ade80" },
-    { days: 14, title: "Holding Firm", icon: "heart", color: "#4ade80" },
-    { days: 30, title: "Solidifying the Habit", icon: "checkmark-done", color: "#4ade80" },
+    { days: 3, title: "Getting Strong", icon: "fitness", color: "#4ade80" },
+    { days: 7, title: "Focused", icon: "eye", color: "#4ade80" },
+    { days: 14, title: "Dedicated", icon: "heart", color: "#4ade80" },
+    { days: 30, title: "Solid Habit", icon: "checkmark-done", color: "#4ade80" },
   ],
   growth: [
-    { days: 3, title: "Beginning the Journey", icon: "leaf", color: "#60a5fa" },
-    { days: 7, title: "Turning Back Consistently", icon: "rocket", color: "#60a5fa" },
-    { days: 14, title: "Building Connection", icon: "speedometer", color: "#60a5fa" },
+    { days: 3, title: "Starting Out", icon: "leaf", color: "#60a5fa" },
+    { days: 7, title: "Improving", icon: "rocket", color: "#60a5fa" },
+    { days: 14, title: "Building Momentum", icon: "speedometer", color: "#60a5fa" },
   ],
 };
 
@@ -34,8 +39,39 @@ export const CATEGORY_ENCOURAGEMENTS = {
 
 export type StreakCategory = 'perfect' | 'strong' | 'growth';
 
+/** Highest tier reached for this category given a **straight-day** streak length `days`. */
 export function getMilestoneForStreak(category: StreakCategory, days: number) {
   const milestones = STREAK_MILESTONES[category];
   // Find the highest milestone achieved
   return [...milestones].reverse().find(m => days >= m.days);
+}
+
+export type StreakMilestoneDef = (typeof STREAK_MILESTONES)[StreakCategory][number];
+
+/** Next tier after `currentDays`, or null if already at the highest tier. */
+export function getNextMilestone(category: StreakCategory, currentDays: number): StreakMilestoneDef | null {
+  const milestones = STREAK_MILESTONES[category];
+  return milestones.find((m) => m.days > currentDays) ?? null;
+}
+
+export type MilestoneAchievement = StreakMilestoneDef & {
+  category: StreakCategory;
+  unlocked: boolean;
+};
+
+/** Unlock flags from **current** straight-day streak lengths (see {@link STREAK_MILESTONES}). */
+export function buildMilestoneAchievements(streaks: {
+  perfect: { current: number };
+  strong: { current: number };
+  growth: { current: number };
+}): MilestoneAchievement[] {
+  const categories: StreakCategory[] = ["perfect", "strong", "growth"];
+  const out: MilestoneAchievement[] = [];
+  for (const cat of categories) {
+    const days = streaks[cat].current;
+    for (const m of STREAK_MILESTONES[cat]) {
+      out.push({ category: cat, ...m, unlocked: days >= m.days });
+    }
+  }
+  return out;
 }

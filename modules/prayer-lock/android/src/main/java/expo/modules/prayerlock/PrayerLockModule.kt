@@ -116,7 +116,58 @@ class PrayerLockModule : Module() {
         val prefs =
           context.getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
 
-        prefs.edit().putString("prayers", prayersJson).apply()
+        prefs.edit().putString("prayers", prayersJson).commit()
+      }
+
+      return@Function true
+    }
+
+    Function("markPrayerSessionComplete") { prayerName: String, prayerDate: String ->
+      appContext.reactContext?.let { context ->
+        val prefs =
+          context.getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
+
+        val sessionKey = "$prayerName|$prayerDate"
+        val completedKeys = try {
+          org.json.JSONArray(prefs.getString("completed_prayer_keys", "[]") ?: "[]")
+        } catch (_: Exception) {
+          org.json.JSONArray()
+        }
+
+        var alreadyRecorded = false
+        for (i in 0 until completedKeys.length()) {
+          if (completedKeys.getString(i) == sessionKey) {
+            alreadyRecorded = true
+            break
+          }
+        }
+        if (!alreadyRecorded) {
+          completedKeys.put(sessionKey)
+        }
+
+        val prayersJson = prefs.getString("prayers", "[]") ?: "[]"
+        val prayers = try {
+          org.json.JSONArray(prayersJson)
+        } catch (_: Exception) {
+          org.json.JSONArray()
+        }
+
+        for (i in 0 until prayers.length()) {
+          val prayer = prayers.getJSONObject(i)
+          if (
+            prayer.optString("name") == prayerName &&
+            prayer.optString("date") == prayerDate
+          ) {
+            prayer.put("isPrayed", true)
+            prayer.put("completed", true)
+            prayer.put("skipped", false)
+          }
+        }
+
+        prefs.edit()
+          .putString("prayers", prayers.toString())
+          .putString("completed_prayer_keys", completedKeys.toString())
+          .commit()
       }
 
       return@Function true
@@ -147,15 +198,53 @@ class PrayerLockModule : Module() {
 
     Function("wasLaunchedFromOverlay") {
       val activity = appContext.currentActivity ?: return@Function false
-
       val intent = activity.intent
+      return@Function intent?.getBooleanExtra("isPrayerOverlay", false) == true
+    }
 
-      if (intent?.getBooleanExtra("isPrayerOverlay", false) == true) {
-        intent.removeExtra("isPrayerOverlay")
-        return@Function true
+    Function("syncOverlaySnooze") { untilIso: String? ->
+      appContext.reactContext?.let { context ->
+        val prefs =
+          context.getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
+
+        prefs.edit().apply {
+          if (untilIso.isNullOrBlank()) {
+            remove("overlay_snoozed_until")
+          } else {
+            putString("overlay_snoozed_until", untilIso)
+          }
+        }.apply()
       }
 
-      return@Function false
+      return@Function true
+    }
+
+    Function("getOverlayLaunchPayload") {
+      val activity = appContext.currentActivity ?: return@Function null
+      val intent = activity.intent ?: return@Function null
+
+      if (intent.getBooleanExtra("isPrayerOverlay", false) != true) {
+        return@Function null
+      }
+
+      val prayerName = intent.getStringExtra("prayerName")
+      val prayerEnd = intent.getStringExtra("prayerEnd")
+      val prayerDate = intent.getStringExtra("prayerDate")
+
+      intent.removeExtra("isPrayerOverlay")
+      intent.removeExtra("prayerName")
+      intent.removeExtra("prayerEnd")
+      intent.removeExtra("prayerDate")
+
+      if (prayerName.isNullOrBlank() || prayerEnd.isNullOrBlank()) {
+        return@Function null
+      }
+
+      return@Function mapOf(
+        "prayerName" to prayerName,
+        "prayerEnd" to prayerEnd,
+        "prayerDate" to (prayerDate ?: "")
+      )
     }
   }
 }

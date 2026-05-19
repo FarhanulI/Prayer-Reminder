@@ -1,9 +1,14 @@
+import {
+  STREAK_MILESTONES,
+  StreakCategory,
+  getMilestoneForStreak,
+  getNextMilestone,
+} from "@/constants/milestones";
 import { useAuthContext } from "@/context/AuthProvider";
-import { STREAK_MILESTONES, StreakCategory, getMilestoneForStreak } from "@/constants/milestones";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useMilestones } from "@/hooks/useMilestones";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import dayjs from "dayjs";
 import React, { useMemo } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -52,20 +57,22 @@ const CircularProgress = ({ value, total, size = 180 }: { value: number; total: 
 const StreakTrackCard = ({
   category,
   count,
-  title,
+  currentTitle,
+  nextTitle,
+  nextMilestoneDays,
+  progress,
   icon,
   color,
-  nextMilestoneDays
 }: {
   category: string;
   count: number;
-  title: string;
+  currentTitle: string;
+  nextTitle: string;
+  nextMilestoneDays: number;
+  progress: number;
   icon: string;
   color: string;
-  nextMilestoneDays: number;
 }) => {
-  const progress = Math.min((count / nextMilestoneDays) * 100, 100);
-
   return (
     <View className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mb-4">
       <View className="flex-row items-center mb-4">
@@ -76,10 +83,10 @@ const StreakTrackCard = ({
         <View className="flex-1">
           <View className="flex-row justify-between items-center mb-0.5">
             <Text className="text-white text-[16px] font-semibold">{category}</Text>
-            <Text className="text-[#dbb142] font-bold text-[16px]">{count} Days</Text>
+            <Text className="font-bold text-[16px]" style={{ color }}>{count} Days</Text>
           </View>
           <View className="flex-row justify-between items-center">
-            <Text className="text-white/40 text-[10px] uppercase font-bold tracking-widest">{title}</Text>
+            <Text className="text-white/40 text-[10px] uppercase font-bold tracking-widest">{currentTitle}</Text>
             <Text className="text-white/30 text-[10px] font-bold uppercase">Current</Text>
           </View>
         </View>
@@ -87,7 +94,7 @@ const StreakTrackCard = ({
 
       {/* Progress Info */}
       <View className="flex-row justify-between items-center mb-2">
-        <Text className="text-white/60 text-[10px] font-bold uppercase">Next: {title}</Text>
+        <Text className="text-white/60 text-[10px] font-bold uppercase">Next: {nextTitle}</Text>
         <Text className="text-white/40 text-[10px] font-bold">{nextMilestoneDays} Days</Text>
       </View>
 
@@ -108,23 +115,67 @@ const StreakTrackCard = ({
 
 // --- MAIN SCREEN ---
 
+function streakTrackProps(category: StreakCategory, count: number, label: string) {
+  const achieved = getMilestoneForStreak(category, count);
+  const next = getNextMilestone(category, count);
+  const list = STREAK_MILESTONES[category];
+  const first = list[0];
+  const last = list[list.length - 1];
+  const nextTier = next ?? first;
+  const displayIcon = achieved?.icon ?? nextTier.icon;
+  const color = achieved?.color ?? nextTier.color;
+
+  const nextTitle = next ? next.title : "Top tier";
+  const nextMilestoneDays = next ? next.days : last.days;
+  const progress = !next ? 100 : Math.min((count / next.days) * 100, 100);
+
+  return {
+    category: label,
+    count,
+    currentTitle: achieved?.title ?? "—",
+    nextTitle,
+    nextMilestoneDays,
+    progress,
+    icon: displayIcon,
+    color,
+  };
+}
+
 export default function MilestonesScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthContext();
-  const { data, isLoading: loading } = useDashboardData(user?.uid);
+  const uid = user?.uid;
+  const { data, isPending: dashPending } = useDashboardData(uid);
+  const { data: milestonesData, isPending: milestonesPending } = useMilestones(uid);
 
-  const { profile, userData, streaks } = useMemo(() => {
+  const { profile, userData } = useMemo(() => {
     return {
       profile: data?.profile,
       userData: data?.userData,
-      streaks: data?.streaks,
     };
   }, [data]);
 
+  const streaks = milestonesData?.streaks;
+
   const completedCount = useMemo(() => {
-    if (!userData) return 0;
-    return Object.values(userData).filter((p: any) => p.isPrayed).length;
+    if (!userData || !userData.prayers) return 0;
+    return Object.values(userData.prayers).filter((p: any) => typeof p === 'object' && p?.isPrayed).length;
   }, [userData]);
+
+  const perfectTrack = useMemo(
+    () => streakTrackProps("perfect", streaks?.perfect?.current ?? 0, "Perfect Streak"),
+    [streaks?.perfect?.current]
+  );
+  const strongTrack = useMemo(
+    () => streakTrackProps("strong", streaks?.strong?.current ?? 0, "Strong Streak"),
+    [streaks?.strong?.current]
+  );
+  const growthTrack = useMemo(
+    () => streakTrackProps("growth", streaks?.growth?.current ?? 0, "Growth Streak"),
+    [streaks?.growth?.current]
+  );
+
+  const loading = dashPending || milestonesPending;
 
   if (loading) {
     return (
@@ -162,8 +213,8 @@ export default function MilestonesScreen() {
         <View className="items-center my-8">
           <Text className="text-white/60 text-lg font-medium mb-8" style={{ fontFamily: 'serif' }}>Daily Performance</Text>
 
-          <TouchableOpacity 
-            activeOpacity={0.8} 
+          <TouchableOpacity
+            activeOpacity={0.8}
             onPress={() => navigation.navigate("History")}
           >
             <CircularProgress value={completedCount} total={5} />
@@ -181,50 +232,46 @@ export default function MilestonesScreen() {
 
         {/* Streak Tracks Section */}
         <View className="mb-8">
-          <Text className="text-white text-xl font-bold mb-6" style={{ fontFamily: 'serif' }}>Streak Tracks</Text>
+          <View className="flex-row justify-between items-center mb-6">
+            <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Streak Tracks</Text>
+            <TouchableOpacity
+              className="flex-row items-center border border-[#dbb142]/40 bg-[#dbb142]/10 px-3 py-1.5 rounded-full"
+              onPress={() => navigation.navigate("MilestoneDetails")}
+            >
+              <Ionicons name="information-circle-outline" size={14} color="#dbb142" />
+              <Text className="text-[#dbb142] text-[10px] font-bold ml-1.5 tracking-widest uppercase">How it works</Text>
+            </TouchableOpacity>
+          </View>
 
-          <StreakTrackCard
-            category="Perfect Streak"
-            count={streaks?.perfect?.current || 0}
-            title="Consistent"
-            icon="flame"
-            color="#dbb142"
-            nextMilestoneDays={7}
-          />
+          <StreakTrackCard {...perfectTrack} />
 
-          <StreakTrackCard
-            category="Strong Streak"
-            count={streaks?.strong?.current || 0}
-            title="Dedicated"
-            icon="fitness"
-            color="#4ade80"
-            nextMilestoneDays={14}
-          />
+          <StreakTrackCard {...strongTrack} />
 
-          <StreakTrackCard
-            category="Growth Streak"
-            count={streaks?.growth?.current || 0}
-            title="Momentum"
-            icon="leaf"
-            color="#60a5fa"
-            nextMilestoneDays={30}
-          />
+          <StreakTrackCard {...growthTrack} />
         </View>
 
         {/* Your Path to Nearness Section */}
         <View className="mb-10">
-          <Text className="text-white text-xl font-bold mb-2" style={{ fontFamily: 'serif' }}>Your Path to Nearness</Text>
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Your Path to Nearness</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("MilestoneDetails")}>
+              <Text className="text-[#dbb142] text-xs font-bold uppercase tracking-wider">Details</Text>
+            </TouchableOpacity>
+          </View>
           <Text className="text-white/40 text-xs leading-relaxed mb-8">
             Every prayer is a step closer to the Divine. Keep your heart firm on this path.
           </Text>
 
           <View className="flex-row flex-wrap justify-between">
-            <MilestoneItem title="First Steps to Him" unlocked />
-            <MilestoneItem title="Finding Steadfastness" unlocked />
-            <MilestoneItem title="A Heart Devoted" unlocked />
-            <MilestoneItem title="Disciplined" />
-            <MilestoneItem title="Unstoppable" />
-            <MilestoneItem title="Elite" />
+            {(milestonesData?.milestones ?? []).map((m) => (
+              <MilestoneItem
+                key={`${m.category}-${m.days}`}
+                title={m.title}
+                unlocked={m.unlocked}
+                color={m.color}
+                icon={m.icon}
+              />
+            ))}
           </View>
         </View>
       </ScrollView>
@@ -232,16 +279,36 @@ export default function MilestonesScreen() {
   );
 }
 
-const MilestoneItem = ({ title, unlocked }: { title: string; unlocked?: boolean }) => (
+const MilestoneItem = ({
+  title,
+  unlocked,
+  color,
+  icon,
+}: {
+  title: string;
+  unlocked?: boolean;
+  color: string;
+  icon: string;
+}) => (
   <View className="items-center w-[30%] mb-8">
-    <View className={`w-16 h-16 rounded-full items-center justify-center border ${unlocked ? 'border-[#dbb142] bg-[#dbb142]/10' : 'border-white/10 bg-white/5'}`}>
+    <View
+      className={`w-16 h-16 rounded-full items-center justify-center border ${unlocked ? "bg-white/5" : "border-white/10 bg-white/5"}`}
+      style={
+        unlocked
+          ? { borderColor: color, backgroundColor: `${color}18` }
+          : undefined
+      }
+    >
       <Ionicons
-        name={unlocked ? (title.includes('Finding') ? 'trophy-outline' : title.includes('Heart') ? 'shield-checkmark-outline' : 'star-outline') : 'lock-closed-outline'}
+        name={(unlocked ? icon : "lock-closed-outline") as any}
         size={24}
-        color={unlocked ? "#dbb142" : "rgba(255,255,255,0.1)"}
+        color={unlocked ? color : "rgba(255,255,255,0.1)"}
       />
     </View>
-    <Text className={`text-center text-[10px] mt-2 font-bold px-1 ${unlocked ? 'text-[#dbb142]' : 'text-white/20'}`}>
+    <Text
+      className={`text-center text-[10px] mt-2 font-bold px-1 ${unlocked ? "" : "text-white/20"}`}
+      style={unlocked ? { color } : undefined}
+    >
       {title}
     </Text>
   </View>

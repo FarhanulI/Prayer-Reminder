@@ -10,6 +10,7 @@ import OnBoardingScreen from "../screens/OnBoarding/OnBoardingScreen";
 import PrayerLockSetupScreen from "../screens/PrayerLockSetupScreen";
 import SignupScreen from "../screens/SignupScreen";
 import HistoryScreen from "../screens/History/HistoryScreen";
+import MilestoneDetailsScreen from "../screens/Milestones/MilestoneDetailsScreen";
 import MainTabNavigator from "./MainTabNavigator";
 
 const Stack = createNativeStackNavigator();
@@ -78,6 +79,7 @@ export default function AppNavigator() {
               </Stack.Screen>
             ) : null}
             <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="MilestoneDetails" component={MilestoneDetailsScreen} />
             <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: true, headerTitle: "History", headerStyle: { backgroundColor: '#0d1410' }, headerTintColor: '#dbb142' }} />
             <Stack.Screen name="OnBoarding" component={OnBoardingScreen} />
           </>

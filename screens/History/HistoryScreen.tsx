@@ -40,12 +40,12 @@ export default function HistoryScreen() {
   let totalCompleted = 0;
 
   weekData.forEach((day) => {
-    if (day.data) {
-      if (day.data.fajr?.isPrayed) totalCompleted++;
-      if (day.data.dhuhr?.isPrayed) totalCompleted++;
-      if (day.data.asr?.isPrayed) totalCompleted++;
-      if (day.data.maghrib?.isPrayed) totalCompleted++;
-      if (day.data.isha?.isPrayed) totalCompleted++;
+    if (day.data && day.data.prayers) {
+      if (day.data.prayers.fajr?.isPrayed) totalCompleted++;
+      if (day.data.prayers.dhuhr?.isPrayed) totalCompleted++;
+      if (day.data.prayers.asr?.isPrayed) totalCompleted++;
+      if (day.data.prayers.maghrib?.isPrayed) totalCompleted++;
+      if (day.data.prayers.isha?.isPrayed) totalCompleted++;
     }
   });
 
@@ -104,12 +104,12 @@ export default function HistoryScreen() {
                 const isToday = day.date.isSame(dayjs(), 'day');
 
                 let dailyCompleted = 0;
-                if (day.data) {
-                  if (day.data.fajr?.isPrayed) dailyCompleted++;
-                  if (day.data.dhuhr?.isPrayed) dailyCompleted++;
-                  if (day.data.asr?.isPrayed) dailyCompleted++;
-                  if (day.data.maghrib?.isPrayed) dailyCompleted++;
-                  if (day.data.isha?.isPrayed) dailyCompleted++;
+                if (day.data && day.data.prayers) {
+                  if (day.data.prayers.fajr?.isPrayed) dailyCompleted++;
+                  if (day.data.prayers.dhuhr?.isPrayed) dailyCompleted++;
+                  if (day.data.prayers.asr?.isPrayed) dailyCompleted++;
+                  if (day.data.prayers.maghrib?.isPrayed) dailyCompleted++;
+                  if (day.data.prayers.isha?.isPrayed) dailyCompleted++;
                 }
 
                 return (
@@ -195,7 +195,7 @@ export default function HistoryScreen() {
                   {/* 7 dots for the 7 days of the week */}
                   <View className="flex-row items-center">
                     {weekData.map((day, dIdx) => {
-                      const isDone = day.data?.[prayerKey]?.isPrayed;
+                      const isDone = day.data?.prayers?.[prayerKey]?.isPrayed;
                       return (
                         <View
                           key={dIdx}

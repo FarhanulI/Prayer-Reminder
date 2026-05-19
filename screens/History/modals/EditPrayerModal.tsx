@@ -32,7 +32,7 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
     useEffect(() => {
         const initial: Record<string, boolean> = {};
         PRAYERS.forEach(p => {
-            initial[p.toLowerCase()] = selectedDay?.data?.[p.toLowerCase()]?.isPrayed || false;
+            initial[p.toLowerCase()] = selectedDay?.data?.prayers?.[p.toLowerCase()]?.isPrayed || false;
         });
         setLocalPrayers(initial);
     }, [selectedDay, editModalVisible]);
@@ -60,13 +60,17 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                 const oldStatus = selectedDay.data?.[prayerKey]?.isPrayed || false;
 
                 if (newStatus !== oldStatus) {
-                    updateData[`${prayerKey}.isPrayed`] = newStatus;
-                    updateData[`${prayerKey}.status`] = newStatus ? "completed" : null;
-                    updateData[`${prayerKey}.completedAt`] = newStatus ? serverTimestamp() : null;
-                    updateData[`${prayerKey}.skipped`] = false;
-                    updateData[`${prayerKey}.skippedAt`] = null;
+                    updateData[`prayers.${prayerKey}.isPrayed`] = newStatus;
+                    updateData[`prayers.${prayerKey}.status`] = newStatus ? "completed" : null;
+                    updateData[`prayers.${prayerKey}.completedAt`] = newStatus ? serverTimestamp() : null;
+                    updateData[`prayers.${prayerKey}.skipped`] = false;
+                    updateData[`prayers.${prayerKey}.skippedAt`] = null;
                 }
             });
+            
+            // Update the total completed count for the day
+            const newCompletedCount = Object.values(localPrayers).filter(status => status).length;
+            updateData.prayerCount = newCompletedCount;
 
             if (Object.keys(updateData).length > 0) {
                 try {
@@ -74,10 +78,10 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                 } catch (err: any) {
                     if (err.code === 'not-found') {
                         // Create document if it doesn't exist
-                        const fullDoc: Record<string, any> = {};
+                        const prayersObj: Record<string, any> = {};
                         PRAYERS.forEach(prayer => {
                             const prayerKey = prayer.toLowerCase();
-                            fullDoc[prayerKey] = {
+                            prayersObj[prayerKey] = {
                                 isPrayed: localPrayers[prayerKey],
                                 status: localPrayers[prayerKey] ? "completed" : null,
                                 completedAt: localPrayers[prayerKey] ? serverTimestamp() : null,
@@ -85,7 +89,12 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                                 skippedAt: null,
                             };
                         });
-                        await setDoc(logRef, fullDoc, { merge: true });
+                        const newCount = Object.values(localPrayers).filter(status => status).length;
+                        
+                        await setDoc(logRef, { 
+                            prayers: prayersObj,
+                            prayerCount: newCount 
+                        }, { merge: true });
                     } else {
                         throw err;
                     }
@@ -138,7 +147,7 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                             const prayerKey = prayer.toLowerCase();
                             const isPrayed = localPrayers[prayerKey] || false;
                             const meta = PRAYER_METADATA[prayer];
-                            const prayerTime = selectedDay.data?.[prayerKey]?.time || "--:--";
+                            const prayerTime = selectedDay.data?.prayers?.[prayerKey]?.time || "--:--";
 
                             return (
                                 <TouchableOpacity
