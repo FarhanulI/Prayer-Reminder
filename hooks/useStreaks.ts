@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { doc, getDoc } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
-import { PrayerCollection } from '@/types';
+import { PrayerLogDocument } from '@/types';
 
 export function useStreaks(uid: string | null | undefined, currentDate: dayjs.Dayjs) {
   return useQuery({
@@ -26,7 +26,7 @@ export function useStreaks(uid: string | null | undefined, currentDate: dayjs.Da
       const snaps = await Promise.all(promises);
       const data = snaps.map((snap, i) => ({
         date: startOfWeek.add(i, 'day'),
-        data: snap.exists() ? (snap.data() as PrayerCollection) : null,
+        data: snap.exists() ? (snap.data() as PrayerLogDocument) : null,
       }));
 
       return data;

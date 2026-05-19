@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { auth } from "../lib/firebase";
 
 type AuthContextType = {
@@ -61,6 +62,14 @@ export const AuthProvider = ({ children }: any) => {
       } else {
         setUser(null);
         await AsyncStorage.removeItem(SESSION_KEY);
+        if (Platform.OS === "android") {
+          try {
+            const { stopService } = await import("../modules/prayer-lock");
+            stopService();
+          } catch {
+            /* native module unavailable */
+          }
+        }
       }
       setLoading(false);
     });

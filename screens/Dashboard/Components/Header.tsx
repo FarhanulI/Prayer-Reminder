@@ -1,60 +1,123 @@
-import { useAuthContext } from '@/context/AuthProvider';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from "expo-location";
+import dayjs from 'dayjs';
 import { DocumentData } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Text, View } from 'react-native';
 
 interface HeaderProps {
     profile: DocumentData | null | undefined;
 }
 
-
 export default function Header({ profile }: HeaderProps) {
-    const { logout } = useAuthContext();
+    const [currentDateIndex, setCurrentDateIndex] = useState(0); // 0 = Gregorian, 1 = Hijri
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const translateYAnim = useRef(new Animated.Value(0)).current;
 
-    const [locationName, setLocationName] = useState<string>("Locating...");
+    // Format English Date (e.g., "Mon, 18 May")
+    const getEnglishDate = () => {
+        if (profile?.date?.gregorian) {
+            const greg = profile.date.gregorian;
+            const weekdayShort = greg.weekday?.en ? greg.weekday.en.substring(0, 3) : '';
+            const monthShort = greg.month?.en ? greg.month.en.substring(0, 3) : '';
+            return `${weekdayShort ? weekdayShort + ', ' : ''}${greg.day} ${monthShort}`;
+        }
+        return dayjs().format("ddd, D MMM");
+    };
 
+    // Format Hijri Date in English letters and numbers (e.g., "18 Dhu al-Qi'dah 1447")
+    const getHijriDate = () => {
+        if (profile?.date?.hijri) {
+            const hijri = profile.date.hijri;
+            const day = hijri.day;
+            const year = hijri.year;
+            const monthEn = hijri.month?.en || '';
+            return `${day} ${monthEn} ${year}`;
+        }
+
+        try {
+            const formatter = new Intl.DateTimeFormat('en-US-u-ca-islamic', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            const formatted = formatter.format(new Date());
+            const dayMatch = formatted.match(/\d+/);
+            const yearMatch = formatted.match(/\d{4}/);
+            const day = dayMatch ? dayMatch[0] : '18';
+            const year = yearMatch ? yearMatch[0] : '1447';
+            const month = formatted.replace(day, '').replace(year, '').replace('AH', '').replace(/[,]/g, '').trim();
+            return `${day} ${month} ${year}`;
+        } catch (e) {
+            return "18 Dhu al-Qi'dah 1447";
+        }
+    };
+
+    const englishDate = getEnglishDate();
+    const hijriDate = getHijriDate();
 
     useEffect(() => {
-        const fetchLocationName = async () => {
-            if (profile?.location) {
+        const interval = setInterval(() => {
+            // Slide up & fade out
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 400,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(translateYAnim, {
+                    toValue: -12,
+                    duration: 400,
+                    useNativeDriver: true,
+                }),
+            ]).start(() => {
+                // Change date index
+                setCurrentDateIndex((prev) => (prev === 0 ? 1 : 0));
+                // Reset translateY to bottom for the next item to slide up
+                translateYAnim.setValue(12);
 
-                try {
-                    const { latitude, longitude } = profile.location;
-                    const [result] = await Location.reverseGeocodeAsync({ latitude, longitude });
+                // Slide in & fade in
+                Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                        toValue: 1,
+                        duration: 400,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(translateYAnim, {
+                        toValue: 0,
+                        duration: 400,
+                        useNativeDriver: true,
+                    }),
+                ]).start();
+            });
+        }, 4000); // Transition every 4 seconds
 
-                    if (result) {
-                        const name = [result?.city || result.subregion || result.region, result.country].filter(Boolean).join(", ");
-                        setLocationName(name || "Unknown Location");
-                    }
-                } catch (error) {
-                    console.error("Error reverse geocoding:", error);
-                    setLocationName("Unknown Location");
-                }
-            }
-        };
-
-        fetchLocationName();
-    }, [profile?.location]);
+        return () => clearInterval(interval);
+    }, [fadeAnim, translateYAnim]);
 
     return (
         <View className="flex-row justify-between items-center mb-8">
             <View>
-                <View className="flex-row items-center">
-                    <Ionicons name="location" size={10} color="rgba(255,255,255,0.4)" style={{ marginRight: 4 }} />
-                    <Text className="text-white/40 text-[11px] font-bold uppercase tracking-widest">{locationName}</Text>
-                </View>
+                <Text className="text-white/40 text-[11px] font-bold uppercase tracking-widest">Assalamu Alaikum</Text>
                 <Text className="text-white text-xl font-bold">{profile?.name || "User"}</Text>
             </View>
-            <View className="flex-row items-center">
-                {/* <TouchableOpacity className="bg-white/5 p-2 rounded-full mr-3">
-                    <Ionicons name="notifications-outline" size={20} color="white" />
-                </TouchableOpacity> */}
-                <TouchableOpacity onPress={logout} className="bg-white/5 p-2 rounded-full">
-                    <Ionicons name="log-out-outline" size={20} color="#ff4d4d" />
-                </TouchableOpacity>
+
+            {/* Elegant glassmorphic pill showing English & Arabic Hijri dates with calendar icon */}
+            <View className="bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5 flex-row items-center">
+                <Ionicons name="calendar-outline" size={14} color="#dbb142" className="mr-2" />
+                <View className=" overflow-hidden justify-center min-w-[140px]">
+                    <Animated.View
+                        style={{
+                            opacity: fadeAnim,
+                            transform: [{ translateY: translateYAnim }],
+                        }}
+                    >
+                        <Text className="text-white text-[11px] font-bold tracking-wide text-center">
+                            {currentDateIndex === 0 ? englishDate : hijriDate}
+                        </Text>
+                    </Animated.View>
+                </View>
             </View>
         </View>
     );
 }
+

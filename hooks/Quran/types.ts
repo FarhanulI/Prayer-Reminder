@@ -25,6 +25,7 @@ export interface Verse {
     id: number;
     text: string;
     translation: string;
+    ayah: number
 }
 
 export interface SurahDetail {

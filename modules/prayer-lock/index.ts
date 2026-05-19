@@ -30,6 +30,13 @@ export function syncPrayers(prayersJson: String): void {
   PrayerLock.syncPrayers(prayersJson);
 }
 
+export function markPrayerSessionComplete(
+  prayerName: string,
+  prayerDate: string,
+): void {
+  PrayerLock.markPrayerSessionComplete(prayerName, prayerDate);
+}
+
 export function startService(): void {
   PrayerLock.startService();
 }
@@ -40,5 +47,19 @@ export function stopService(): void {
 
 export function wasLaunchedFromOverlay(): boolean {
   return PrayerLock.wasLaunchedFromOverlay();
+}
+
+export type OverlayLaunchPayload = {
+  prayerName: string;
+  prayerEnd: string;
+  prayerDate: string;
+};
+
+export function syncOverlaySnooze(untilIso: string | null): void {
+  PrayerLock.syncOverlaySnooze(untilIso);
+}
+
+export function getOverlayLaunchPayload(): OverlayLaunchPayload | null {
+  return PrayerLock.getOverlayLaunchPayload();
 }
 

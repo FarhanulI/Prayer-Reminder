@@ -42,6 +42,8 @@ const VerseList = ({ surah, onPageChange }: VerseListPotpsTypes) => {
                         number={v.id}
                         arabic={v.text}
                         english={v.translation}
+                        ayah={v.ayah}
+                        surahId={surah.id}
                     />
                 ))}
             </View>

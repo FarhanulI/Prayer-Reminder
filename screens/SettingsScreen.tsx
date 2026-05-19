@@ -1,6 +1,7 @@
 import { useAuthContext } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import { AppState, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
@@ -9,6 +10,7 @@ const PRAYER_LOCK_ENABLED_KEY = "prayer_lock_enabled";
 
 export default function SettingsScreen() {
   const { logout } = useAuthContext();
+  const navigation = useNavigation<any>();
   const [setupDone, setSetupDone] = useState(false);
   const [lockEnabled, setLockEnabled] = useState(true);
   const [hasUsageAccess, setHasUsageAccess] = useState(false);
@@ -119,10 +121,13 @@ export default function SettingsScreen() {
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
           </TouchableOpacity>
-          <TouchableOpacity className="flex-row items-center justify-between py-3">
+          <TouchableOpacity 
+            className="flex-row items-center justify-between py-3"
+            onPress={() => navigation.navigate('History')}
+          >
             <View className="flex-row items-center">
-              <Ionicons name="notifications-outline" size={20} color="white" />
-              <Text className="text-white font-medium ml-3">Notifications</Text>
+              <Ionicons name="time-outline" size={20} color="white" />
+              <Text className="text-white font-medium ml-3">History</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
           </TouchableOpacity>

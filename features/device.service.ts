@@ -31,8 +31,6 @@ export const fetchPrayerTimes = async (
         const date = new Date();
         const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
 
-        console.log({ formattedDate, latitude, longitude });
-
         // 3. Call AlAdhan API
         // Method 3 = Muslim World League (common standard)
         const response = await fetch(
@@ -42,7 +40,6 @@ export const fetchPrayerTimes = async (
         const json = await response.json();
 
         if (json.code === 200) {
-            console.log("Prayer Timings:", json.data.timings);
             return { prayerTimings: json.data?.timings, date: json.data?.date };
         }
 
@@ -114,11 +111,14 @@ export const saveDailyPrayerTimes = async (uid: string, timings: Timings) => {
         await setDoc(
             prayerLogsRef,
             {
-                fajr: { isPrayed: false, time: timings.Fajr, end: timings.Sunrise, status: null, completedAt: null, skippedAt: null },
-                dhuhr: { isPrayed: false, time: timings.Dhuhr, end: timings.Asr, status: null, completedAt: null, skippedAt: null },
-                asr: { isPrayed: false, time: timings.Asr, end: timings.Sunset, status: null, completedAt: null, skippedAt: null },
-                maghrib: { isPrayed: false, time: timings.Maghrib, end: timings.Isha, status: null, completedAt: null, skippedAt: null },
-                isha: { isPrayed: false, time: timings.Isha, end: timings.Fajr, status: null, completedAt: null, skippedAt: null },
+                prayers: {
+                    fajr: { isPrayed: false, time: timings.Fajr, end: timings.Sunrise, status: null, completedAt: null, skippedAt: null },
+                    dhuhr: { isPrayed: false, time: timings.Dhuhr, end: timings.Asr, status: null, completedAt: null, skippedAt: null },
+                    asr: { isPrayed: false, time: timings.Asr, end: timings.Sunset, status: null, completedAt: null, skippedAt: null },
+                    maghrib: { isPrayed: false, time: timings.Maghrib, end: timings.Isha, status: null, completedAt: null, skippedAt: null },
+                    isha: { isPrayed: false, time: timings.Isha, end: timings.Fajr, status: null, completedAt: null, skippedAt: null },
+                },
+                prayerCount: 0,
             },
             { merge: true }
         );

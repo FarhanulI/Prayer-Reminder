@@ -4,7 +4,7 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useEffect } from 'react';
 
 import { db } from '@/lib/firebase';
-import { PrayerCollection } from '@/types';
+import { PrayerLogDocument } from '@/types';
 
 /**
  * Custom hook to fetch and sync dashboard data (profile and prayer times).
@@ -32,8 +32,8 @@ export function useDashboardData(uid: string | null | undefined) {
 
       return {
         profile: profileSnap.exists() ? profileSnap.data() : null,
-        userData: prayerSnap.exists() ? (prayerSnap.data() as PrayerCollection) : null,
-        yesterdayData: yesterdaySnap.exists() ? (yesterdaySnap.data() as PrayerCollection) : null,
+        userData: prayerSnap.exists() ? (prayerSnap.data() as PrayerLogDocument) : null,
+        yesterdayData: yesterdaySnap.exists() ? (yesterdaySnap.data() as PrayerLogDocument) : null,
         streaks: profileSnap.exists() ? profileSnap.data()?.streaks : null,
       };
     },
@@ -67,7 +67,7 @@ export function useDashboardData(uid: string | null | undefined) {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
           ...oldData,
-          userData: snap.data() as PrayerCollection,
+          userData: snap.data() as PrayerLogDocument,
         }));
       }
     });
@@ -77,7 +77,7 @@ export function useDashboardData(uid: string | null | undefined) {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
           ...oldData,
-          yesterdayData: snap.data() as PrayerCollection,
+          yesterdayData: snap.data() as PrayerLogDocument,
         }));
       }
     });
