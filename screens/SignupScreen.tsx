@@ -11,8 +11,9 @@ import {
   View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-// Icons: Ensure @expo/vector-icons is installed
 import { signupUser } from '@/features/auth/auth.service';
+import { GoogleSignInError } from '@/features/auth/googleSignIn.service';
+import { useGoogleSignIn } from '@/hooks/useGoogleSignIn';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 
 const FONT_FAMILIES = {
@@ -38,6 +39,7 @@ const SignUpScreen = ({ navigation }: any) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const { signInWithGoogle, googleLoading, getGoogleSignInErrorMessage } = useGoogleSignIn();
 
   const validate = () => {
     if (!fullName.trim()) {
@@ -84,6 +86,28 @@ const SignUpScreen = ({ navigation }: any) => {
       Toast.show({ type: 'error', text1: 'Sign Up Failed', text2: message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      const { isNewUser } = await signInWithGoogle();
+      Toast.show({
+        type: 'success',
+        text1: isNewUser ? 'Account Created! 🎉' : 'Welcome back! 🤲',
+      });
+      if (isNewUser) {
+        navigation.replace('OnBoarding');
+      }
+    } catch (err: unknown) {
+      if (err instanceof GoogleSignInError && err.reason === 'cancelled') {
+        return;
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Google Sign Up Failed',
+        text2: getGoogleSignInErrorMessage(err),
+      });
     }
   };
 
@@ -209,9 +233,19 @@ const SignUpScreen = ({ navigation }: any) => {
           </View>
 
           <View className="flex-row justify-between mb-8">
-            <TouchableOpacity className="flex-1 flex-row items-center justify-center py-3.5 rounded-lg border border-white/15 mr-2">
-              <Ionicons name="logo-google" size={18} color="white" className="mr-2" />
-              <Text className="text-white font-medium ml-2">Google</Text>
+            <TouchableOpacity
+              onPress={handleGoogleSignUp}
+              disabled={loading || googleLoading}
+              className="flex-1 flex-row items-center justify-center py-3.5 rounded-lg border border-white/15 mr-2"
+            >
+              {googleLoading ? (
+                <ActivityIndicator color="#dbb142" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="logo-google" size={18} color="white" />
+                  <Text className="text-white font-medium ml-2">Google</Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity className="flex-1 flex-row items-center justify-center py-3.5 rounded-lg border border-white/15 ml-2">
               <Ionicons name="logo-apple" size={20} color="white" className="mr-2" />

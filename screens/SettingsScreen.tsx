@@ -121,7 +121,7 @@ export default function SettingsScreen() {
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             className="flex-row items-center justify-between py-3"
             onPress={() => navigation.navigate('History')}
           >
@@ -205,7 +205,7 @@ export default function SettingsScreen() {
         )}
 
         {/* Security Section */}
-        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-3 ml-1">Privacy</Text>
+        {/* <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-3 ml-1">Privacy</Text>
         <View className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mb-8">
           <TouchableOpacity className="flex-row items-center justify-between py-3">
             <View className="flex-row items-center">
@@ -214,7 +214,7 @@ export default function SettingsScreen() {
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <TouchableOpacity
           onPress={logout}
