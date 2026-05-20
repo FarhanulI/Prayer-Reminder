@@ -9,7 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.farhanul.prayerreminder",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +22,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.farhan82.prayerreminderlocker",
+      "package": "com.farhanul.prayerreminder",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.PACKAGE_USAGE_STATS",
         "android.permission.SYSTEM_ALERT_WINDOW",
@@ -34,6 +37,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "./app.plugin.js",
       "expo-router",
       [
@@ -47,7 +51,8 @@
             "backgroundColor": "#0d1410"
           }
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,

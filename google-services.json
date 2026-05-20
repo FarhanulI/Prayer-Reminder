@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "669674762808",
+    "project_id": "prayerreminder-da728",
+    "storage_bucket": "prayerreminder-da728.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669674762808:android:74bb605137f2024ee26ccd",
+        "android_client_info": {
+          "package_name": "com.farhanul.prayerreminder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669674762808-t8eu85ddtdj6c8iu01u9sa549obs54h2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.farhanul.prayerreminder",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "669674762808-991ebj0a05f2pbrn29qn20drfr8hgo6f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADJzSt_jQPuRV4RgVdJfXURpVd-HRrJYs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669674762808-991ebj0a05f2pbrn29qn20drfr8hgo6f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

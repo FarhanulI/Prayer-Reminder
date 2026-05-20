@@ -6,6 +6,7 @@ import {
 } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
+import { signOutGoogleSession } from './googleSignIn.service';
 import { refreshApplicationData } from '../device.service';
 
 /**
@@ -101,5 +102,6 @@ export const signupUser = async (
  * @returns {Promise<void>} 
  */
 export const logoutUser = async (): Promise<void> => {
+  await signOutGoogleSession();
   await signOut(auth);
 };

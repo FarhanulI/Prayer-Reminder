@@ -13,12 +13,15 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { loginUser } from '../features/auth/auth.service';
+import { GoogleSignInError } from '../features/auth/googleSignIn.service';
+import { useGoogleSignIn } from '../hooks/useGoogleSignIn';
 
 const LoginScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const { signInWithGoogle, googleLoading, getGoogleSignInErrorMessage } = useGoogleSignIn();
 
     const validate = () => {
         if (!email.trim()) {
@@ -50,6 +53,22 @@ const LoginScreen = ({ navigation }: any) => {
             Toast.show({ type: 'error', text1: 'Login Failed', text2: message });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        try {
+            await signInWithGoogle();
+            Toast.show({ type: 'success', text1: 'Welcome back! 🤲' });
+        } catch (err: unknown) {
+            if (err instanceof GoogleSignInError && err.reason === 'cancelled') {
+                return;
+            }
+            Toast.show({
+                type: 'error',
+                text1: 'Google Sign In Failed',
+                text2: getGoogleSignInErrorMessage(err),
+            });
         }
     };
 
@@ -141,6 +160,31 @@ const LoginScreen = ({ navigation }: any) => {
                                 <Text className="text-[#101a15] font-bold tracking-[2px] text-[16px] uppercase">
                                     Sign In
                                 </Text>
+                            )}
+                        </TouchableOpacity>
+
+                        <View className="flex-row items-center my-8">
+                            <View className="flex-1 h-[1px] bg-white/10" />
+                            <Text className="text-[#88988a] text-[11px] font-bold tracking-[2px] mx-4 uppercase">
+                                Or
+                            </Text>
+                            <View className="flex-1 h-[1px] bg-white/10" />
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={handleGoogleSignIn}
+                            disabled={loading || googleLoading}
+                            className="flex-row items-center justify-center py-4 rounded-2xl border border-white/15"
+                        >
+                            {googleLoading ? (
+                                <ActivityIndicator color="#dbb142" size="small" />
+                            ) : (
+                                <>
+                                    <Ionicons name="logo-google" size={18} color="white" />
+                                    <Text className="text-white font-semibold ml-2 text-[15px]">
+                                        Continue with Google
+                                    </Text>
+                                </>
                             )}
                         </TouchableOpacity>
 
