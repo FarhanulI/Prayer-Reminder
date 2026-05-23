@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import Skeleton from "@/components/Skeleton";
+import { Card } from "@/components/ui/card";
 import { useAuthContext } from "@/context/AuthProvider";
 import { useStreaks } from "@/hooks/useStreaks";
 import { PrayerCollection } from "@/types";
@@ -11,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateSelectorRow from "./components/DateSelectorRow";
 import { PRAYERS } from "./constants";
 import EditPrayerModal from "./modals/EditPrayerModal";
+import colors from "@/constants/colors.json";
 
 export default function HistoryScreen() {
   const { user } = useAuthContext();
@@ -56,7 +58,7 @@ export default function HistoryScreen() {
   const weekEndStr = weekData.length > 0 ? weekData[6].date.format('MMM DD, YYYY').toUpperCase() : '';
 
   return (
-    <View className="flex-1 bg-[#0d1410]">
+    <View className="flex-1 bg-emerald-darkest">
       <ScrollView
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 10, paddingBottom: 140 }}
@@ -68,7 +70,7 @@ export default function HistoryScreen() {
           {loading ? (
             <Skeleton width={80} height={20} borderRadius={4} />
           ) : (
-            <Text className="text-[#dbb142] text-[12px] font-bold uppercase tracking-widest">{overallPercentage}% OVERALL</Text>
+            <Text className="text-gold text-[12px] font-bold uppercase tracking-widest">{overallPercentage}% OVERALL</Text>
           )}
         </View>
 
@@ -85,9 +87,9 @@ export default function HistoryScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
             {loading ? (
               [...Array(3)].map((_, index) => (
-                <View
+                <Card
                   key={index}
-                  className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mr-4 items-center justify-center w-[110px]"
+                  className="mr-4 items-center justify-center w-[110px]"
                 >
                   <Skeleton width={30} height={12} borderRadius={4} className="mb-1" />
                   <Skeleton width={40} height={10} borderRadius={4} className="mb-3" />
@@ -97,7 +99,7 @@ export default function HistoryScreen() {
                       <Skeleton key={i} width={6} height={6} borderRadius={3} className="mx-0.5" />
                     ))}
                   </View>
-                </View>
+                </Card>
               ))
             ) : (
               weekData.map((day, index) => {
@@ -113,11 +115,11 @@ export default function HistoryScreen() {
                 }
 
                 return (
-                  <View
+                  <Card
                     key={index}
-                    className={`bg-[#141d17] border border-white/5 rounded-[24px] p-5 mr-4 items-center justify-center w-[110px] ${isToday ? 'border-[#dbb142]/30' : ''}`}
+                    className={`mr-4 items-center justify-center w-[110px] ${isToday ? 'border-gold/30' : ''}`}
                   >
-                    <Text className={`text-[12px] font-bold uppercase tracking-widest mb-1 ${isToday ? 'text-[#dbb142]' : 'text-white/60'}`}>
+                    <Text className={`text-[12px] font-bold uppercase tracking-widest mb-1 ${isToday ? 'text-gold' : 'text-white/60'}`}>
                       {day.date.format('ddd')}
                     </Text>
 
@@ -128,17 +130,17 @@ export default function HistoryScreen() {
                       }}
                       className="absolute top-3 right-3 p-1 bg-white/5 rounded-full"
                     >
-                      <Ionicons name="pencil" size={10} color="#dbb142" />
+                      <Ionicons name="pencil" size={10} color={colors.gold} />
                     </TouchableOpacity>
                     {isToday && (
-                      <Text className="text-[#dbb142] text-[9px] font-bold uppercase tracking-widest mb-2">(TODAY)</Text>
+                      <Text className="text-gold text-[9px] font-bold uppercase tracking-widest mb-2">(TODAY)</Text>
                     )}
                     {!isToday && <Text className="text-white/30 text-[9px] uppercase tracking-widest mb-3">{day.date.format('MMM DD')}</Text>}
 
                     {/* Circle Progress */}
                     <View className="w-14 h-14 rounded-full border-4 border-white/5 items-center justify-center my-2">
                       <View
-                        className={`absolute w-14 h-14 rounded-full border-4 ${dailyCompleted > 0 ? 'border-[#dbb142]' : 'border-transparent'} ${dailyCompleted < 5 ? 'border-t-transparent' : ''}`}
+                        className={`absolute w-14 h-14 rounded-full border-4 ${dailyCompleted > 0 ? 'border-gold' : 'border-transparent'} ${dailyCompleted < 5 ? 'border-t-transparent' : ''}`}
                       />
                       <Text className="text-white text-xs font-bold">{dailyCompleted}/5</Text>
                     </View>
@@ -148,11 +150,11 @@ export default function HistoryScreen() {
                       {[...Array(5)].map((_, i) => (
                         <View
                           key={i}
-                          className={`w-1.5 h-1.5 rounded-full mx-0.5 ${i < dailyCompleted ? 'bg-[#dbb142]' : 'bg-white/10'}`}
+                          className={`w-1.5 h-1.5 rounded-full mx-0.5 ${i < dailyCompleted ? 'bg-gold' : 'bg-white/10'}`}
                         />
                       ))}
                     </View>
-                  </View>
+                  </Card>
                 );
               })
             )}
@@ -160,7 +162,7 @@ export default function HistoryScreen() {
         </View>
 
         {/* Detailed Prayer Logs List */}
-        <View className="bg-[#141d17] border border-white/5 rounded-[28px] p-5">
+        <Card variant="history">
           {loading ? (
             [...Array(5)].map((_, idx) => (
               <View key={idx} className="flex-row items-center justify-between mb-5">
@@ -199,7 +201,7 @@ export default function HistoryScreen() {
                       return (
                         <View
                           key={dIdx}
-                          className={`w-2 h-2 rounded-full mx-1 ${isDone ? 'bg-[#dbb142]' : 'bg-white/5'}`}
+                          className={`w-2 h-2 rounded-full mx-1 ${isDone ? 'bg-gold' : 'bg-white/5'}`}
                         />
                       );
                     })}
@@ -208,7 +210,7 @@ export default function HistoryScreen() {
               );
             })
           )}
-        </View>
+        </Card>
 
       </ScrollView>
 

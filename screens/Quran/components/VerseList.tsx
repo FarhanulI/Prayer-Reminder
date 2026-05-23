@@ -3,6 +3,7 @@ import { usePagination } from '@/hooks/usePagination'
 import { Ionicons } from '@expo/vector-icons'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
+import colors from '@/constants/colors.json'
 import VerseCard from './VerseCard'
 
 interface VerseListPotpsTypes {
@@ -53,13 +54,13 @@ const VerseList = ({ surah, onPageChange }: VerseListPotpsTypes) => {
                     <TouchableOpacity
                         onPress={prevPage}
                         disabled={isFirstPage}
-                        className={`p-1 rounded-md mr-4 ${isFirstPage ? 'opacity-20' : 'bg-[#1a291f] border border-[#dbb142]/20'}`}
+                        className={`p-1 rounded-md mr-4 ${isFirstPage ? 'opacity-20' : 'bg-emerald-light border border-gold/20'}`}
                     >
-                        <Ionicons name="chevron-back" size={20} color="#dbb142" />
+                        <Ionicons name="chevron-back" size={20} color={colors.gold} />
                     </TouchableOpacity>
 
-                    <View className="bg-[#1a291f] border border-[#dbb142]/20 px-6 py-2.5 rounded-xl">
-                        <Text className="text-[#dbb142] font-bold tracking-widest text-xs uppercase">
+                    <View className="bg-emerald-light border border-gold/20 px-6 py-2.5 rounded-xl">
+                        <Text className="text-gold font-bold tracking-widest text-xs uppercase">
                             Page {currentPage} of {totalPages}
                         </Text>
                     </View>
@@ -67,9 +68,9 @@ const VerseList = ({ surah, onPageChange }: VerseListPotpsTypes) => {
                     <TouchableOpacity
                         onPress={nextPage}
                         disabled={isLastPage}
-                        className={`p-1 rounded-md ml-4 ${isLastPage ? 'opacity-20' : 'bg-[#1a291f] border border-[#dbb142]/20'}`}
+                        className={`p-1 rounded-md ml-4 ${isLastPage ? 'opacity-20' : 'bg-emerald-light border border-gold/20'}`}
                     >
-                        <Ionicons name="chevron-forward" size={20} color="#dbb142" />
+                        <Ionicons name="chevron-forward" size={20} color={colors.gold} />
                     </TouchableOpacity>
                 </View>
             )}

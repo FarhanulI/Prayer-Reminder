@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import dayjs from 'dayjs';
@@ -6,10 +7,12 @@ import dayjs from 'dayjs';
  * Individual prayer time card in the horizontal row.
  */
 const PrayerTimeItem = ({ name, time, isActive }: { name: string; time: string; isActive?: boolean }) => (
-  <View className={`items-center justify-center p-3 rounded-2xl border ${isActive ? 'bg-[#dbb142]/10 border-[#dbb142]' : 'bg-[#141d17] border-white/5'} mr-3 w-[85px]`}>
-    <Text className={`text-[10px] uppercase font-bold mb-1 ${isActive ? 'text-[#dbb142]' : 'text-white/40'}`}>{name}</Text>
+  <Card
+    className={`items-center justify-center p-3 mr-3 w-[85px] ${isActive ? 'bg-gold/10 border-gold' : ''}`}
+  >
+    <Text className={`text-[10px] uppercase font-bold mb-1 ${isActive ? 'text-gold' : 'text-white/40'}`}>{name}</Text>
     <Text className={`text-[13px] font-semibold ${isActive ? 'text-white' : 'text-white/70'}`}>{time}</Text>
-  </View>
+  </Card>
 );
 
 interface PrayerTimesRowProps {
@@ -31,10 +34,10 @@ const PrayerTimesRow: React.FC<PrayerTimesRowProps> = ({ prayerList, currentInfo
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {loading ? (
           [...Array(5)].map((_, i) => (
-            <View key={i} className="bg-[#141d17] border border-white/5 rounded-2xl p-3 mr-3 w-[85px] items-center">
+            <Card key={i} className="p-3 mr-3 w-[85px] items-center">
               <View className="bg-white/5 w-10 h-3 rounded mb-2" />
               <View className="bg-white/5 w-14 h-4 rounded" />
-            </View>
+            </Card>
           ))
         ) : (
           prayerList.map((p, i) => (

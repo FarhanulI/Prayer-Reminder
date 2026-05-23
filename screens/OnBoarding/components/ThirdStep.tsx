@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -7,6 +8,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import colors from '@/constants/colors.json';
 import { SelectionCard } from './SelectionCard';
 
 interface ThirdStepProps {
@@ -29,8 +31,8 @@ const ThirdStep = ({
     return (
         <View>
             <View className="items-center mb-10">
-                <View className="bg-[#dbb142]/10 p-5 rounded-full mb-6 border border-[#dbb142]/20">
-                    <MaterialCommunityIcons name="shield-check-outline" size={40} color="#dbb142" />
+                <View className="bg-gold/10 p-5 rounded-full mb-6 border border-gold/20">
+                    <MaterialCommunityIcons name="shield-check-outline" size={40} color={colors.gold} />
                 </View>
                 <Text
                     className="text-white text-3xl text-center mb-4"
@@ -43,7 +45,7 @@ const ThirdStep = ({
                 </Text>
             </View>
 
-            <View className="bg-[#141d17] rounded-[32px] p-6 mb-10 border border-white/5">
+            <Card variant="large" className="mb-10">
                 {commitmentOptions.map((option) => (
                     <SelectionCard
                         key={option.id}
@@ -53,17 +55,17 @@ const ThirdStep = ({
                         onPress={() => setCommitment(option.id)}
                     />
                 ))}
-            </View>
+            </Card>
 
             <TouchableOpacity
                 onPress={handleFinish}
                 disabled={!commitment || loading}
-                className={`py-4 rounded-full items-center mb-4 ${commitment ? 'bg-[#dbb142]' : 'bg-[#dbb142]/30'}`}
+                className={`py-4 rounded-full items-center mb-4 ${commitment ? 'bg-gold' : 'bg-gold/30'}`}
             >
                 {loading ? (
-                    <ActivityIndicator color="#101a15" />
+                    <ActivityIndicator color={colors['emerald-login-bg']} />
                 ) : (
-                    <Text className="text-[#101a15] font-bold tracking-widest text-[12px]">BEGIN JOURNEY</Text>
+                    <Text className="text-emerald-login-bg font-bold tracking-widest text-[12px]">BEGIN JOURNEY</Text>
                 )}
             </TouchableOpacity>
 

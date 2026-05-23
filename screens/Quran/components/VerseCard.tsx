@@ -1,3 +1,4 @@
+import { cardClassName } from '@/components/ui/card';
 import { useAyahAudio } from '@/hooks/Quran/useAyahAudio';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
@@ -11,10 +12,11 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import colors from '@/constants/colors.json';
 
-const GOLD = '#dbb142';
-const CARD_BG = '#0f1812';
-const CARD_BG_PLAYING = '#121f18';
+const GOLD = colors.gold;
+const CARD_BG = colors['verse-card-bg'];
+const CARD_BG_PLAYING = colors['verse-card-bg-playing'];
 
 type VerseCardProps = {
     number: number;
@@ -34,14 +36,14 @@ function HexVerseBadge({ number }: { number: number }) {
                     position: 'absolute',
                     width: 30,
                     height: 30,
-                    backgroundColor: '#0a100c',
+                    backgroundColor: colors['verse-badge-bg'],
                     borderWidth: 1.5,
                     borderColor: `${GOLD}99`,
                     transform: [{ rotate: '45deg' }],
                     borderRadius: 5,
                 }}
             />
-            <Text className="text-[#dbb142] text-[12px] font-bold z-10">{number}</Text>
+            <Text className="text-gold text-[12px] font-bold z-10">{number}</Text>
         </View>
     );
 }
@@ -94,13 +96,11 @@ const VerseCard = ({
 
     return (
         <Animated.View
-            style={[
-                styles.card,
-                {
-                    borderColor,
-                    backgroundColor: isPlaying ? CARD_BG_PLAYING : CARD_BG,
-                },
-            ]}
+            className={cardClassName('quranVerse')}
+            style={{
+                borderColor,
+                backgroundColor: isPlaying ? CARD_BG_PLAYING : CARD_BG,
+            }}
         >
             <Animated.View style={[styles.leftAccent, { opacity: accentOpacity }]} />
 
@@ -112,11 +112,8 @@ const VerseCard = ({
                 </View>
 
                 <View className="flex-row  items-center gap-2">
-                    <View className="flex-row items-center bg-[#1a291f] border border-[#dbb142]/25 rounded-full px-1.5 py-1.5 ml-2">
+                    <View className="flex-row items-center bg-emerald-light border border-gold/25 rounded-full px-1.5 py-1.5 ml-2">
                         <Ionicons name="bookmark" size={12} color="bg-white/5" />
-                        {/* <Text className="text-[#dbb142] text-[9px] font-bold tracking-[1.5px] ml-1.5 uppercase">
-                            Last Read
-                        </Text> */}
                     </View>
 
                     <TouchableOpacity
@@ -131,16 +128,16 @@ const VerseCard = ({
                     <TouchableOpacity
                         onPress={isPlaying ? pause : play}
                         disabled={loading}
-                        className="w-10 h-10 rounded-full bg-[#dbb142] items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-gold items-center justify-center"
                         accessibilityLabel={isPlaying ? 'Pause recitation' : 'Play recitation'}
                     >
                         {loading ? (
-                            <ActivityIndicator size="small" color="#0d1410" />
+                            <ActivityIndicator size="small" color={colors['emerald-darkest']} />
                         ) : (
                             <Ionicons
                                 name={isPlaying ? 'pause' : 'play'}
                                 size={18}
-                                color="#0d1410"
+                                color={colors['emerald-darkest']}
                                 style={{ marginLeft: isPlaying ? 0 : 2 }}
                             />
                         )}
@@ -158,7 +155,7 @@ const VerseCard = ({
 
             {/* Transliteration */}
             {transliteration ? (
-                <Text className="text-[#dbb142]/90 text-[14px] italic leading-6 mb-3">
+                <Text className="text-gold/90 text-[14px] italic leading-6 mb-3">
                     {transliteration}
                 </Text>
             ) : null}
@@ -172,15 +169,6 @@ const VerseCard = ({
 };
 
 const styles = StyleSheet.create({
-    card: {
-        borderRadius: 16,
-        borderWidth: 1,
-        paddingHorizontal: 18,
-        paddingVertical: 18,
-        marginBottom: 16,
-        overflow: 'hidden',
-        position: 'relative',
-    },
     leftAccent: {
         position: 'absolute',
         left: 0,

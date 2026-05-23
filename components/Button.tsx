@@ -7,7 +7,7 @@ interface ButtonProps extends TouchableOpacityProps {
 
 export const Button = ({ title, ...props }: ButtonProps) => {
   return (
-    <TouchableOpacity className="bg-[#D4A373] p-4 rounded-xl items-center mb-3" {...props}>
+    <TouchableOpacity className="bg-sand p-4 rounded-xl items-center mb-3" {...props}>
       <Text className="text-white font-bold text-lg">{title}</Text>
     </TouchableOpacity>
   );

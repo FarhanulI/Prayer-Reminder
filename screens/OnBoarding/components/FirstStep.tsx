@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import React from 'react';
 import {
     Platform,
@@ -49,10 +50,10 @@ const FirstStep = ({
             </View>
 
             {/* Step 01 Container */}
-            <View className="bg-[#141d17] rounded-[32px] p-6 mb-6 border border-white/5">
+            <Card variant="large" className="mb-6">
                 <View className="flex-row items-center mb-5">
-                    <View className="bg-[#dbb142]/20 px-2 py-1 rounded-md border border-[#dbb142]/30 mr-3">
-                        <Text className="text-[#dbb142] text-[10px] font-bold uppercase tracking-tighter">Step 01</Text>
+                    <View className="bg-gold/20 px-2 py-1 rounded-md border border-gold/30 mr-3">
+                        <Text className="text-gold text-[10px] font-bold uppercase tracking-tighter">Step 01</Text>
                     </View>
                     <Text
                         className="text-white text-lg font-medium"
@@ -70,13 +71,13 @@ const FirstStep = ({
                         onPress={() => setPrayerFreq(option)}
                     />
                 ))}
-            </View>
+            </Card>
 
             {/* Step 02 Container */}
-            <View className="bg-[#141d17] rounded-[32px] p-6 mb-6 border border-white/5">
+            <Card variant="large" className="mb-6">
                 <View className="flex-row items-center mb-5">
-                    <View className="bg-[#dbb142]/20 px-2 py-1 rounded-md border border-[#dbb142]/30 mr-3">
-                        <Text className="text-[#dbb142] text-[10px] font-bold uppercase tracking-tighter">Step 02</Text>
+                    <View className="bg-gold/20 px-2 py-1 rounded-md border border-gold/30 mr-3">
+                        <Text className="text-gold text-[10px] font-bold uppercase tracking-tighter">Step 02</Text>
                     </View>
                     <Text
                         className="text-white text-lg font-medium"
@@ -94,13 +95,13 @@ const FirstStep = ({
                         onPress={() => setScreenTime(option)}
                     />
                 ))}
-            </View>
+            </Card>
 
             {/* Step 03 Container (Age) */}
-            <View className="bg-[#141d17] rounded-[32px] p-6 mb-8 border border-white/5">
+            <Card variant="large" className="mb-8">
                 <View className="flex-row items-center mb-5">
-                    <View className="bg-[#dbb142]/20 px-2 py-1 rounded-md border border-[#dbb142]/30 mr-3">
-                        <Text className="text-[#dbb142] text-[10px] font-bold uppercase tracking-tighter">Step 03</Text>
+                    <View className="bg-gold/20 px-2 py-1 rounded-md border border-gold/30 mr-3">
+                        <Text className="text-gold text-[10px] font-bold uppercase tracking-tighter">Step 03</Text>
                     </View>
                     <Text
                         className="text-white text-lg font-medium"
@@ -118,13 +119,13 @@ const FirstStep = ({
                         onPress={() => setAge(option)}
                     />
                 ))}
-            </View>
+            </Card>
 
             <TouchableOpacity
                 onPress={() => setCurrentStep(1)}
-                className="bg-[#dbb142] py-4 rounded-full items-center mb-4 active:opacity-90"
+                className="bg-gold py-4 rounded-full items-center mb-4 active:opacity-90"
             >
-                <Text className="text-[#101a15] font-bold tracking-widest text-[12px]">CONTINUE</Text>
+                <Text className="text-emerald-login-bg font-bold tracking-widest text-[12px]">CONTINUE</Text>
             </TouchableOpacity>
         </View>
     );

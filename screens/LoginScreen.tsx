@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
@@ -15,6 +16,7 @@ import Toast from 'react-native-toast-message';
 import { loginUser } from '../features/auth/auth.service';
 import { GoogleSignInError } from '../features/auth/googleSignIn.service';
 import { useGoogleSignIn } from '../hooks/useGoogleSignIn';
+import colors from '@/constants/colors.json';
 
 const LoginScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
@@ -73,7 +75,7 @@ const LoginScreen = ({ navigation }: any) => {
     };
 
     return (
-        <LinearGradient colors={['#101a15', '#080d0a']} className="flex-1">
+        <LinearGradient colors={[colors['emerald-login-bg'], colors['emerald-login-bg-end']]} className="flex-1">
             <KeyboardAvoidingView
                 className="flex-1"
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -85,8 +87,8 @@ const LoginScreen = ({ navigation }: any) => {
                 >
                     {/* Header Section */}
                     <View className="items-center mb-12">
-                        <View className="bg-[#dbb142]/10 p-5 rounded-full border border-[#dbb142]/20 mb-6">
-                            <Ionicons name="moon-outline" size={40} color="#dbb142" />
+                        <View className="bg-gold/10 p-5 rounded-full border border-gold/20 mb-6">
+                            <Ionicons name="moon-outline" size={40} color={colors.gold} />
                         </View>
                         <Text
                             className="text-white text-3xl font-bold tracking-[4px] text-center mb-2"
@@ -100,17 +102,17 @@ const LoginScreen = ({ navigation }: any) => {
                     </View>
 
                     {/* Card Container */}
-                    <View className="bg-[#19231d]/80 rounded-[32px] p-7 border border-white/5 shadow-2xl">
+                    <Card variant="auth">
                         
                         {/* Email Input */}
-                        <Text className="text-[#88988a] text-[11px] font-bold tracking-[2px] mb-2 ml-1 uppercase">
+                        <Text className="text-emerald-muted text-[11px] font-bold tracking-[2px] mb-2 ml-1 uppercase">
                             Email Address
                         </Text>
                         <View className="flex-row items-center bg-white/5 rounded-2xl border border-white/10 mb-5 px-5">
-                            <Ionicons name="mail-outline" size={18} color="#707f71" />
+                            <Ionicons name="mail-outline" size={18} color={colors['emerald-placeholder']} />
                             <TextInput
                                 placeholder="heart@peace.com"
-                                placeholderTextColor="#707f71"
+                                placeholderTextColor={colors['emerald-placeholder']}
                                 className="flex-1 py-4 px-3 text-white text-[15px]"
                                 onChangeText={setEmail}
                                 value={email}
@@ -121,18 +123,18 @@ const LoginScreen = ({ navigation }: any) => {
 
                         {/* Password Input */}
                         <View className="flex-row justify-between items-end mb-2">
-                            <Text className="text-[#88988a] text-[11px] font-bold tracking-[2px] ml-1 uppercase">
+                            <Text className="text-emerald-muted text-[11px] font-bold tracking-[2px] ml-1 uppercase">
                                 Password
                             </Text>
                             <TouchableOpacity>
-                                <Text className="text-[#dbb142] text-[11px] font-medium">Forgot?</Text>
+                                <Text className="text-gold text-[11px] font-medium">Forgot?</Text>
                             </TouchableOpacity>
                         </View>
                         <View className="flex-row items-center bg-white/5 rounded-2xl border border-white/10 mb-8 px-5">
-                            <Ionicons name="lock-closed-outline" size={18} color="#707f71" />
+                            <Ionicons name="lock-closed-outline" size={18} color={colors['emerald-placeholder']} />
                             <TextInput
                                 placeholder="••••••••••••"
-                                placeholderTextColor="#707f71"
+                                placeholderTextColor={colors['emerald-placeholder']}
                                 secureTextEntry={!showPassword}
                                 className="flex-1 py-4 px-3 text-white text-[15px]"
                                 onChangeText={setPassword}
@@ -142,7 +144,7 @@ const LoginScreen = ({ navigation }: any) => {
                                 <Ionicons 
                                     name={showPassword ? "eye-off-outline" : "eye-outline"} 
                                     size={20} 
-                                    color="#707f71" 
+                                    color={colors['emerald-placeholder']} 
                                 />
                             </TouchableOpacity>
                         </View>
@@ -151,13 +153,13 @@ const LoginScreen = ({ navigation }: any) => {
                         <TouchableOpacity
                             onPress={handleLogin}
                             disabled={loading}
-                            className={`py-4.5 rounded-2xl items-center justify-center shadow-lg ${loading ? 'bg-[#dbb142]/70' : 'bg-[#dbb142]'}`}
+                            className={`py-4.5 rounded-2xl items-center justify-center shadow-lg ${loading ? 'bg-gold/70' : 'bg-gold'}`}
                             style={{ paddingVertical: 18 }}
                         >
                             {loading ? (
-                                <ActivityIndicator color="#101a15" size="small" />
+                                <ActivityIndicator color={colors['emerald-login-bg']} size="small" />
                             ) : (
-                                <Text className="text-[#101a15] font-bold tracking-[2px] text-[16px] uppercase">
+                                <Text className="text-emerald-login-bg font-bold tracking-[2px] text-[16px] uppercase">
                                     Sign In
                                 </Text>
                             )}
@@ -165,7 +167,7 @@ const LoginScreen = ({ navigation }: any) => {
 
                         <View className="flex-row items-center my-8">
                             <View className="flex-1 h-[1px] bg-white/10" />
-                            <Text className="text-[#88988a] text-[11px] font-bold tracking-[2px] mx-4 uppercase">
+                            <Text className="text-emerald-muted text-[11px] font-bold tracking-[2px] mx-4 uppercase">
                                 Or
                             </Text>
                             <View className="flex-1 h-[1px] bg-white/10" />
@@ -177,7 +179,7 @@ const LoginScreen = ({ navigation }: any) => {
                             className="flex-row items-center justify-center py-4 rounded-2xl border border-white/15"
                         >
                             {googleLoading ? (
-                                <ActivityIndicator color="#dbb142" size="small" />
+                                <ActivityIndicator color={colors.gold} size="small" />
                             ) : (
                                 <>
                                     <Ionicons name="logo-google" size={18} color="white" />
@@ -192,15 +194,15 @@ const LoginScreen = ({ navigation }: any) => {
                         <View className="flex-row justify-center mt-8">
                             <Text className="text-white/40 text-[14px]">New seeker? </Text>
                             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                                <Text className="text-[#dbb142] font-bold text-[14px]">Create Account</Text>
+                                <Text className="text-gold font-bold text-[14px]">Create Account</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </Card>
 
                     {/* Security Badge */}
                     <View className="flex-row justify-center items-center mt-10 opacity-30">
-                        <Ionicons name="shield-checkmark-outline" size={14} color="#88988a" />
-                        <Text className="text-[#88988a] text-[10px] ml-2 tracking-[1px] uppercase">
+                        <Ionicons name="shield-checkmark-outline" size={14} color={colors['emerald-muted']} />
+                        <Text className="text-emerald-muted text-[10px] ml-2 tracking-[1px] uppercase">
                             Secure End-to-End Encryption
                         </Text>
                     </View>

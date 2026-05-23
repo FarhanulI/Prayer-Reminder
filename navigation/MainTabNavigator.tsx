@@ -2,6 +2,7 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
+import colors from "@/constants/colors.json";
 
 import MilestonesScreen from "@/screens/Milestones/MilestonesScreen";
 import DashboardScreen from "../screens/Dashboard/DashboardScreen";
@@ -14,7 +15,7 @@ const Tab = createBottomTabNavigator();
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View
-      className="flex-row items-center justify-between bg-[#141d17] border-t border-white/5 px-6 pb-8 pt-4"
+      className="flex-row items-center justify-between bg-emerald-dark border-t border-white/5 px-6 pb-8 pt-4"
       style={{
         paddingBottom: Platform.OS === 'ios' ? 34 : 20,
         borderTopLeftRadius: 24,
@@ -63,17 +64,17 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             accessibilityLabel={options.tabBarAccessibilityLabel}
             testID={options.tabBarTestID}
             onPress={onPress}
-            className={`items-center justify-center py-3 px-6 rounded-2xl ${isFocused ? 'bg-[#182a1d]' : ''}`}
+            className={`items-center justify-center py-3 px-6 rounded-2xl ${isFocused ? 'bg-emerald-light' : ''}`}
             style={{ minWidth: 80 }}
           >
             <IconComponent
               name={iconName}
               size={22}
-              color={isFocused ? "#dbb142" : "rgba(255,255,255,0.4)"}
+              color={isFocused ? colors.gold : "rgba(255,255,255,0.4)"}
               style={{ marginBottom: 4 }}
             />
             <Text
-              className={`text-[10px] font-bold tracking-widest ${isFocused ? 'text-[#dbb142]' : 'text-white/40'}`}
+              className={`text-[10px] font-bold tracking-widest ${isFocused ? 'text-gold' : 'text-white/40'}`}
               style={{ textTransform: 'uppercase' }}
             >
               {route.name}

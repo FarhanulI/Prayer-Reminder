@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -15,20 +16,21 @@ import { signupUser } from '@/features/auth/auth.service';
 import { GoogleSignInError } from '@/features/auth/googleSignIn.service';
 import { useGoogleSignIn } from '@/hooks/useGoogleSignIn';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+import colors from '@/constants/colors.json';
 
 const FONT_FAMILIES = {
   serif: Platform.OS === 'ios' ? 'Georgia' : 'serif', // Simple serif fallback
 };
 
 const COLORS = {
-  bgGradient: ['#101a15', '#080d0a'] as const, // Dark green/black gradient
+  bgGradient: [colors['emerald-login-bg'], colors['emerald-login-bg-end']] as const, // Dark green/black gradient
   cardBg: 'rgba(25, 35, 29, 0.7)', // Subtle dark card background
   inputBg: 'rgba(255, 255, 255, 0.05)', // Darker input field
   inputText: '#e2e8f0',
-  placeholderText: '#707f71',
-  label: '#88988a',
-  accent: '#dbb142', // The Golden/Yellow color from image
-  link: '#dbb142',
+  placeholderText: colors['emerald-placeholder'],
+  label: colors['emerald-muted'],
+  accent: colors.gold, // The Golden/Yellow color from image
+  link: colors.gold,
   textSecondary: 'rgba(255,255,255,0.65)',
 };
 
@@ -112,7 +114,7 @@ const SignUpScreen = ({ navigation }: any) => {
   };
 
   return (
-    <LinearGradient colors={['#101a15', '#080d0a']} className="flex-1">
+    <LinearGradient colors={COLORS.bgGradient} className="flex-1">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -136,15 +138,15 @@ const SignUpScreen = ({ navigation }: any) => {
           </View>
 
           {/* Form Card */}
-          <View className="bg-[#19231d]/70 rounded-2xl p-6 border border-white/10">
+          <Card variant="authCompact">
 
             {/* Full Name */}
-            <Text className="text-[#88988a] text-[11px] font-semibold tracking-widest mb-2 ml-1">FULL NAME</Text>
+            <Text className="text-emerald-muted text-[11px] font-semibold tracking-widest mb-2 ml-1">FULL NAME</Text>
             <View className="flex-row items-center bg-white/5 rounded-lg border border-white/10 mb-4 px-4">
-              <FontAwesome5 name="user" size={14} color="#707f71" />
+              <FontAwesome5 name="user" size={14} color={colors['emerald-placeholder']} />
               <TextInput
                 placeholder="Abdullah Ibn Mas'ud"
-                placeholderTextColor="#707f71"
+                placeholderTextColor={colors['emerald-placeholder']}
                 className="flex-1 py-3.5 px-3 text-white text-[15px]"
                 onChangeText={setFullName}
                 value={fullName}
@@ -152,12 +154,12 @@ const SignUpScreen = ({ navigation }: any) => {
             </View>
 
             {/* Email */}
-            <Text className="text-[#88988a] text-[11px] font-semibold tracking-widest mb-2 ml-1">EMAIL ADDRESS</Text>
+            <Text className="text-emerald-muted text-[11px] font-semibold tracking-widest mb-2 ml-1">EMAIL ADDRESS</Text>
             <View className="flex-row items-center bg-white/5 rounded-lg border border-white/10 mb-4 px-4">
-              <Ionicons name="mail-outline" size={18} color="#707f71" />
+              <Ionicons name="mail-outline" size={18} color={colors['emerald-placeholder']} />
               <TextInput
                 placeholder="heart@peace.com"
-                placeholderTextColor="#707f71"
+                placeholderTextColor={colors['emerald-placeholder']}
                 className="flex-1 py-3.5 px-3 text-white text-[15px]"
                 onChangeText={setEmail}
                 value={email}
@@ -166,27 +168,27 @@ const SignUpScreen = ({ navigation }: any) => {
             </View>
 
             {/* Password */}
-            <Text className="text-[#88988a] text-[11px] font-semibold tracking-widest mb-2 ml-1">PASSWORD</Text>
+            <Text className="text-emerald-muted text-[11px] font-semibold tracking-widest mb-2 ml-1">PASSWORD</Text>
             <View className="flex-row items-center bg-white/5 rounded-lg border border-white/10 mb-4 px-4">
-              <Ionicons name="lock-closed-outline" size={18} color="#707f71" />
+              <Ionicons name="lock-closed-outline" size={18} color={colors['emerald-placeholder']} />
               <TextInput
                 placeholder="••••••••••••"
-                placeholderTextColor="#707f71"
+                placeholderTextColor={colors['emerald-placeholder']}
                 secureTextEntry
                 className="flex-1 py-3.5 px-3 text-white text-[15px]"
                 onChangeText={setPassword}
                 value={password}
               />
-              <Ionicons name="eye-outline" size={20} color="#707f71" />
+              <Ionicons name="eye-outline" size={20} color={colors['emerald-placeholder']} />
             </View>
 
             {/* Confirm Password */}
-            <Text className="text-[#88988a] text-[11px] font-semibold tracking-widest mb-2 ml-1">CONFIRM PASSWORD</Text>
+            <Text className="text-emerald-muted text-[11px] font-semibold tracking-widest mb-2 ml-1">CONFIRM PASSWORD</Text>
             <View className="flex-row items-center bg-white/5 rounded-lg border border-white/10 mb-5 px-4">
-              <Ionicons name="shield-checkmark-outline" size={18} color="#707f71" />
+              <Ionicons name="shield-checkmark-outline" size={18} color={colors['emerald-placeholder']} />
               <TextInput
                 placeholder="••••••••••••"
-                placeholderTextColor="#707f71"
+                placeholderTextColor={colors['emerald-placeholder']}
                 secureTextEntry
                 className="flex-1 py-3.5 px-3 text-white text-[15px]"
                 onChangeText={setConfirmPassword}
@@ -202,12 +204,12 @@ const SignUpScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons
                 name={agreedToTerms ? 'checkbox-marked' : 'checkbox-blank-outline'}
                 size={20}
-                color={agreedToTerms ? '#dbb142' : '#88988a'}
+                color={agreedToTerms ? colors.gold : colors['emerald-muted']}
               />
-              <Text className="text-[#88988a] text-[12px] ml-2 leading-4">
+              <Text className="text-emerald-muted text-[12px] ml-2 leading-4">
                 I acknowledge that I have read and agree to the{' '}
-                <Text className="text-[#dbb142]">Terms of Service</Text> and{' '}
-                <Text className="text-[#dbb142]">Privacy Policy</Text>.
+                <Text className="text-gold">Terms of Service</Text> and{' '}
+                <Text className="text-gold">Privacy Policy</Text>.
               </Text>
             </TouchableOpacity> */}
 
@@ -215,20 +217,20 @@ const SignUpScreen = ({ navigation }: any) => {
             <TouchableOpacity
               onPress={handleSignUp}
               disabled={loading}
-              className={`py-4 rounded-lg items-center justify-center ${loading ? 'bg-[#dbb142]/70' : 'bg-[#dbb142]'}`}
+              className={`py-4 rounded-lg items-center justify-center ${loading ? 'bg-gold/70' : 'bg-gold'}`}
             >
               {loading ? (
                 <ActivityIndicator color="#000" size="small" />
               ) : (
-                <Text className="text-[#101a15] font-bold text-[17px]">Create Account</Text>
+                <Text className="text-emerald-login-bg font-bold text-[17px]">Create Account</Text>
               )}
             </TouchableOpacity>
-          </View>
+          </Card>
 
           {/* Social Sign In */}
           <View className="flex-row items-center my-8">
             <View className="flex-1 h-[1px] bg-white/10" />
-            <Text className="text-[#88988a] text-[12px] font-semibold mx-4">OR SIGN UP WITH</Text>
+            <Text className="text-emerald-muted text-[12px] font-semibold mx-4">OR SIGN UP WITH</Text>
             <View className="flex-1 h-[1px] bg-white/10" />
           </View>
 
@@ -239,7 +241,7 @@ const SignUpScreen = ({ navigation }: any) => {
               className="flex-1 flex-row items-center justify-center py-3.5 rounded-lg border border-white/15 mr-2"
             >
               {googleLoading ? (
-                <ActivityIndicator color="#dbb142" size="small" />
+                <ActivityIndicator color={colors.gold} size="small" />
               ) : (
                 <>
                   <Ionicons name="logo-google" size={18} color="white" />
@@ -257,14 +259,14 @@ const SignUpScreen = ({ navigation }: any) => {
           <View className="flex-row justify-center mb-10">
             <Text className="text-white/60">Already part of the sanctuary? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text className="text-[#dbb142] font-semibold">Sign In</Text>
+              <Text className="text-gold font-semibold">Sign In</Text>
             </TouchableOpacity>
           </View>
 
           {/* Secure Badge */}
           <View className="flex-row justify-center items-center opacity-40">
-            <Ionicons name="shield-checkmark-outline" size={14} color="#88988a" />
-            <Text className="text-[#88988a] text-[10px] ml-1.5 tracking-tighter">ENCRYPTED & SECURE ARCHITECTURE</Text>
+            <Ionicons name="shield-checkmark-outline" size={14} color={colors['emerald-muted']} />
+            <Text className="text-emerald-muted text-[10px] ml-1.5 tracking-tighter">ENCRYPTED & SECURE ARCHITECTURE</Text>
           </View>
 
         </ScrollView>

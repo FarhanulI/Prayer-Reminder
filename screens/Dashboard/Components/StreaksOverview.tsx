@@ -1,8 +1,10 @@
+import { Card } from "@/components/ui/card";
 import { CATEGORY_ENCOURAGEMENTS, CATEGORY_MESSAGES, STREAK_MILESTONES, StreakCategory, getMilestoneForStreak } from "@/constants/milestones";
 import { UserStreaks } from "@/features/streaks.service";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Text, View } from "react-native";
+import colors from "@/constants/colors.json";
 
 interface StreaksOverviewProps {
     streaks: UserStreaks | null;
@@ -30,7 +32,7 @@ const StreakCard = ({
     const progress = nextMilestone ? (count / nextMilestone.days) * 100 : 100;
 
     return (
-        <View className="bg-[#141d17] border border-white/5 rounded-3xl p-5 mb-4">
+        <Card className="rounded-3xl mb-4">
             <View className="flex-row items-center mb-4">
                 <View className="w-12 h-12 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: `${color}15` }}>
                     <Ionicons name={icon as any} size={24} color={color} />
@@ -48,8 +50,8 @@ const StreakCard = ({
 
             {/* Motivational Messaging */}
             <View className="bg-white/5 rounded-xl p-3 mb-4 border border-white/5">
-                <Text className="text-[#dbb142] text-[10px] font-bold uppercase tracking-widest mb-1.5 flex-row items-center">
-                    <Ionicons name="information-circle" size={10} color="#dbb142" /> Why it matters
+                <Text className="text-gold text-[10px] font-bold uppercase tracking-widest mb-1.5 flex-row items-center">
+                    <Ionicons name="information-circle" size={10} color={colors.gold} /> Why it matters
                 </Text>
                 <Text className="text-white/80 text-xs font-medium mb-2 leading-relaxed" style={{ fontStyle: 'italic' }}>
                     "{meaning}"
@@ -76,7 +78,7 @@ const StreakCard = ({
                     Keep going for a stronger connection
                 </Text>
             )}
-        </View>
+        </Card>
     );
 };
 
@@ -93,8 +95,8 @@ const StreaksOverview = ({ streaks }: StreaksOverviewProps) => {
         <View className="mb-10">
             <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-white text-lg font-semibold" style={{ fontFamily: 'serif' }}>Spiritual Journey</Text>
-                <View className="bg-[#dbb142]/10 px-3 py-1 rounded-full">
-                    <Text className="text-[#dbb142] text-[10px] font-bold">JOURNEY STAGES</Text>
+                <View className="bg-gold/10 px-3 py-1 rounded-full">
+                    <Text className="text-gold text-[10px] font-bold">JOURNEY STAGES</Text>
                 </View>
             </View>
 
@@ -110,7 +112,7 @@ const StreaksOverview = ({ streaks }: StreaksOverviewProps) => {
                         count={data.current}
                         title={currentMilestone?.title || "Just Starting"}
                         icon={currentMilestone?.icon || "flash-outline"}
-                        color={currentMilestone?.color || (cat.key === 'perfect' ? '#dbb142' : cat.key === 'strong' ? '#4ade80' : '#60a5fa')}
+                        color={currentMilestone?.color || (cat.key === 'perfect' ? colors.gold : cat.key === 'strong' ? colors.success : colors['blue-accent'])}
                         nextMilestone={nextMilestone}
                         meaning={CATEGORY_MESSAGES[cat.key]}
                         encouragement={CATEGORY_ENCOURAGEMENTS[cat.key]}
