@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
 import { refreshApplicationData } from "@/features/device.service";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -7,25 +9,18 @@ import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import React, { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import PrayerOverlayScreen from "../PrayerOverlayScreen";
-import ForbiddenTimesSection from "./Components/ForbiddenTimesSection";
 import Header from "./Components/Header";
 import UpcomingPrayerCard from "./Components/UpcomingPrayerCard";
 
 dayjs.extend(isBetween);
 
-const { width } = Dimensions.get("window");
-
-// --- SMALL COMPONENTS ---
-
-
-
 /**
  * Stat card for Salat progress.
  */
 const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount }: any) => (
-  <View className="bg-[#141d17] flex-row justify-between items-center border border-white/5 rounded-[32px] p-6 mb-8">
+  <Card variant="large" className="flex-row justify-between items-center mb-8">
     <View className="flex-1 pr-4">
       <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1.5">{title}</Text>
       <Text className="text-white text-[28px] font-semibold leading-tight mb-2" style={{ fontFamily: 'serif' }}>{subtext}</Text>
@@ -39,13 +34,13 @@ const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount
       <View className="w-[84px] h-[84px] rounded-full border-[6px] border-white/5 items-center justify-center">
         {/* Simple Progress Track (approximate for UI) */}
         <View
-          className="absolute w-[84px] h-[84px] rounded-full border-[6px] border-[#dbb142]"
+          className="absolute w-[84px] h-[84px] rounded-full border-[6px] border-gold"
           style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '-15deg' }] }}
         />
         <Text className="text-white text-xl font-bold">{value}</Text>
       </View>
     </View>
-  </View>
+  </Card>
 );
 
 // --- MAIN SCREEN ---
@@ -258,14 +253,14 @@ export default function DashboardScreen() {
 
   if (loading || isFetching) {
     return (
-      <View className="flex-1 bg-[#0d1410] items-center justify-center">
-        <ActivityIndicator color="#dbb142" size="large" />
+      <View className="flex-1 bg-emerald-darkest items-center justify-center">
+        <ActivityIndicator color={colors.gold} size="large" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-[#0d1410]">
+    <View className="flex-1 bg-emerald-darkest">
       {/* Prayer Lock Overlay */}
       <PrayerOverlayScreen
         visible={overlayVisible}
@@ -281,7 +276,7 @@ export default function DashboardScreen() {
         contentContainerStyle={{ paddingTop: 60, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#dbb142" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />
         }
       >
         {/* Header Header */}
@@ -298,6 +293,7 @@ export default function DashboardScreen() {
             isSkipped={currentInfo.isSkipped}
             prayerList={prayerList}
             profile={profile}
+            prayerTimings={userData?.prayers}
           />
         )}
 
@@ -312,6 +308,27 @@ export default function DashboardScreen() {
           />
         </View>
 
+        {/* Feature Cards Row */}
+        <View className="flex-row justify-between mb-8">
+          <TouchableOpacity
+            className="w-[48%] bg-emerald-dark rounded-[24px] p-4 border border-white/5 justify-center shadow-lg"
+            onPress={() => navigation.navigate("Quran")}
+            style={{ minHeight: 110 }}
+          >
+            <View className="flex-row items-center">
+              <View className="w-[44px] h-[54px] rounded-2xl bg-gold/10 items-center justify-center mr-3">
+                <Ionicons name="book" size={22} color={colors.gold} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-white font-bold text-[12px] tracking-widest leading-tight mb-1.5">READ{"\n"}QURAN</Text>
+                <Text className="text-white/60 text-[10px] mb-0.5">Resume Surah</Text>
+                <Text className="text-gold text-[11px] font-semibold">Al-Fatiha</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* <QiblaCard /> */}
+        </View>
 
         {/* Verse Card */}
         {/* <View className="mb-10">
@@ -319,23 +336,16 @@ export default function DashboardScreen() {
           <DailyVerseCard />
         </View> */}
 
-        {/* Forbidden Times Section */}
-        <View className="mb-10">
-          <Text className="text-white text-lg font-semibold mb-4" style={{ fontFamily: 'serif' }}>Forbidden Times</Text>
-          <ForbiddenTimesSection
-            sunTimings={profile?.sunTimings}
-            prayerTimes={userData}
-          />
-        </View>
+
       </ScrollView>
 
       {/* Floating Action Button for Streaks */}
       <TouchableOpacity
         style={{ position: 'absolute', right: 24, bottom: 24 }}
-        className="bg-[#dbb142] w-14 h-14 rounded-full items-center justify-center shadow-lg"
+        className="bg-gold w-14 h-14 rounded-full items-center justify-center shadow-lg"
         onPress={() => navigation.navigate("Streaks")}
       >
-        <Ionicons name="bar-chart" size={24} color="#101a15" />
+        <Ionicons name="bar-chart" size={24} color={colors['emerald-login-bg']} />
       </TouchableOpacity>
     </View>
   );

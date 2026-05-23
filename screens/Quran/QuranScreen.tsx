@@ -1,4 +1,6 @@
 import { DropdownOption } from "@/components/Dropdown";
+import { Card } from "@/components/ui/card";
+import colors from "@/constants/colors.json";
 import { useGetSurah } from "@/hooks/Quran/use-get-surah";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -11,11 +13,11 @@ import { useRef } from "react";
 export default function QuranScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const [currentSurah, setCurrentSurah] = useState<DropdownOption>();
-  const { data: surah, isLoading, isError } = useGetSurah({ id: currentSurah?.id })
+  const { data: surah, isLoading, isError } = useGetSurah({ id: currentSurah?.id || 1 })
 
   return (
-    <View className="flex-1 bg-[#0d1410]">
-      <View className="px-6 pt-14 pb-2 bg-[#0d1410] z-50 border-b border-white/5">
+    <View className="flex-1 bg-emerald-darkest">
+      <View className="px-6 pt-14 pb-2 bg-emerald-darkest z-50 border-b border-white/5">
         {/* Header Section */}
         <View className="flex-row items-center mb-6">
           <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Al-Quran</Text>
@@ -34,11 +36,11 @@ export default function QuranScreen() {
 
         {/* Action Buttons Row */}
         {/* <View className="flex-row mb-6">
-          <TouchableOpacity className="flex-1 bg-[#dbb142] rounded-xl flex-row justify-center items-center py-3.5 mr-2">
-            <Feather name="book-open" size={16} color="#0d1410" />
-            <Text className="text-[#0d1410] font-bold ml-2">Read</Text>
+          <TouchableOpacity className="flex-1 bg-gold rounded-xl flex-row justify-center items-center py-3.5 mr-2">
+            <Feather name="book-open" size={16} color={colors['emerald-darkest']} />
+            <Text className="text-emerald-darkest font-bold ml-2">Read</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="flex-1 bg-[#141d17] border border-white/5 rounded-xl flex-row justify-center items-center py-3.5 ml-2">
+          <TouchableOpacity className="flex-1 bg-emerald-dark border border-white/5 rounded-xl flex-row justify-center items-center py-3.5 ml-2">
             <Feather name="search" size={16} color="white" />
             <Text className="text-white font-bold ml-2">Search</Text>
           </TouchableOpacity>
@@ -46,16 +48,16 @@ export default function QuranScreen() {
 
         {/* Surah Info Card */}
         {isLoading ? (
-          <View className="bg-[#141d17] border border-white/5 rounded-2xl p-8 mb-6 items-center">
+          <Card className="rounded-2xl p-8 mb-6 items-center">
             <View className="w-24 h-6 bg-white/5 rounded mb-4" />
             <View className="w-32 h-4 bg-white/5 rounded mb-2" />
             <View className="w-20 h-3 bg-white/5 rounded mb-6" />
-            <View className="w-full h-12 bg-[#dbb142]/10 rounded-full" />
-          </View>
+            <View className="w-full h-12 bg-gold/10 rounded-full" />
+          </Card>
         ) : surah ? (
-          <View className="bg-[#141d17] border border-[#dbb142]/40 rounded-2xl p-6 mb-6 items-center">
-            <Text className="text-[#dbb142] text-2xl font-bold mb-2" style={{ fontFamily: 'serif' }}>{surah.name}</Text>
-            <Text className="text-[#dbb142] text-base font-semibold">{surah.transliteration}</Text>
+          <Card variant="highlight" className="mb-6 items-center">
+            <Text className="text-gold text-2xl font-bold mb-2" style={{ fontFamily: 'serif' }}>{surah.name}</Text>
+            <Text className="text-gold text-base font-semibold">{surah.transliteration}</Text>
             <Text className="text-white/50 text-xs mb-5">({surah.translation})</Text>
 
             <View className="flex-row items-center mb-6 justify-center">
@@ -69,16 +71,16 @@ export default function QuranScreen() {
               </View>
             </View>
 
-            <TouchableOpacity className="bg-[#dbb142] rounded-full flex-row items-center px-6 py-3.5 w-[90%] justify-center">
-              <Ionicons name="play-circle-outline" size={20} color="#0d1410" />
-              <Text className="text-[#0d1410] font-bold text-xs uppercase tracking-widest ml-2">Listen to Surah</Text>
+            <TouchableOpacity className="bg-gold rounded-full flex-row items-center px-6 py-3.5 w-[90%] justify-center">
+              <Ionicons name="play-circle-outline" size={20} color={colors['emerald-darkest']} />
+              <Text className="text-emerald-darkest font-bold text-xs uppercase tracking-widest ml-2">Listen to Surah</Text>
             </TouchableOpacity>
-          </View>
+          </Card>
         ) : (
-          <View className="bg-[#141d17] border border-white/5 rounded-2xl p-8 mb-6 items-center justify-center opacity-50">
-            <Ionicons name="book-outline" size={32} color="#dbb142" />
+          <Card className="rounded-2xl p-8 mb-6 items-center justify-center opacity-50">
+            <Ionicons name="book-outline" size={32} color={colors.gold} />
             <Text className="text-white/40 mt-2 text-xs uppercase tracking-widest font-bold">Select a surah to begin</Text>
-          </View>
+          </Card>
         )}
 
         {/* Verses List */}

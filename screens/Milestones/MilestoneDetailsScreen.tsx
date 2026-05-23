@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useMemo } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import colors from "@/constants/colors.json";
 
 export default function MilestoneDetailsScreen() {
   const navigation = useNavigation<any>();
@@ -27,45 +28,45 @@ export default function MilestoneDetailsScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-[#141d17] items-center justify-center">
-        <ActivityIndicator color="#dbb142" size="large" />
+      <View className="flex-1 bg-emerald-dark items-center justify-center">
+        <ActivityIndicator color={colors.gold} size="large" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-[#141d17]">
+    <View className="flex-1 bg-emerald-dark">
       {/* Header */}
-      <View className="flex-row justify-between items-center px-6 pt-16 pb-4 bg-[#141d17]">
+      <View className="flex-row justify-between items-center px-6 pt-16 pb-4 bg-emerald-dark">
         <View className="flex-row items-center flex-1">
           <TouchableOpacity 
             className="mr-3 p-2 -ml-2" 
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#a0aba5" />
+            <Ionicons name="arrow-back" size={24} color={colors['emerald-sage']} />
           </TouchableOpacity>
-          <Text className="text-[#a0aba5] text-lg font-bold flex-1" style={{ fontFamily: 'serif' }}>
+          <Text className="text-emerald-sage text-lg font-bold flex-1" style={{ fontFamily: 'serif' }}>
             Understanding Your Path
           </Text>
         </View>
         
-        <View className="w-10 h-10 rounded-full bg-[#182a1d] items-center justify-center overflow-hidden border border-white/10">
+        <View className="w-10 h-10 rounded-full bg-emerald-soft items-center justify-center overflow-hidden border border-white/10">
           {profile?.photoURL ? (
             <Image source={{ uri: profile.photoURL }} className="w-full h-full" />
           ) : (
-            <Text className="text-[#dbb142] font-bold">{profile?.name?.charAt(0) || "U"}</Text>
+            <Text className="text-gold font-bold">{profile?.name?.charAt(0) || "U"}</Text>
           )}
         </View>
       </View>
 
       <ScrollView
-        className="flex-1 px-6 bg-[#141d17]"
+        className="flex-1 px-6 bg-emerald-dark"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120, paddingTop: 10 }}
       >
         {/* Journey of the Soul Card */}
-        <View className="bg-[#1e2722] border-l-4 border-l-[#dbb142] rounded-xl p-5 mb-8 border border-white/5">
-          <Text className="text-[#dbb142] text-lg font-bold mb-3" style={{ fontFamily: 'serif' }}>
+        <View className="bg-emerald-medium-dark border-l-4 border-l-gold rounded-xl p-5 mb-8 border border-white/5">
+          <Text className="text-gold text-lg font-bold mb-3" style={{ fontFamily: 'serif' }}>
             The Journey of the Soul
           </Text>
           <Text className="text-white/70 text-xs leading-relaxed">
@@ -75,7 +76,7 @@ export default function MilestoneDetailsScreen() {
 
         {/* The Perfect Track Heading */}
         <View className="flex-row items-center mb-6">
-          <Ionicons name="star" size={18} color="#dbb142" />
+          <Ionicons name="star" size={18} color={colors.gold} />
           <Text className="text-white text-lg font-bold ml-2" style={{ fontFamily: 'serif' }}>
             The 'Perfect' Track
           </Text>
@@ -93,12 +94,12 @@ export default function MilestoneDetailsScreen() {
             // Icon color logic
             let iconColor = "rgba(255,255,255,0.3)";
             let borderColor = "border-white/10";
-            let bgColor = "bg-[#182a1d]";
+            let bgColor = "bg-emerald-soft";
             
             if (isUnlocked) {
               iconColor = milestone.color;
-              borderColor = "border-[#dbb142]";
-              bgColor = "bg-[#dbb142]/10";
+              borderColor = "border-gold";
+              bgColor = "bg-gold/10";
             } else if (isNext) {
                borderColor = "border-white/30";
             }
@@ -117,13 +118,13 @@ export default function MilestoneDetailsScreen() {
                 </View>
 
                 {/* Content Card */}
-                <View className="flex-1 bg-[#1e2722] rounded-xl p-4 border border-white/5">
+                <View className="flex-1 bg-emerald-medium-dark rounded-xl p-4 border border-white/5">
                   <View className="flex-row justify-between items-start mb-2">
                     <Text className={`font-bold flex-1 mr-2 ${isUnlocked ? 'text-white' : 'text-white/60'}`} style={{ fontFamily: 'serif' }}>
                       {milestone.title}
                     </Text>
                     <View className="bg-white/5 px-2 py-1 rounded">
-                      <Text className={`text-[10px] font-bold ${isUnlocked ? 'text-[#dbb142]' : 'text-white/40'}`}>
+                      <Text className={`text-[10px] font-bold ${isUnlocked ? 'text-gold' : 'text-white/40'}`}>
                         {milestone.days} Days
                       </Text>
                     </View>
@@ -138,10 +139,10 @@ export default function MilestoneDetailsScreen() {
         </View>
 
         {/* Flexible Growth Card */}
-        <View className="bg-[#182a1d] rounded-xl p-5 mb-8 border border-white/5">
+        <View className="bg-emerald-soft rounded-xl p-5 mb-8 border border-white/5">
           <View className="flex-row items-center mb-3">
-             <Ionicons name="git-branch-outline" size={20} color="#a0aba5" className="mr-2" />
-             <Text className="text-[#a0aba5] text-lg font-bold ml-2" style={{ fontFamily: 'serif' }}>
+             <Ionicons name="git-branch-outline" size={20} color={colors['emerald-sage']} className="mr-2" />
+             <Text className="text-emerald-sage text-lg font-bold ml-2" style={{ fontFamily: 'serif' }}>
               Flexible Growth
              </Text>
           </View>
@@ -172,10 +173,10 @@ export default function MilestoneDetailsScreen() {
         {/* Bottom Quote / Image Placeholder */}
         <View className="rounded-xl overflow-hidden h-40 border border-white/10 mb-8 relative bg-black items-center justify-center">
             {/* Dark overlay */}
-            <View className="absolute inset-0 bg-[#dbb142]/10" />
+            <View className="absolute inset-0 bg-gold/10" />
             
             <View className="absolute bottom-4 px-4 items-center w-full">
-              <Text className="text-[#dbb142] text-sm font-bold text-center italic" style={{ fontFamily: 'serif' }}>
+              <Text className="text-gold text-sm font-bold text-center italic" style={{ fontFamily: 'serif' }}>
                 "Verily in the remembrance of Allah do hearts find rest."
               </Text>
             </View>

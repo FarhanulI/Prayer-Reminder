@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import colors from "@/constants/colors.json";
 import {
   STREAK_MILESTONES,
   StreakCategory,
@@ -35,7 +37,7 @@ const CircularProgress = ({ value, total, size = 180 }: { value: number; total: 
           height: size,
           borderRadius: size / 2,
           borderWidth: 6,
-          borderColor: '#dbb142',
+          borderColor: colors.gold,
           borderTopColor: 'transparent',
           borderLeftColor: 'transparent',
           transform: [{ rotate: `${(percentage / 100) * 360 - 45}deg` }]
@@ -74,7 +76,7 @@ const StreakTrackCard = ({
   color: string;
 }) => {
   return (
-    <View className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mb-4">
+    <Card className="mb-4">
       <View className="flex-row items-center mb-4">
         <View className="w-12 h-12 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: `${color}15` }}>
           <Ionicons name={icon as any} size={24} color={color} />
@@ -109,7 +111,7 @@ const StreakTrackCard = ({
       <Text className="text-white/40 text-[10px] font-medium text-center italic">
         "Keep the flame alive!"
       </Text>
-    </View>
+    </Card>
   );
 };
 
@@ -179,28 +181,28 @@ export default function MilestonesScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-[#0d1410] items-center justify-center">
-        <ActivityIndicator color="#dbb142" size="large" />
+      <View className="flex-1 bg-emerald-darkest items-center justify-center">
+        <ActivityIndicator color={colors.gold} size="large" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-[#0d1410]">
+    <View className="flex-1 bg-emerald-darkest">
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 pt-16 pb-4">
         <View className="flex-row items-center">
-          <View className="w-10 h-10 rounded-full bg-[#182a1d] items-center justify-center border border-[#dbb142]/20 overflow-hidden mr-3">
+          <View className="w-10 h-10 rounded-full bg-emerald-soft items-center justify-center border border-gold/20 overflow-hidden mr-3">
             {profile?.photoURL ? (
               <Image source={{ uri: profile.photoURL }} className="w-full h-full" />
             ) : (
-              <Text className="text-[#dbb142] font-bold">{profile?.name?.charAt(0) || "U"}</Text>
+              <Text className="text-gold font-bold">{profile?.name?.charAt(0) || "U"}</Text>
             )}
           </View>
-          <Text className="text-[#dbb142] text-2xl font-bold" style={{ fontFamily: 'serif' }}>Milestones</Text>
+          <Text className="text-gold text-2xl font-bold" style={{ fontFamily: 'serif' }}>Milestones</Text>
         </View>
-        <TouchableOpacity className="bg-white/5 p-2 rounded-xl" onPress={() => navigation.navigate("History")}>
-          <Ionicons name="settings-outline" size={20} color="white/60" />
+        <TouchableOpacity className="bg-white/5 p-2 rounded-xl border border-gold/40" onPress={() => navigation.navigate("History")}>
+          <Ionicons name="settings-outline" size={20} color={colors.gold} />
         </TouchableOpacity>
       </View>
 
@@ -220,9 +222,9 @@ export default function MilestonesScreen() {
             <CircularProgress value={completedCount} total={5} />
           </TouchableOpacity>
 
-          <View className="mt-8 bg-[#dbb142]/10 px-6 py-2.5 rounded-full border border-[#dbb142]/20 flex-row items-center">
-            <MaterialCommunityIcons name="medal-outline" size={18} color="#dbb142" />
-            <Text className="text-[#dbb142] text-[11px] font-bold uppercase tracking-widest ml-2">Strong Day</Text>
+          <View className="mt-8 bg-gold/10 px-6 py-2.5 rounded-full border border-gold/20 flex-row items-center">
+            <MaterialCommunityIcons name="medal-outline" size={18} color={colors.gold} />
+            <Text className="text-gold text-[11px] font-bold uppercase tracking-widest ml-2">Strong Day</Text>
           </View>
 
           <Text className="text-white/30 text-xs font-medium italic mt-6 text-center px-10">
@@ -235,11 +237,11 @@ export default function MilestonesScreen() {
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Streak Tracks</Text>
             <TouchableOpacity
-              className="flex-row items-center border border-[#dbb142]/40 bg-[#dbb142]/10 px-3 py-1.5 rounded-full"
+              className="flex-row items-center border border-gold/40 bg-gold/10 px-3 py-1.5 rounded-full"
               onPress={() => navigation.navigate("MilestoneDetails")}
             >
-              <Ionicons name="information-circle-outline" size={14} color="#dbb142" />
-              <Text className="text-[#dbb142] text-[10px] font-bold ml-1.5 tracking-widest uppercase">How it works</Text>
+              <Ionicons name="information-circle-outline" size={14} color={colors.gold} />
+              <Text className="text-gold text-[10px] font-bold ml-1.5 tracking-widest uppercase">How it works</Text>
             </TouchableOpacity>
           </View>
 
@@ -255,7 +257,7 @@ export default function MilestonesScreen() {
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Your Path to Nearness</Text>
             <TouchableOpacity onPress={() => navigation.navigate("MilestoneDetails")}>
-              <Text className="text-[#dbb142] text-xs font-bold uppercase tracking-wider">Details</Text>
+              <Text className="text-gold text-xs font-bold uppercase tracking-wider">Details</Text>
             </TouchableOpacity>
           </View>
           <Text className="text-white/40 text-xs leading-relaxed mb-8">

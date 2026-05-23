@@ -1,7 +1,9 @@
 import Skeleton from "@/components/Skeleton";
+import { cardClassName } from "@/components/ui/card";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { Animated, PanResponder, Text, TouchableOpacity, View } from "react-native";
+import colors from "@/constants/colors.json";
 
 interface DateSelectorRowProps {
     handlePrevWeek: () => void;
@@ -50,10 +52,10 @@ const DateSelectorRow = ({
         <Animated.View
             {...panResponder.panHandlers}
             style={{ transform: [{ translateX: wiggleAnim }] }}
-            className="flex-row justify-between items-center bg-[#141d17] p-4 rounded-2xl mb-6 border border-white/5"
+            className={cardClassName('compact', 'flex-row justify-between items-center mb-6')}
         >
             <TouchableOpacity onPress={handlePrevWeek}>
-                <Ionicons name="chevron-back" size={16} color="#dbb142" />
+                <Ionicons name="chevron-back" size={16} color={colors.gold} />
             </TouchableOpacity>
             {loading ? (
                 <Skeleton width={120} height={20} borderRadius={4} />
@@ -63,7 +65,7 @@ const DateSelectorRow = ({
                 </Text>
             )}
             <TouchableOpacity onPress={handleNextWeek}>
-                <Ionicons name="chevron-forward" size={16} color="#dbb142" />
+                <Ionicons name="chevron-forward" size={16} color={colors.gold} />
             </TouchableOpacity>
         </Animated.View>
     );

@@ -9,14 +9,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import colors from "@/constants/colors.json";
 
 type Permission = {
   key: string;
   icon: string;
   title: string;
   description: string;
-  checkFn: () => boolean;
-  requestFn: () => void;
+  granted: boolean;
+  onPress: () => void;
 };
 
 export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () => void }) {
@@ -85,21 +86,21 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
   const allGranted = permissions.usage && permissions.overlay;
 
   return (
-    <LinearGradient colors={["#080d0a", "#101a15"]} style={{ flex: 1 }}>
+    <LinearGradient colors={[colors['emerald-login-bg-end'], colors['emerald-login-bg']]} style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 28, paddingVertical: 60 }}
       >
         {/* Header */}
         <View style={{ alignItems: "center", marginBottom: 48 }}>
           <View style={{
-            backgroundColor: "rgba(219,177,66,0.1)",
+            backgroundColor: `${colors.gold}1a`,
             borderWidth: 1,
-            borderColor: "rgba(219,177,66,0.25)",
+            borderColor: `${colors.gold}40`,
             borderRadius: 999,
             padding: 20,
             marginBottom: 20,
           }}>
-            <Ionicons name="shield-checkmark-outline" size={40} color="#dbb142" />
+            <Ionicons name="shield-checkmark-outline" size={40} color={colors.gold} />
           </View>
           <Text style={{ color: "#fff", fontSize: 26, fontWeight: "700", marginBottom: 8, textAlign: "center" }}>
             Prayer Lock Setup
@@ -117,9 +118,9 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
               onPress={item.granted ? undefined : item.onPress}
               activeOpacity={item.granted ? 1 : 0.7}
               style={{
-                backgroundColor: "#141d17",
+                backgroundColor: colors['emerald-dark'],
                 borderWidth: 1.5,
-                borderColor: item.granted ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.07)",
+                borderColor: item.granted ? `${colors.success}66` : "rgba(255,255,255,0.07)",
                 borderRadius: 24,
                 padding: 20,
                 flexDirection: "row",
@@ -127,7 +128,7 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
               }}
             >
               <View style={{
-                backgroundColor: item.granted ? "rgba(74,222,128,0.1)" : "rgba(219,177,66,0.1)",
+                backgroundColor: item.granted ? `${colors.success}1a` : `${colors.gold}1a`,
                 borderRadius: 16,
                 padding: 12,
                 marginRight: 16,
@@ -135,7 +136,7 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
                 <Ionicons
                   name={item.icon as any}
                   size={24}
-                  color={item.granted ? "#4ade80" : "#dbb142"}
+                  color={item.granted ? colors.success : colors.gold}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -149,7 +150,7 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
               <Ionicons
                 name={item.granted ? "checkmark-circle" : "chevron-forward"}
                 size={22}
-                color={item.granted ? "#4ade80" : "rgba(255,255,255,0.3)"}
+                color={item.granted ? colors.success : "rgba(255,255,255,0.3)"}
               />
             </TouchableOpacity>
           ))}
@@ -159,15 +160,15 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
         <TouchableOpacity
           onPress={onComplete}
           style={{
-            backgroundColor: allGranted ? "#dbb142" : "rgba(255,255,255,0.05)",
+            backgroundColor: allGranted ? colors.gold : "rgba(255,255,255,0.05)",
             borderWidth: 1,
-            borderColor: allGranted ? "#dbb142" : "rgba(255,255,255,0.1)",
+            borderColor: allGranted ? colors.gold : "rgba(255,255,255,0.1)",
             borderRadius: 20,
             paddingVertical: 16,
             alignItems: "center",
           }}
         >
-          <Text style={{ color: allGranted ? "#080d0a" : "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 14, letterSpacing: 1, textTransform: "uppercase" }}>
+          <Text style={{ color: allGranted ? colors['emerald-login-bg-end'] : "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 14, letterSpacing: 1, textTransform: "uppercase" }}>
             {allGranted ? "✓  All Set" : "Skip for now"}
           </Text>
         </TouchableOpacity>

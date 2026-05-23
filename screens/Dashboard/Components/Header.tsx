@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { DocumentData } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
+import colors from '@/constants/colors.json';
 
 interface HeaderProps {
     profile: DocumentData | null | undefined;
@@ -103,7 +104,7 @@ export default function Header({ profile }: HeaderProps) {
 
             {/* Elegant glassmorphic pill showing English & Arabic Hijri dates with calendar icon */}
             <View className="bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5 flex-row items-center">
-                <Ionicons name="calendar-outline" size={14} color="#dbb142" className="mr-2" />
+                <Ionicons name="calendar-outline" size={14} color={colors.gold} className="mr-2" />
                 <View className=" overflow-hidden justify-center min-w-[140px]">
                     <Animated.View
                         style={{

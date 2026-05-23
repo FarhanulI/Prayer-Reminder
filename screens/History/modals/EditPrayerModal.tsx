@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { useAuthContext } from '@/context/AuthProvider';
 import { db } from '@/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { updateUserStreaks } from '../../../features/streaks.service';
 import { PRAYERS } from '../constants';
+import colors from '@/constants/colors.json';
 
 interface EditPrayerModalProps {
     editModalVisible: boolean;
@@ -57,7 +59,7 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
             PRAYERS.forEach(prayer => {
                 const prayerKey = prayer.toLowerCase();
                 const newStatus = localPrayers[prayerKey];
-                const oldStatus = selectedDay.data?.[prayerKey]?.isPrayed || false;
+                const oldStatus = selectedDay.data?.prayers?.[prayerKey]?.isPrayed || false;
 
                 if (newStatus !== oldStatus) {
                     updateData[`prayers.${prayerKey}.isPrayed`] = newStatus;
@@ -123,14 +125,14 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
             visible={editModalVisible}
             onRequestClose={() => setEditModalVisible(false)}
         >
-            <View className="flex-1 bg-[#0d1410]">
+            <View className="flex-1 bg-emerald-darkest">
                 {/* Header */}
                 <View className="flex-row justify-between items-center px-6 pt-14 pb-6 border-b border-white/5">
                     <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                        <Ionicons name="close" size={24} color="#dbb142" />
+                        <Ionicons name="close" size={24} color={colors.gold} />
                     </TouchableOpacity>
                     <View className="items-center flex-1">
-                        <Text className="text-[#dbb142] text-xl font-bold text-center" style={{ fontFamily: 'serif' }}>
+                        <Text className="text-gold text-xl font-bold text-center" style={{ fontFamily: 'serif' }}>
                             {selectedDay.date.format('dddd, MMM DD')}
                         </Text>
                     </View>
@@ -150,22 +152,21 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                             const prayerTime = selectedDay.data?.prayers?.[prayerKey]?.time || "--:--";
 
                             return (
-                                <TouchableOpacity
+                                <Card
                                     key={prayer}
                                     onPress={() => handleToggleLocal(prayer)}
-                                    className={`flex-row items-center justify-between p-5 rounded-2xl border ${isPrayed ? 'bg-[#141d17] border-[#dbb142]/20' : 'bg-[#141d17] border-white/5'
-                                        } mb-4`}
+                                    className={`flex-row items-center justify-between p-5 mb-4 ${isPrayed ? 'border-gold/20' : ''}`}
                                 >
                                     <View className="flex-row items-center flex-1">
-                                        <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${isPrayed ? 'bg-[#dbb142]/10' : 'bg-white/5'}`}>
+                                        <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${isPrayed ? 'bg-gold/10' : 'bg-white/5'}`}>
                                             <Ionicons
                                                 name={meta.icon as any}
                                                 size={20}
-                                                color={isPrayed ? '#dbb142' : '#9ca3af'}
+                                                color={isPrayed ? colors.gold : '#9ca3af'}
                                             />
                                         </View>
                                         <View>
-                                            <Text className={`font-bold text-base ${isPrayed ? 'text-[#dbb142]' : 'text-white'}`}>
+                                            <Text className={`font-bold text-base ${isPrayed ? 'text-gold' : 'text-white'}`}>
                                                 {prayer}
                                             </Text>
                                             <Text className="text-white/40 text-[10px] font-bold">
@@ -183,12 +184,12 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                                         <Switch
                                             value={isPrayed}
                                             onValueChange={() => handleToggleLocal(prayer)}
-                                            trackColor={{ false: "#1f2937", true: "#dbb142" }}
+                                            trackColor={{ false: "#1f2937", true: colors.gold }}
                                             thumbColor={isPrayed ? "#ffffff" : "#4b5563"}
                                             ios_backgroundColor="#1f2937"
                                         />
                                     </View>
-                                </TouchableOpacity>
+                                </Card>
                             );
                         })}
                     </View>
@@ -199,10 +200,10 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                     <TouchableOpacity
                         onPress={handleSaveChanges}
                         disabled={updating}
-                        className={`py-4 rounded-2xl items-center shadow-lg flex-row justify-center ${updating ? 'bg-gray-600' : 'bg-[#dbb142] shadow-[#dbb142]/20'}`}
+                        className={`py-4 rounded-2xl items-center shadow-lg flex-row justify-center ${updating ? 'bg-gray-600' : 'bg-gold shadow-gold/20'}`}
                     >
-                        <Ionicons name={updating ? "sync" : "save-outline"} size={18} color="#0d1410" className="mr-2" />
-                        <Text className="text-[#0d1410] font-bold uppercase tracking-widest text-sm ml-2">
+                        <Ionicons name={updating ? "sync" : "save-outline"} size={18} color={colors['emerald-darkest']} className="mr-2" />
+                        <Text className="text-emerald-darkest font-bold uppercase tracking-widest text-sm ml-2">
                             {updating ? "Saving..." : "Save Changes"}
                         </Text>
                     </TouchableOpacity>

@@ -1,9 +1,11 @@
+import { Card } from "@/components/ui/card";
 import { useAuthContext } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import { AppState, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
+import colors from "@/constants/colors.json";
 
 const SETUP_DONE_KEY = "prayer_lock_setup_done";
 const PRAYER_LOCK_ENABLED_KEY = "prayer_lock_enabled";
@@ -107,13 +109,13 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0d1410]">
+    <View className="flex-1 bg-emerald-darkest">
       <ScrollView contentContainerStyle={{ paddingTop: 60, paddingHorizontal: 24 }}>
         <Text className="text-white text-2xl font-bold mb-8" style={{ fontFamily: 'serif' }}>Settings</Text>
 
         {/* Account Section */}
         <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-3 ml-1">Account</Text>
-        <View className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mb-6">
+        <Card className="mb-6">
           <TouchableOpacity className="flex-row items-center justify-between py-3 border-b border-white/5">
             <View className="flex-row items-center">
               <Ionicons name="person-outline" size={20} color="white" />
@@ -131,17 +133,17 @@ export default function SettingsScreen() {
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
           </TouchableOpacity>
-        </View>
+        </Card>
 
         {/* Prayer Lock Section (Android Only & If Setup Done) */}
         {Platform.OS === 'android' && setupDone && (
           <>
             <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-3 ml-1">Focus Mode</Text>
-            <View className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mb-6">
+            <Card className="mb-6">
               <View className="flex-row items-center justify-between py-1">
                 <View className="flex-row items-center flex-1 pr-4">
-                  <View className="bg-[#dbb142]/10 p-2.5 rounded-xl mr-3">
-                    <Ionicons name="lock-closed-outline" size={20} color="#dbb142" />
+                  <View className="bg-gold/10 p-2.5 rounded-xl mr-3">
+                    <Ionicons name="lock-closed-outline" size={20} color={colors.gold} />
                   </View>
                   <View className="flex-1">
                     <Text className="text-white font-medium">Prayer Lock</Text>
@@ -151,20 +153,20 @@ export default function SettingsScreen() {
                 <Switch
                   value={lockEnabled}
                   onValueChange={toggleLock}
-                  trackColor={{ false: "#1f2923", true: "#dbb142" }}
+                  trackColor={{ false: colors["emerald-track"], true: colors.gold }}
                   // @ts-ignore
-                  thumbColor={Platform.OS === 'ios' ? '#fff' : lockEnabled ? '#fff' : '#88988a'}
+                  thumbColor={Platform.OS === 'ios' ? '#fff' : lockEnabled ? '#fff' : colors["emerald-muted"]}
                 />
               </View>
-            </View>
+            </Card>
 
             {/* System Permissions Management */}
             <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-3 ml-1">System Permissions</Text>
-            <View className="bg-[#141d17] border border-white/5 rounded-[24px] p-5 mb-6">
+            <Card className="mb-6">
               {/* Usage Access */}
               <View className="flex-row items-center justify-between py-3 border-b border-white/5">
                 <View className="flex-row items-center">
-                  <View className={`w-2 h-2 rounded-full mr-3 ${hasUsageAccess ? 'bg-[#dbb142]' : 'bg-red-500'}`} />
+                  <View className={`w-2 h-2 rounded-full mr-3 ${hasUsageAccess ? 'bg-gold' : 'bg-red-500'}`} />
                   <View>
                     <Text className="text-white font-medium">Usage Access</Text>
                     <Text className="text-white/40 text-[10px]">Required to detect apps</Text>
@@ -173,18 +175,18 @@ export default function SettingsScreen() {
                 {!hasUsageAccess && (
                   <TouchableOpacity
                     onPress={() => openPermissionSettings('usage')}
-                    className="bg-[#dbb142]/10 border border-[#dbb142]/30 px-3 py-1.5 rounded-lg"
+                    className="bg-gold/10 border border-gold/30 px-3 py-1.5 rounded-lg"
                   >
-                    <Text className="text-[#dbb142] text-[10px] font-bold uppercase">Enable</Text>
+                    <Text className="text-gold text-[10px] font-bold uppercase">Enable</Text>
                   </TouchableOpacity>
                 )}
-                {hasUsageAccess && <Ionicons name="checkmark-circle" size={18} color="#dbb142" />}
+                {hasUsageAccess && <Ionicons name="checkmark-circle" size={18} color={colors.gold} />}
               </View>
 
               {/* Overlay Permission */}
               <View className="flex-row items-center justify-between py-3">
                 <View className="flex-row items-center">
-                  <View className={`w-2 h-2 rounded-full mr-3 ${hasOverlayAccess ? 'bg-[#dbb142]' : 'bg-red-500'}`} />
+                  <View className={`w-2 h-2 rounded-full mr-3 ${hasOverlayAccess ? 'bg-gold' : 'bg-red-500'}`} />
                   <View>
                     <Text className="text-white font-medium">Display Over Apps</Text>
                     <Text className="text-white/40 text-[10px]">Required for the lock screen</Text>
@@ -193,14 +195,14 @@ export default function SettingsScreen() {
                 {!hasOverlayAccess && (
                   <TouchableOpacity
                     onPress={() => openPermissionSettings('overlay')}
-                    className="bg-[#dbb142]/10 border border-[#dbb142]/30 px-3 py-1.5 rounded-lg"
+                    className="bg-gold/10 border border-gold/30 px-3 py-1.5 rounded-lg"
                   >
-                    <Text className="text-[#dbb142] text-[10px] font-bold uppercase">Enable</Text>
+                    <Text className="text-gold text-[10px] font-bold uppercase">Enable</Text>
                   </TouchableOpacity>
                 )}
-                {hasOverlayAccess && <Ionicons name="checkmark-circle" size={18} color="#dbb142" />}
+                {hasOverlayAccess && <Ionicons name="checkmark-circle" size={18} color={colors.gold} />}
               </View>
-            </View>
+            </Card>
           </>
         )}
 
@@ -220,8 +222,8 @@ export default function SettingsScreen() {
           onPress={logout}
           className="bg-red-500/10 border border-red-500/30 py-4 rounded-2xl items-center flex-row justify-center mb-10"
         >
-          <Ionicons name="log-out-outline" size={20} color="#ff4d4d" />
-          <Text className="text-[#ff4d4d] font-bold ml-2">Log Out</Text>
+          <Ionicons name="log-out-outline" size={20} color={colors["red-accent"]} />
+          <Text className="text-red-accent font-bold ml-2">Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -6,6 +6,7 @@ import {
     Text,
     View
 } from 'react-native';
+import colors from '../../constants/colors.json';
 import { useAuthContext } from '../../context/AuthProvider';
 import { saveOnboardingData } from '../../features/device.service';
 import { OnboardingData } from '../../types';
@@ -107,7 +108,7 @@ const OnBoardingScreen = ({ navigation }: any) => {
 
 
     return (
-        <LinearGradient colors={['#0d1410', '#060a08']} className="flex-1">
+        <LinearGradient colors={[colors['emerald-darkest'], colors['emerald-onboarding-bg-end']]} className="flex-1">
             <ScrollView
                 className="flex-1 px-6"
                 contentContainerStyle={{ paddingTop: 60, paddingBottom: 40 }}
@@ -118,7 +119,7 @@ const OnBoardingScreen = ({ navigation }: any) => {
                     {[0, 1, 2].map((i) => (
                         <View
                             key={i}
-                            className={`h-1 w-8 mx-1 rounded-full ${i === currentStep ? 'bg-[#dbb142]' : 'bg-white/10'}`}
+                            className={`h-1 w-8 mx-1 rounded-full ${i === currentStep ? 'bg-gold' : 'bg-white/10'}`}
                         />
                     ))}
                 </View>
@@ -165,7 +166,7 @@ const OnBoardingScreen = ({ navigation }: any) => {
                 {currentStep !== 1 && (
                     <View className="items-center mt-12 pb-10">
                         <Text
-                            className="text-[#dbb142]/70 text-center text-xl italic leading-7"
+                            className="text-gold/70 text-center text-xl italic leading-7"
                             style={{ fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif' }}
                         >
                             "Verily, in the remembrance of Allah do hearts find rest."

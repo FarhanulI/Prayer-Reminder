@@ -1,16 +1,18 @@
+import colors from "@/constants/colors.json";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 
+import ForbiddenTimesScreen from "@/screens/ForbiddenTimesScreen";
 import { useAuthContext } from "../context/AuthProvider";
+import HistoryScreen from "../screens/History/HistoryScreen";
 import LoginScreen from "../screens/LoginScreen";
+import MilestoneDetailsScreen from "../screens/Milestones/MilestoneDetailsScreen";
 import OnBoardingScreen from "../screens/OnBoarding/OnBoardingScreen";
 import PrayerLockSetupScreen from "../screens/PrayerLockSetupScreen";
 import SignupScreen from "../screens/SignupScreen";
-import HistoryScreen from "../screens/History/HistoryScreen";
-import MilestoneDetailsScreen from "../screens/Milestones/MilestoneDetailsScreen";
 import MainTabNavigator from "./MainTabNavigator";
 
 const Stack = createNativeStackNavigator();
@@ -54,11 +56,20 @@ export default function AppNavigator() {
 
   if (loading || (user && setupDone === null)) {
     return (
-      <View className="flex-1 bg-[#0d1410] items-center justify-center">
+      <View className="flex-1 bg-emerald-darkest items-center justify-center">
         <View className="items-center">
           <View className="w-24 h-24 mb-6 items-center justify-center">
-            <View className="absolute w-24 h-24 rounded-full border-2 border-[#dbb142]/20" />
-            <ActivityIndicator size="large" color="#dbb142" />
+            <View
+              style={{
+                position: "absolute",
+                width: 96,
+                height: 96,
+                borderRadius: 48,
+                borderWidth: 2,
+                borderColor: `${colors.gold}33`,
+              }}
+            />
+            <ActivityIndicator size="large" color={colors.gold} />
           </View>
         </View>
       </View>
@@ -80,7 +91,17 @@ export default function AppNavigator() {
             ) : null}
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen name="MilestoneDetails" component={MilestoneDetailsScreen} />
-            <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: true, headerTitle: "History", headerStyle: { backgroundColor: '#0d1410' }, headerTintColor: '#dbb142' }} />
+            <Stack.Screen name="Forbidden-times" component={ForbiddenTimesScreen} />
+            <Stack.Screen
+              name="History"
+              component={HistoryScreen}
+              options={{
+                headerShown: true,
+                headerTitle: "History",
+                headerStyle: { backgroundColor: colors['emerald-darkest'] },
+                headerTintColor: colors.gold,
+              }}
+            />
             <Stack.Screen name="OnBoarding" component={OnBoardingScreen} />
           </>
         ) : (

@@ -13,6 +13,7 @@ import {
   Vibration,
   View,
 } from "react-native";
+import colors from "@/constants/colors.json";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.5;
@@ -78,7 +79,7 @@ export default function PrayerOverlayScreen({
 
   const progressColor = translateX.interpolate({
     inputRange: [0, SWIPE_THRESHOLD * 0.8, SWIPE_THRESHOLD],
-    outputRange: ["#dbb142", "#dbb142", "#4ade80"],
+    outputRange: [colors.gold, colors.gold, colors.success],
     extrapolate: "clamp",
   });
 
@@ -203,12 +204,12 @@ export default function PrayerOverlayScreen({
       <Animated.View
         style={{
           flex: 1,
-          backgroundColor: "#080d0a",
+          backgroundColor: colors['emerald-login-bg-end'],
           opacity,
           paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 60,
         }}
       >
-        <StatusBar barStyle="light-content" backgroundColor="#080d0a" />
+        <StatusBar barStyle="light-content" backgroundColor={colors['emerald-login-bg-end']} />
 
         <View
           style={{
@@ -223,15 +224,15 @@ export default function PrayerOverlayScreen({
             {/* Mosque Icon */}
             <View
               style={{
-                backgroundColor: "rgba(219,177,66,0.1)",
+                backgroundColor: `${colors.gold}1a`,
                 borderWidth: 1,
-                borderColor: "rgba(219,177,66,0.2)",
+                borderColor: `${colors.gold}33`,
                 borderRadius: 999,
                 padding: 24,
                 marginBottom: 20,
               }}
             >
-              <Ionicons name="moon" size={48} color="#dbb142" />
+              <Ionicons name="moon" size={48} color={colors.gold} />
             </View>
 
             {/* Prayer Name */}
@@ -265,16 +266,16 @@ export default function PrayerOverlayScreen({
                 marginBottom: 8,
               }}
             >
-              <Ionicons name="time-outline" size={14} color="#dbb142" />
+              <Ionicons name="time-outline" size={14} color={colors.gold} />
               <Text
-                style={{ color: "#dbb142", marginLeft: 6, fontWeight: "600" }}
+                style={{ color: colors.gold, marginLeft: 6, fontWeight: "600" }}
               >
                 {prayerTime}
               </Text>
             </View>
             <View
               style={{
-                backgroundColor: "rgba(219,177,66,0.1)",
+                backgroundColor: `${colors.gold}1a`,
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 borderRadius: 8,
@@ -282,7 +283,7 @@ export default function PrayerOverlayScreen({
               }}
             >
               <Text
-                style={{ color: "#dbb142", fontSize: 12, fontWeight: "700" }}
+                style={{ color: colors.gold, fontSize: 12, fontWeight: "700" }}
               >
                 Ends in: {remainingTime}
               </Text>
@@ -291,7 +292,7 @@ export default function PrayerOverlayScreen({
             {/* Hadith */}
             <View
               style={{
-                backgroundColor: "#141d17",
+                backgroundColor: colors['emerald-dark'],
                 borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.06)",
                 borderRadius: 24,
@@ -317,7 +318,7 @@ export default function PrayerOverlayScreen({
               </Text>
               <Text
                 style={{
-                  color: "#dbb142",
+                  color: colors.gold,
                   fontSize: 11,
                   fontWeight: "700",
                   textTransform: "uppercase",
@@ -342,9 +343,9 @@ export default function PrayerOverlayScreen({
               <Animated.View
                 {...panResponder.panHandlers}
                 style={{
-                  backgroundColor: "#141d17",
+                  backgroundColor: colors['emerald-dark'],
                   borderWidth: 2,
-                  borderColor: "rgba(219,177,66,0.3)", // Fixed color for native driver compatibility
+                  borderColor: `${colors.gold}4d`, // Fixed color for native driver compatibility
                   borderRadius: 64,
                   height: 70,
                   justifyContent: "center",
@@ -360,7 +361,7 @@ export default function PrayerOverlayScreen({
                     top: 0,
                     bottom: 0,
                     width: "100%",
-                    backgroundColor: "#dbb142", // Keep base color gold
+                    backgroundColor: colors.gold, // Keep base color gold
                     opacity: 0.15,
                     transform: [
                       { translateX: -SCREEN_WIDTH / 2 }, // Center for scale
@@ -384,12 +385,12 @@ export default function PrayerOverlayScreen({
                       width: 58,
                       height: 58,
                       borderRadius: 999,
-                      backgroundColor: "#dbb142", // Use fixed color for native driver compatibility
+                      backgroundColor: colors.gold, // Use fixed color for native driver compatibility
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    <Ionicons name="arrow-forward" size={26} color="#080d0a" />
+                    <Ionicons name="arrow-forward" size={26} color={colors['emerald-login-bg-end']} />
                   </Animated.View>
                 </Animated.View>
 
@@ -431,7 +432,7 @@ export default function PrayerOverlayScreen({
                   justifyContent: "center",
                 }}
               >
-                <Ionicons name="alarm-outline" size={16} color="rgba(219,177,66,0.8)" style={{ marginRight: 8 }} />
+                <Ionicons name="alarm-outline" size={16} color={`${colors.gold}cc`} style={{ marginRight: 8 }} />
                 <Text
                   style={{
                     color: "rgba(255,255,255,0.6)",
@@ -447,9 +448,9 @@ export default function PrayerOverlayScreen({
             ) : (
               <View
                 style={{
-                  backgroundColor: "#141d17",
+                  backgroundColor: colors['emerald-dark'],
                   borderWidth: 1,
-                  borderColor: "rgba(219,177,66,0.2)",
+                  borderColor: `${colors.gold}33`,
                   borderRadius: 20,
                   padding: 16,
                   marginBottom: 16,
@@ -457,8 +458,8 @@ export default function PrayerOverlayScreen({
                 }}
               >
                 <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                  <Ionicons name="alarm-outline" size={16} color="#dbb142" />
-                  <Text style={{ color: "#dbb142", fontWeight: "700", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginLeft: 8 }}>
+                  <Ionicons name="alarm-outline" size={16} color={colors.gold} />
+                  <Text style={{ color: colors.gold, fontWeight: "700", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginLeft: 8 }}>
                     Remind me at...
                   </Text>
                   {endTime ? (
@@ -485,16 +486,16 @@ export default function PrayerOverlayScreen({
                           setShowTimePicker(false);
                         }}
                         style={{
-                          backgroundColor: "rgba(219,177,66,0.12)",
+                          backgroundColor: `${colors.gold}1f`,
                           borderWidth: 1,
-                          borderColor: "rgba(219,177,66,0.3)",
+                          borderColor: `${colors.gold}4d`,
                           borderRadius: 12,
                           paddingVertical: 10,
                           paddingHorizontal: 16,
                           alignItems: "center",
                         }}
                       >
-                        <Text style={{ color: "#dbb142", fontWeight: "700", fontSize: 13 }}>
+                        <Text style={{ color: colors.gold, fontWeight: "700", fontSize: 13 }}>
                           {mins}m
                         </Text>
                         <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>
