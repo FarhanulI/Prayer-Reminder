@@ -1,8 +1,10 @@
+import Skeleton from "@/components/Skeleton";
 import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
 import { refreshApplicationData } from "@/features/device.service";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useEndOfDayReminder } from "@/hooks/useEndOfDayReminder";
 import { usePrayerLock } from "@/hooks/usePrayerLock";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -10,7 +12,11 @@ import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import EndOfDayOverlayScreen from "../EndOfDayOverlayScreen";
 import PrayerOverlayScreen from "../PrayerOverlayScreen";
+import BookmarksCard from "./Components/BookmarksCard";
+import ContinueReadingCard from "./Components/ContinueReadingCard";
+import DailyVerseCard from "./Components/DailyVerseCard";
 import Header from "./Components/Header";
 import UpcomingPrayerCard from "./Components/UpcomingPrayerCard";
 
@@ -32,7 +38,6 @@ const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount
 
     <View className="items-center justify-center">
       <View className="w-[84px] h-[84px] rounded-full border-[6px] border-white/5 items-center justify-center">
-        {/* Simple Progress Track (approximate for UI) */}
         <View
           className="absolute w-[84px] h-[84px] rounded-full border-[6px] border-gold"
           style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '-15deg' }] }}
@@ -47,15 +52,15 @@ const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
-  const { user, logout } = useAuthContext();
-  const { data, isLoading: loading, refetch, isFetching } = useDashboardData(user?.uid);
+  const { user } = useAuthContext();
+  const { data, isLoading: loading, refetch, isFetching } = useDashboardData(user?.profile?.uid);
 
 
 
-  const { profile, userData, yesterdayData } = useMemo(() => {
+  const { profile, prayerData, yesterdayData } = useMemo(() => {
     return {
       profile: data?.profile,
-      userData: data?.userData,
+      prayerData: data?.prayerData,
       yesterdayData: data?.yesterdayData,
     }
   }, [data])
@@ -67,29 +72,33 @@ export default function DashboardScreen() {
   const [overlayEndTime, setOverlayEndTime] = useState("");
   const [isSkipReminder, setIsSkipReminder] = useState(false);
 
+  const { visible: eodVisible, dismiss: dismissEod } = useEndOfDayReminder();
+
   const onRefresh = useCallback(async () => {
-    if (!user?.uid) return;
+    if (!user?.profile?.uid) return;
     setRefreshing(true);
     try {
-      await refreshApplicationData(user.uid);
+      await refreshApplicationData(user?.profile?.uid);
       await refetch();
     } catch (error) {
       console.error("Refresh failed:", error);
     } finally {
       setRefreshing(false);
     }
-  }, [user?.uid, refetch]);
+  }, [user?.profile?.uid, refetch]);
 
   // Auto-refresh if no data is present on load
-  React.useEffect(() => {
-    if (user?.uid && !userData && !loading) {
-      onRefresh();
-    }
-  }, [user?.uid, userData, loading, onRefresh]);
+  // React.useEffect(() => {
+  //   if (user?.profile?.uid && !prayerData && !loading) {
+  //     onRefresh();
+  //   }
+  // }, [user?.profile?.uid, prayerData, loading, onRefresh]);
 
   // Calculate prayer list
   const prayerList = useMemo(() => {
-    if (!userData || !userData.prayers) return [];
+    if (!prayerData || !prayerData.prayers) return [];
+
+    const today = dayjs().format("YYYY-MM-DD");
 
     const formatTime = (t: string) => {
       if (!t) return "--:--";
@@ -99,13 +108,13 @@ export default function DashboardScreen() {
     };
 
     return [
-      { name: "Fajr", time: formatTime(userData.prayers.fajr?.time), rawTime: userData.prayers.fajr?.time, end: userData.prayers.fajr?.end, isPrayed: userData.prayers.fajr?.isPrayed, skipped: userData.prayers.fajr?.skipped },
-      { name: "Dhuhr", time: formatTime(userData.prayers.dhuhr?.time), rawTime: userData.prayers.dhuhr?.time, end: userData.prayers.dhuhr?.end, isPrayed: userData.prayers.dhuhr?.isPrayed, skipped: userData.prayers.dhuhr?.skipped },
-      { name: "Asr", time: formatTime(userData.prayers.asr?.time), rawTime: userData.prayers.asr?.time, end: userData.prayers.asr?.end, isPrayed: userData.prayers.asr?.isPrayed, skipped: userData.prayers.asr?.skipped },
-      { name: "Maghrib", time: formatTime(userData.prayers.maghrib?.time), rawTime: userData.prayers.maghrib?.time, end: userData.prayers.maghrib?.end, isPrayed: userData.prayers.maghrib?.isPrayed, skipped: userData.prayers.maghrib?.skipped },
-      { name: "Isha", time: formatTime(userData.prayers.isha?.time), rawTime: userData.prayers.isha?.time, end: userData.prayers.isha?.end, isPrayed: userData.prayers.isha?.isPrayed, skipped: userData.prayers.isha?.skipped },
+      { name: "Fajr", time: formatTime(prayerData.prayers.fajr?.time), rawTime: prayerData.prayers.fajr?.time, end: prayerData.prayers.fajr?.end, isPrayed: prayerData.prayers.fajr?.isPrayed, skipped: prayerData.prayers.fajr?.skipped, date: today },
+      { name: "Dhuhr", time: formatTime(prayerData.prayers.dhuhr?.time), rawTime: prayerData.prayers.dhuhr?.time, end: prayerData.prayers.dhuhr?.end, isPrayed: prayerData.prayers.dhuhr?.isPrayed, skipped: prayerData.prayers.dhuhr?.skipped, date: today },
+      { name: "Asr", time: formatTime(prayerData.prayers.asr?.time), rawTime: prayerData.prayers.asr?.time, end: prayerData.prayers.asr?.end, isPrayed: prayerData.prayers.asr?.isPrayed, skipped: prayerData.prayers.asr?.skipped, date: today },
+      { name: "Maghrib", time: formatTime(prayerData.prayers.maghrib?.time), rawTime: prayerData.prayers.maghrib?.time, end: prayerData.prayers.maghrib?.end, isPrayed: prayerData.prayers.maghrib?.isPrayed, skipped: prayerData.prayers.maghrib?.skipped, date: today },
+      { name: "Isha", time: formatTime(prayerData.prayers.isha?.time), rawTime: prayerData.prayers.isha?.time, end: prayerData.prayers.isha?.end, isPrayed: prayerData.prayers.isha?.isPrayed, skipped: prayerData.prayers.isha?.skipped, date: today },
     ];
-  }, [userData]);
+  }, [prayerData]);
 
   // Calculate prayer list for locking (uses raw times for robust comparison)
   const lockPrayers = useMemo(() => {
@@ -128,7 +137,6 @@ export default function DashboardScreen() {
       list.push({
         ...p,
         time: p.rawTime, // Use raw 24h time for internal logic
-        date: today
       });
     });
 
@@ -214,7 +222,6 @@ export default function DashboardScreen() {
 
   const onShowOverlay = useCallback(
     (prayerName: string, prayerEnd: string, prayerDate: string) => {
-      console.log(`[Dashboard] Triggering overlay for: ${prayerName} until ${prayerEnd} (${prayerDate})`);
       setOverlayPrayerName(prayerName);
       setOverlayEndTime(prayerEnd);
       setOverlayPrayerDate(prayerDate);
@@ -231,7 +238,7 @@ export default function DashboardScreen() {
 
   // --- Prayer Lock Hook ---
   const { markPrayerComplete, snoozeUntilTime } = usePrayerLock({
-    uid: user?.uid ?? null,
+    uid: user?.profile?.uid ?? null,
     prayers: lockPrayers,
     onShowOverlay,
   });
@@ -239,7 +246,6 @@ export default function DashboardScreen() {
   const handlePray = async (name: string) => {
     const finalName = name || overlayPrayerName;
     const logDate = overlayPrayerDate || dayjs().format("YYYY-MM-DD");
-    console.log(`[Dashboard] Finalizing prayer completion for: ${finalName} (${logDate})`);
     // Sync completion to native storage before hiding overlay so blocked apps
     // cannot relaunch this app while Firestore/dashboard data is still stale.
     await markPrayerComplete(finalName, logDate);
@@ -261,6 +267,42 @@ export default function DashboardScreen() {
 
   return (
     <View className="flex-1 bg-emerald-darkest">
+      <EndOfDayOverlayScreen
+        visible={eodVisible}
+        missedPrayers={prayerList.filter(p => {
+          if (p.isPrayed) return false;
+          if (p.skipped) return true;
+          if (!p.end || !p.rawTime) return false;
+          const cleanEnd = p.end.split(' ')[0];
+          const cleanTime = p.rawTime.split(' ')[0];
+          let endObj = dayjs(`${p.date} ${cleanEnd}`);
+          const startObj = dayjs(`${p.date} ${cleanTime}`);
+          if (endObj.isBefore(startObj)) {
+            endObj = endObj.add(1, 'day');
+          }
+          return endObj.isBefore(dayjs());
+        })}
+        currentPrayer={currentInfo}
+        onClose={dismissEod}
+        onLogPrayer={async (name, date) => {
+          await markPrayerComplete(name, date || dayjs().format("YYYY-MM-DD"));
+          // If no more missed prayers, close overlay
+          const remaining = prayerList.filter(p => {
+            if (p.isPrayed || p.name === name) return false;
+            if (p.skipped) return true;
+            if (!p.end || !p.rawTime) return false;
+            const cleanEnd = p.end.split(' ')[0];
+            const cleanTime = p.rawTime.split(' ')[0];
+            let endObj = dayjs(`${p.date} ${cleanEnd}`);
+            const startObj = dayjs(`${p.date} ${cleanTime}`);
+            if (endObj.isBefore(startObj)) {
+              endObj = endObj.add(1, 'day');
+            }
+            return endObj.isBefore(dayjs());
+          });
+          if (remaining.length === 0) dismissEod();
+        }}
+      />
       {/* Prayer Lock Overlay */}
       <PrayerOverlayScreen
         visible={overlayVisible}
@@ -283,7 +325,7 @@ export default function DashboardScreen() {
         <Header profile={profile} />
 
         {/* Upcoming Card (Unified with Prayer Times) */}
-        {currentInfo && (
+        {currentInfo ? (
           <UpcomingPrayerCard
             title={currentInfo.title}
             name={currentInfo.name}
@@ -293,8 +335,10 @@ export default function DashboardScreen() {
             isSkipped={currentInfo.isSkipped}
             prayerList={prayerList}
             profile={profile}
-            prayerTimings={userData?.prayers}
+            prayerTimings={prayerData?.prayers}
           />
+        ) : (
+          <Skeleton height={230} className="w-full mb-8" borderRadius={24} />
         )}
 
         {/* Quick Stats Row */}
@@ -308,35 +352,17 @@ export default function DashboardScreen() {
           />
         </View>
 
-        {/* Feature Cards Row */}
+        {/* Feature Cards Row — Last Read + Bookmarks */}
         <View className="flex-row justify-between mb-8">
-          <TouchableOpacity
-            className="w-[48%] bg-emerald-dark rounded-[24px] p-4 border border-white/5 justify-center shadow-lg"
-            onPress={() => navigation.navigate("Quran")}
-            style={{ minHeight: 110 }}
-          >
-            <View className="flex-row items-center">
-              <View className="w-[44px] h-[54px] rounded-2xl bg-gold/10 items-center justify-center mr-3">
-                <Ionicons name="book" size={22} color={colors.gold} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-bold text-[12px] tracking-widest leading-tight mb-1.5">READ{"\n"}QURAN</Text>
-                <Text className="text-white/60 text-[10px] mb-0.5">Resume Surah</Text>
-                <Text className="text-gold text-[11px] font-semibold">Al-Fatiha</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          {/* <QiblaCard /> */}
+          <ContinueReadingCard onPress={(lastRead) => navigation.navigate("Quran", { surahNumber: lastRead?.surahNumber, ayahNumber: lastRead?.ayahNumber })} />
+          <BookmarksCard onPress={() => navigation.navigate("Bookmarks")} />
         </View>
 
         {/* Verse Card */}
-        {/* <View className="mb-10">
-          <Text className="text-white text-lg font-semibold mb-4" style={{ fontFamily: 'serif' }}>Daily Verse</Text>
+        <View className="mb-10">
+          {/* <Text className="text-white text-lg font-semibold mb-4" style={{ fontFamily: 'serif' }}>Daily Verse</Text> */}
           <DailyVerseCard />
-        </View> */}
-
-
+        </View>
       </ScrollView>
 
       {/* Floating Action Button for Streaks */}

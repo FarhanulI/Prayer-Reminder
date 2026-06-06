@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card';
+import colors from '@/constants/colors.json';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
@@ -16,7 +17,6 @@ import Toast from 'react-native-toast-message';
 import { loginUser } from '../features/auth/auth.service';
 import { GoogleSignInError } from '../features/auth/googleSignIn.service';
 import { useGoogleSignIn } from '../hooks/useGoogleSignIn';
-import colors from '@/constants/colors.json';
 
 const LoginScreen = ({ navigation }: any) => {
     const [email, setEmail] = useState('');
@@ -42,7 +42,6 @@ const LoginScreen = ({ navigation }: any) => {
         setLoading(true);
         try {
             await loginUser(email.trim(), password);
-            Toast.show({ type: 'success', text1: 'Welcome back! 🤲' });
         } catch (err: any) {
             const message =
                 err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
@@ -61,7 +60,7 @@ const LoginScreen = ({ navigation }: any) => {
     const handleGoogleSignIn = async () => {
         try {
             await signInWithGoogle();
-            Toast.show({ type: 'success', text1: 'Welcome back! 🤲' });
+            // Toast.show({ type: 'success', text1: 'Welcome back! 🤲' });
         } catch (err: unknown) {
             if (err instanceof GoogleSignInError && err.reason === 'cancelled') {
                 return;
@@ -103,7 +102,7 @@ const LoginScreen = ({ navigation }: any) => {
 
                     {/* Card Container */}
                     <Card variant="auth">
-                        
+
                         {/* Email Input */}
                         <Text className="text-emerald-muted text-[11px] font-bold tracking-[2px] mb-2 ml-1 uppercase">
                             Email Address
@@ -141,10 +140,10 @@ const LoginScreen = ({ navigation }: any) => {
                                 value={password}
                             />
                             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Ionicons 
-                                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                                    size={20} 
-                                    color={colors['emerald-placeholder']} 
+                                <Ionicons
+                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                    size={20}
+                                    color={colors['emerald-placeholder']}
                                 />
                             </TouchableOpacity>
                         </View>

@@ -1,3 +1,4 @@
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -7,7 +8,7 @@ import {
     View
 } from 'react-native';
 import colors from '../../constants/colors.json';
-import { useAuthContext } from '../../context/AuthProvider';
+import { AUTHSTATUS, useAuthContext } from '../../context/AuthProvider';
 import { saveOnboardingData } from '../../features/device.service';
 import { OnboardingData } from '../../types';
 import FirstStep from './components/FirstStep';
@@ -15,13 +16,15 @@ import SecondStep from './components/SecondStep';
 import ThirdStep from './components/ThirdStep';
 
 const OnBoardingScreen = ({ navigation }: any) => {
-    const { user } = useAuthContext();
+    const { user, setAuthStatus } = useAuthContext();
     const [currentStep, setCurrentStep] = useState(0); // 0: Questions, 1: Insight, 2: Commitment
     const [prayerFreq, setPrayerFreq] = useState('');
     const [screenTime, setScreenTime] = useState('');
     const [age, setAge] = useState('');
     const [commitment, setCommitment] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const { data, isLoading: loadingUserInfo, refetch, isFetching } = useDashboardData(user?.profile?.uid);
 
     const prayerOptions = ['5 times', '3-4 times', '1-2 times', 'Rarely'];
     const screenTimeOptions = ['< 2h', '2-4h', '4-6h', '6h+'];
@@ -72,13 +75,14 @@ const OnBoardingScreen = ({ navigation }: any) => {
     };
 
     const handleFinish = async () => {
-        if (!user?.uid) return;
+        if (!user?.profile?.uid) return;
         setLoading(true);
         const stats = getPrayerStats();
 
         const onboardingData: OnboardingData = {
             onboardingCompleted: true,
             profile: {
+                ...data?.profile?.profile,
                 age: stats.ageNum,
                 dailyPhoneUsage: stats.usageNum
             },
@@ -96,9 +100,12 @@ const OnBoardingScreen = ({ navigation }: any) => {
             }
         };
 
+        console.log({ onboardingData });
+
+
         try {
-            await saveOnboardingData(user.uid, onboardingData);
-            navigation.replace('Main');
+            await saveOnboardingData(user?.profile?.uid, onboardingData);
+            setAuthStatus(AUTHSTATUS.authenticated)
         } catch (error) {
             console.error("Failed to save onboarding:", error);
         } finally {
@@ -136,6 +143,7 @@ const OnBoardingScreen = ({ navigation }: any) => {
                         prayerOptions={prayerOptions}
                         screenTimeOptions={screenTimeOptions}
                         ageOptions={ageOptions}
+                        loadingUserInfo={loadingUserInfo}
                     />
                 )}
                 {currentStep === 1 && (

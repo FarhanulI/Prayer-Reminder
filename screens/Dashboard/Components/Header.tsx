@@ -1,9 +1,9 @@
+import colors from '@/constants/colors.json';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { DocumentData } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
-import colors from '@/constants/colors.json';
 
 interface HeaderProps {
     profile: DocumentData | null | undefined;
@@ -99,7 +99,7 @@ export default function Header({ profile }: HeaderProps) {
         <View className="flex-row justify-between items-center mb-8">
             <View>
                 <Text className="text-white/40 text-[11px] font-bold uppercase tracking-widest">Assalamu Alaikum</Text>
-                <Text className="text-white text-xl font-bold">{profile?.name || "User"}</Text>
+                <Text className="text-white text-xl font-bold">{profile?.profile?.name || profile?.name || "User"}</Text>
             </View>
 
             {/* Elegant glassmorphic pill showing English & Arabic Hijri dates with calendar icon */}

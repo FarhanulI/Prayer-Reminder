@@ -1,4 +1,9 @@
 import { Card } from '@/components/ui/card';
+import colors from '@/constants/colors.json';
+import { signupUser } from '@/features/auth/auth.service';
+import { GoogleSignInError } from '@/features/auth/googleSignIn.service';
+import { useGoogleSignIn } from '@/hooks/useGoogleSignIn';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -12,15 +17,6 @@ import {
   View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { signupUser } from '@/features/auth/auth.service';
-import { GoogleSignInError } from '@/features/auth/googleSignIn.service';
-import { useGoogleSignIn } from '@/hooks/useGoogleSignIn';
-import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import colors from '@/constants/colors.json';
-
-const FONT_FAMILIES = {
-  serif: Platform.OS === 'ios' ? 'Georgia' : 'serif', // Simple serif fallback
-};
 
 const COLORS = {
   bgGradient: [colors['emerald-login-bg'], colors['emerald-login-bg-end']] as const, // Dark green/black gradient
@@ -74,8 +70,6 @@ const SignUpScreen = ({ navigation }: any) => {
     try {
       await signupUser(email.trim(), password, fullName.trim());
       Toast.show({ type: 'success', text1: 'Account Created! 🎉' });
-      navigation.replace('OnBoarding');
-
     } catch (err: any) {
       const message =
         err.code === 'auth/email-already-in-use'
@@ -93,14 +87,11 @@ const SignUpScreen = ({ navigation }: any) => {
 
   const handleGoogleSignUp = async () => {
     try {
-      const { isNewUser } = await signInWithGoogle();
-      Toast.show({
-        type: 'success',
-        text1: isNewUser ? 'Account Created! 🎉' : 'Welcome back! 🤲',
-      });
-      if (isNewUser) {
-        navigation.replace('OnBoarding');
-      }
+      await signInWithGoogle();
+      // Toast.show({
+      //   type: 'success',
+      //   text1: isNewUser ? 'Account Created! 🎉' : 'Welcome back! 🤲',
+      // });
     } catch (err: unknown) {
       if (err instanceof GoogleSignInError && err.reason === 'cancelled') {
         return;

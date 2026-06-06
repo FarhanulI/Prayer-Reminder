@@ -1,3 +1,4 @@
+import colors from "@/constants/colors.json";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
@@ -9,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import colors from "@/constants/colors.json";
 
 type Permission = {
   key: string;
@@ -157,7 +157,7 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
         </View>
 
         {/* Skip / Continue */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={onComplete}
           style={{
             backgroundColor: allGranted ? colors.gold : "rgba(255,255,255,0.05)",
@@ -171,7 +171,7 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
           <Text style={{ color: allGranted ? colors['emerald-login-bg-end'] : "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 14, letterSpacing: 1, textTransform: "uppercase" }}>
             {allGranted ? "✓  All Set" : "Skip for now"}
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </LinearGradient>
   );

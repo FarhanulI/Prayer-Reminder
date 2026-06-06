@@ -19,6 +19,7 @@ interface FirstStepProps {
     prayerOptions: string[];
     screenTimeOptions: string[];
     ageOptions: string[];
+    loadingUserInfo: boolean
 }
 
 const FirstStep = ({
@@ -31,7 +32,8 @@ const FirstStep = ({
     setCurrentStep,
     prayerOptions,
     screenTimeOptions,
-    ageOptions
+    ageOptions,
+    loadingUserInfo
 }: FirstStepProps) => {
 
     return (
@@ -123,7 +125,8 @@ const FirstStep = ({
 
             <TouchableOpacity
                 onPress={() => setCurrentStep(1)}
-                className="bg-gold py-4 rounded-full items-center mb-4 active:opacity-90"
+                className={`py-4 rounded-full items-center mb-4 active:opacity-90 ${!loadingUserInfo && screenTime && age && prayerFreq ? 'bg-gold' : 'bg-gold/40'}`}
+                disabled={loadingUserInfo && !(screenTime && age && prayerFreq)}
             >
                 <Text className="text-emerald-login-bg font-bold tracking-widest text-[12px]">CONTINUE</Text>
             </TouchableOpacity>

@@ -8,9 +8,7 @@ export const DeviceSync = () => {
 
     useEffect(() => {
         const sync = async () => {
-            console.log({ user });
-
-            if (user?.uid) {
+            if (user?.profile?.uid) {
                 try {
                     const [token, location] = await Promise.all([
                         getDeviceToken(),
@@ -18,7 +16,7 @@ export const DeviceSync = () => {
                     ]);
 
 
-                    await saveUserDeviceInfo(user.uid, {
+                    await saveUserDeviceInfo(user?.profile?.uid, {
                         deviceToken: token,
                         location: location?.coords || null
                     });
@@ -30,7 +28,7 @@ export const DeviceSync = () => {
         };
 
         sync();
-    }, [user?.uid]);
+    }, [user?.profile?.uid]);
 
     return null; // This component doesn't render anything
 };

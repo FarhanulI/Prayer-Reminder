@@ -1,3 +1,40 @@
+import { LocationObjectCoords } from "expo-location";
+import { FieldValue } from "firebase/firestore";
+
+export type UserProfileInfoType = {
+    age?: number;
+    dailyPhoneUsage?: number;
+    email: string | null;
+    name: string | null;
+    photoURL: string | null;
+    subscription: 'free' | 'premium' | string; // Assuming 'free' is a subscription tier
+    uid?: string;
+}
+
+export interface UserDocument {
+    createdAt: Date | FieldValue;
+    date?: DateInfo; // represented as null in your snippet, typed flexibly
+    deviceToken?: string;
+    goal?: {
+        targetDaily: number;
+        type: string; // 'improve' seems to be a specific status/mode
+    };
+    insights?: {
+        estimatedLifetimeMissed: number;
+        estimatedLifetimePrayed: number;
+    };
+    lastLogin?: FieldValue;
+    location: LocationObjectCoords | null,
+    onboardingCompleted: boolean;
+    prayerHabit?: {
+        averageDaily: number;
+        estimatedMissedPerDay: number;
+    };
+    profile: UserProfileInfoType;
+    sunTimings?: null | any; // marked as null in your document
+    updatedAt?: FieldValue;
+}
+
 export interface PrayerTimesResponse {
     code: number;
     status: string;

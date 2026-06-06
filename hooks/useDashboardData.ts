@@ -3,8 +3,9 @@ import dayjs from 'dayjs';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { useEffect } from 'react';
 
+import { useAuthContext } from '@/context/AuthProvider';
 import { db } from '@/lib/firebase';
-import { PrayerLogDocument } from '@/types';
+import { PrayerLogDocument, UserDocument } from '@/types';
 
 /**
  * Custom hook to fetch and sync dashboard data (profile and prayer times).
@@ -12,13 +13,14 @@ import { PrayerLogDocument } from '@/types';
  */
 export function useDashboardData(uid: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { logout } = useAuthContext();
 
   // 1. Initial Data Fetching via TanStack Query
   const query = useQuery({
     queryKey: ['dashboard', uid],
     queryFn: async () => {
       // Safety check: if no UID, return null structure
-      if (!uid) return { profile: null, userData: null, yesterdayData: null };
+      if (!uid) return { profile: null, prayerData: null, yesterdayData: null };
 
       const today = dayjs().format('YYYY-MM-DD');
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
@@ -30,9 +32,14 @@ export function useDashboardData(uid: string | null | undefined) {
         getDoc(doc(db, 'users', uid, 'prayer_logs', yesterday))
       ]);
 
+      if (!profileSnap.exists()) {
+        await logout();
+        return null;
+      }
+
       return {
-        profile: profileSnap.exists() ? profileSnap.data() : null,
-        userData: prayerSnap.exists() ? (prayerSnap.data() as PrayerLogDocument) : null,
+        profile: profileSnap.exists() ? profileSnap.data() as UserDocument : null,
+        prayerData: prayerSnap.exists() ? (prayerSnap.data() as PrayerLogDocument) : null,
         yesterdayData: yesterdaySnap.exists() ? (yesterdaySnap.data() as PrayerLogDocument) : null,
         streaks: profileSnap.exists() ? profileSnap.data()?.streaks : null,
       };
@@ -55,10 +62,12 @@ export function useDashboardData(uid: string | null | undefined) {
     const unsubProfile = onSnapshot(doc(db, 'users', uid), (snap) => {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
-          ...oldData,
-          profile: snap.data(),
-          streaks: snap.data()?.streaks || null,
+          ...(oldData ?? {}),
+          profile: snap.data() ?? null,
+          streaks: snap.data()?.streaks ?? null,
         }));
+      } else {
+        logout();
       }
     });
 
@@ -67,7 +76,7 @@ export function useDashboardData(uid: string | null | undefined) {
       if (snap.exists()) {
         queryClient.setQueryData(['dashboard', uid], (oldData: any) => ({
           ...oldData,
-          userData: snap.data() as PrayerLogDocument,
+          prayerData: snap.data() as PrayerLogDocument,
         }));
       }
     });

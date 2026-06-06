@@ -4,18 +4,40 @@ import colors from '@/constants/colors.json';
 import { useSurahsLists } from '@/hooks/Quran/use-surah-list';
 import { Feather } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 interface DropdownSecionProps {
     onSelectSurah: (value: DropdownOption) => void;
+    selectedSurahId?: number;
 }
 
-const DropdownSecion = ({ onSelectSurah }: DropdownSecionProps): React.ReactNode => {
+const DropdownSecion = ({ onSelectSurah, selectedSurahId }: DropdownSecionProps): React.ReactNode => {
     const isFocused = useIsFocused();
     const [surah, setSurah] = useState<DropdownOption>();
 
-    const { data: surahsList, isLoading } = useSurahsLists({ lang: 'en', enabled: isFocused })
+    const { data: surahsList, isLoading } = useSurahsLists({ lang: 'en', enabled: isFocused });
+
+    useEffect(() => {
+        if (!isLoading && surahsList && surahsList.length > 0) {
+            if (selectedSurahId) {
+                const found = surahsList.find(s => s.id === selectedSurahId);
+                if (found && (!surah || surah.id !== found.id)) {
+                    setSurah(found);
+                    onSelectSurah(found);
+                    return;
+                }
+            }
+
+            if (!surah) {
+                const initial = surahsList[0];
+                if (initial) {
+                    setSurah(initial);
+                    onSelectSurah(initial);
+                }
+            }
+        }
+    }, [surahsList, isLoading, selectedSurahId]);
 
     return (
         <View className=" bg-emerald-dark border border-white/5 rounded-2xl p-2 mb-4">
@@ -24,6 +46,8 @@ const DropdownSecion = ({ onSelectSurah }: DropdownSecionProps): React.ReactNode
                 options={surahsList}
                 onSelect={(item) => { setSurah(item); onSelectSurah(item) }}
                 containerStyle="w-full"
+                searchable
+
                 renderTrigger={(value, isOpen, toggleDropdown) => (
                     <TouchableOpacity
                         onPress={toggleDropdown}

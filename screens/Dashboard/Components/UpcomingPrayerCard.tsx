@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
-import { PrayerCollection } from "@/types";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { PrayerCollection, UserDocument } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
 import * as Location from "expo-location";
-import { DocumentData } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import SunTimings from "./SunTImings";
 
 interface UpcomingPrayerCardProps {
   title: string;
@@ -17,7 +17,7 @@ interface UpcomingPrayerCardProps {
   isPrayed?: boolean;
   isSkipped?: boolean;
   prayerList?: Array<{ name: string; time: string }>;
-  profile?: DocumentData | null;
+  profile?: UserDocument | null | undefined;
   prayerTimings?: PrayerCollection
 }
 
@@ -153,29 +153,7 @@ const UpcomingPrayerCard: React.FC<UpcomingPrayerCardProps> = ({
 
 
       {/* Sunrise & Sunset Row */}
-      <View className="flex-row items-center justify-between bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 ">
-        <View className="flex-row items-center flex-1 justify-center">
-          <Feather name="sunrise" size={16} color={colors.gold} />
-          <View className="ml-3">
-            <Text className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Sunrise</Text>
-            <Text className="text-white/80 text-sm font-semibold mt-0.5">
-              {profile?.sunTimings?.sunrise ? dayjs(`2000-01-01 ${profile.sunTimings.sunrise.split(' ')[0]}`).format("h:mm A") : "--:--"}
-            </Text>
-          </View>
-        </View>
-
-        <View className="w-[1px] h-6 bg-white/10" />
-
-        <View className="flex-row items-center flex-1 justify-center">
-          <Feather name="sunset" size={16} color={colors.gold} />
-          <View className="ml-3">
-            <Text className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Sunset</Text>
-            <Text className="text-white/80 text-sm font-semibold mt-0.5">
-              {profile?.sunTimings?.sunset ? dayjs(`2000-01-01 ${profile.sunTimings.sunset.split(' ')[0]}`).format("h:mm A") : "--:--"}
-            </Text>
-          </View>
-        </View>
-      </View>
+      <SunTimings profile={profile!} />
 
       {/* Divider */}
       <View className="h-[1px] bg-white/10 w-full my-8" />
@@ -212,7 +190,7 @@ const UpcomingPrayerCard: React.FC<UpcomingPrayerCardProps> = ({
           <View className="flex-row items-center border border-red-accent bg-gold/10 px-3 py-2 rounded-xl"
           >
             <Ionicons name="information-circle-outline" size={14} color={colors["red-accent"]} />
-            <Text className="text-red-accent text-[10px] font-bold ml-1.5 tracking-widest uppercase">Forbidden Times</Text>
+            <Text className="text-red-accent text-[7px] font-bold ml-1.5 tracking-widest uppercase">Forbidden Times</Text>
           </View>
 
         </TouchableOpacity>
