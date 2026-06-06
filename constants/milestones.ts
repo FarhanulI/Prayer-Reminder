@@ -6,26 +6,26 @@ import colors from "./colors.json";
  * (7 days) means seven back-to-back days each meeting that track’s minimum — not 7 scattered days.
  */
 export const STREAK_MILESTONES = {
-  strong: [
-    { days: 3, title: "Getting Strong", icon: "fitness", color: colors.success },
-    { days: 7, title: "Focused", icon: "eye", color: colors.success },
-    { days: 14, title: "Dedicated", icon: "heart", color: colors.success },
-    { days: 30, title: "Solid Habit", icon: "checkmark-done", color: colors.success },
-  ],
   growth: [
-    { days: 3, title: "Starting Out", icon: "leaf", color: colors["blue-accent"] },
-    { days: 7, title: "Improving", icon: "rocket", color: colors["blue-accent"] },
-    { days: 14, title: "Building Momentum", icon: "speedometer", color: colors["blue-accent"] },
+    { days: 3, title: "Starting Out", icon: "leaf", color: colors["blue-accent"], description: "Pray at least 3 Salah for 3 consecutive days to take your first step on this journey." },
+    { days: 7, title: "Improving", icon: "rocket", color: colors["blue-accent"], description: "Pray at least 3 Salah for 7 consecutive days to build a week of progress." },
+    { days: 14, title: "Building Momentum", icon: "speedometer", color: colors["blue-accent"], description: "Pray at least 3 Salah for 14 consecutive days to build real momentum." },
   ],
-  perfect: [
-    { days: 3, title: "First Steps to Him", icon: "footsteps", color: colors.gold, description: "Setting your intention. The first steps in establishing a lifelong bond with Allah." },
-    { days: 7, title: "Finding Steadfastness", icon: "anchor", color: colors.gold, description: "Istiqamah (consistency). Your heart begins to find peace in the rhythm of the daily prayers." },
-    { days: 14, title: "A Heart Devoted", icon: "heart", color: colors.gold, description: "Moving beyond habit. Prayer becomes a conversation with Allah that you long for." },
-    { days: 30, title: "Disciplined", icon: "shield-checkmark", color: colors.gold, description: "A month of devotion. Your character is being refined through the discipline of worship." },
-    { days: 60, title: "Unstoppable", icon: "flash", color: colors.gold, description: "Spiritual resilience. The light of Salah protects your heart from the distractions of the Dunya." },
-    { days: 100, title: "Elite", icon: "trophy", color: colors.gold, description: "Mu'min (The Believer). You have built a fortress of faith, finding true success through total submission." },
+  strong: [
+    { days: 3, title: "Getting Strong", icon: "fitness", color: colors.success, description: "Pray at least 4 Salah for 3 consecutive days to start getting strong." },
+    { days: 7, title: "Focused", icon: "eye", color: colors.success, description: "Pray at least 4 Salah for 7 consecutive days to build a week of focus and dedication." },
+    { days: 14, title: "Dedicated", icon: "heart", color: colors.success, description: "Pray at least 4 Salah for 14 consecutive days to prove your commitment." },
+    { days: 30, title: "Solid Habit", icon: "checkmark-done", color: colors.success, description: "Pray at least 4 Salah for 30 consecutive days to build a solid habit." },
   ],
 
+  perfect: [
+    { days: 3, title: "First Steps to Him", icon: "footsteps", color: colors.gold, description: "Pray all 5 Salah for 3 consecutive days to set your intention and take your first steps to Him." },
+    { days: 7, title: "Finding Steadfastness", icon: "anchor", color: colors.gold, description: "Pray all 5 Salah for 7 consecutive days to find peace and steadfastness." },
+    { days: 14, title: "A Heart Devoted", icon: "heart", color: colors.gold, description: "Pray all 5 Salah for 14 consecutive days to turn your habit into a devoted conversation with Allah." },
+    { days: 30, title: "Disciplined", icon: "shield-checkmark", color: colors.gold, description: "Pray all 5 Salah for 30 consecutive days to refine your character through discipline." },
+    { days: 60, title: "Unstoppable", icon: "flash", color: colors.gold, description: "Pray all 5 Salah for 60 consecutive days to build spiritual resilience." },
+    { days: 100, title: "Elite", icon: "trophy", color: colors.gold, description: "Pray all 5 Salah for 100 consecutive days to build a fortress of faith." },
+  ],
 };
 
 export const CATEGORY_MESSAGES = {

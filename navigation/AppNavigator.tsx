@@ -112,7 +112,7 @@ const AppStack = () => {
         component={HistoryScreen}
         options={{
           headerShown: true,
-          headerTitle: "Seerah (Journey)",
+          headerTitle: "History",
           headerStyle: { backgroundColor: colors['emerald-darkest'] },
           headerTintColor: colors.gold
         }}

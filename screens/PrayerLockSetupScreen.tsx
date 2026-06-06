@@ -11,15 +11,6 @@ import {
   View,
 } from "react-native";
 
-type Permission = {
-  key: string;
-  icon: string;
-  title: string;
-  description: string;
-  granted: boolean;
-  onPress: () => void;
-};
-
 export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () => void }) {
   const [permissions, setPermissions] = useState({ usage: false, overlay: false });
 
@@ -70,20 +61,18 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
     {
       icon: "stats-chart-outline",
       title: "Usage Access",
-      description: "Allows Prayer Lock to detect when you open distracting apps during prayer time.",
+      description: "Allows Salah Reminder to detect when you open distracting apps during prayer time.",
       granted: permissions.usage,
       onPress: requestUsage,
     },
     {
       icon: "layers-outline",
       title: "Display Over Other Apps",
-      description: "Allows Prayer Lock to show the prayer reminder overlay on top of any app.",
+      description: "Allows Salah Reminder to show the prayer reminder overlay on top of any app.",
       granted: permissions.overlay,
       onPress: requestOverlay,
     },
   ];
-
-  const allGranted = permissions.usage && permissions.overlay;
 
   return (
     <LinearGradient colors={[colors['emerald-login-bg-end'], colors['emerald-login-bg']]} style={{ flex: 1 }}>
@@ -103,10 +92,10 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
             <Ionicons name="shield-checkmark-outline" size={40} color={colors.gold} />
           </View>
           <Text style={{ color: "#fff", fontSize: 26, fontWeight: "700", marginBottom: 8, textAlign: "center" }}>
-            Prayer Lock Setup
+            Salah Reminder Setup
           </Text>
           <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, textAlign: "center", lineHeight: 22 }}>
-            Grant these permissions so Prayer Lock can protect your salah time.
+            Grant these permissions to remind you of your salah.
           </Text>
         </View>
 

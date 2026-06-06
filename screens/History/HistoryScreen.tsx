@@ -84,6 +84,10 @@ export default function HistoryScreen() {
 
         {/* Daily Progress Cards (Horizontal Scroll) */}
         <View className="mb-8">
+          <View className="flex-row items-center justify-end mb-2 pr-2">
+            <Text className="text-white/40 text-[10px] uppercase tracking-widest mr-1">Swipe</Text>
+            <Ionicons name="swap-horizontal" size={12} color="rgba(255,255,255,0.4)" />
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
             {loading ? (
               [...Array(3)].map((_, index) => (

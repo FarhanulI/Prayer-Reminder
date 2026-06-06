@@ -36,7 +36,7 @@ const DailyPerformance = ({ completedCount }: { completedCount: number }) => {
             <Text className="text-white/30 text-xs font-medium italic mt-6 text-center px-10">
                 {completedCount === 5
                     ? '"Alhamdulillah, all prayers completed today."'
-                    : '"Building solid habits, one prayer at a time."'}
+                    : '"Building solid habits"'}
             </Text>
         </View>
     )

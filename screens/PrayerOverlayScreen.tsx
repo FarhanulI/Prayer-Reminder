@@ -16,6 +16,7 @@ import {
   UIManager,
   Vibration,
   View,
+  ActivityIndicator,
 } from "react-native";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -65,6 +66,9 @@ export default function PrayerOverlayScreen({
   );
   const translateX = useRef(new Animated.Value(0)).current;
   const [remainingTime, setRemainingTime] = useState("");
+  const [currentTime, setCurrentTime] = useState(dayjs().format("h:mm A"));
+  const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
   const opacity = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -107,6 +111,7 @@ export default function PrayerOverlayScreen({
 
     const calculateRemaining = () => {
       const now = dayjs();
+      setCurrentTime(now.format("h:mm A"));
       const today = now.format("YYYY-MM-DD");
       let end = dayjs(`${today} ${endTime}`);
 
@@ -137,6 +142,10 @@ export default function PrayerOverlayScreen({
   }, [visible, endTime]);
 
   useEffect(() => {
+    if (!visible) {
+      setIsProcessing(false);
+      isProcessingRef.current = false;
+    }
     if (visible) {
       Animated.timing(opacity, {
         toValue: 1,
@@ -168,8 +177,8 @@ export default function PrayerOverlayScreen({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => !isProcessingRef.current,
+      onMoveShouldSetPanResponder: () => !isProcessingRef.current,
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dx > 0) {
           translateX.setValue(gestureState.dx);
@@ -182,6 +191,8 @@ export default function PrayerOverlayScreen({
         );
         if (gestureState.dx >= SWIPE_THRESHOLD) {
           Vibration.vibrate(60);
+          setIsProcessing(true);
+          isProcessingRef.current = true;
           console.log(
             `[PrayerOverlay] Swipe success for "${currentName}", calling onPray`,
           );
@@ -189,10 +200,15 @@ export default function PrayerOverlayScreen({
             toValue: SCREEN_WIDTH,
             duration: 250,
             useNativeDriver: true,
-          }).start(() => {
-            onPrayRef.current(currentName);
-            // Reset for next time
-            translateX.setValue(0);
+          }).start(async () => {
+            try {
+              await onPrayRef.current(currentName);
+            } finally {
+              // Reset for next time
+              translateX.setValue(0);
+              setIsProcessing(false);
+              isProcessingRef.current = false;
+            }
           });
         } else {
           Animated.spring(translateX, {
@@ -282,7 +298,7 @@ export default function PrayerOverlayScreen({
               <Text
                 style={{ color: colors.gold, marginLeft: 6, fontWeight: "600" }}
               >
-                {prayerTime}
+                {currentTime}
               </Text>
             </View>
             <View
@@ -386,46 +402,65 @@ export default function PrayerOverlayScreen({
                   }}
                 />
 
-                {/* Draggable Thumb */}
-                <Animated.View
-                  style={{
-                    position: "absolute",
-                    left: 6,
-                    transform: [{ translateX }],
-                    zIndex: 10,
-                  }}
-                >
-                  <Animated.View
-                    style={{
-                      width: 58,
-                      height: 58,
-                      borderRadius: 999,
-                      backgroundColor: colors.gold, // Use fixed color for native driver compatibility
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Ionicons name="arrow-forward" size={26} color={colors['emerald-login-bg-end']} />
-                  </Animated.View>
-                </Animated.View>
+                {isProcessing ? (
+                  <View style={{ position: "absolute", width: "100%", height: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
+                    <ActivityIndicator size="small" color={colors.gold} style={{ marginRight: 8 }} />
+                    <Text
+                      style={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: 13,
+                        fontWeight: "700",
+                        letterSpacing: 2,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Wait until finish
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    {/* Draggable Thumb */}
+                    <Animated.View
+                      style={{
+                        position: "absolute",
+                        left: 6,
+                        transform: [{ translateX }],
+                        zIndex: 10,
+                      }}
+                    >
+                      <Animated.View
+                        style={{
+                          width: 58,
+                          height: 58,
+                          borderRadius: 999,
+                          backgroundColor: colors.gold, // Use fixed color for native driver compatibility
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Ionicons name="arrow-forward" size={26} color={colors['emerald-login-bg-end']} />
+                      </Animated.View>
+                    </Animated.View>
 
-                <Animated.Text
-                  style={{
-                    color: "rgba(255,255,255,0.5)",
-                    textAlign: "center",
-                    fontSize: 13,
-                    fontWeight: "700",
-                    letterSpacing: 2,
-                    textTransform: "uppercase",
-                    opacity: translateX.interpolate({
-                      inputRange: [0, SWIPE_THRESHOLD],
-                      outputRange: [1, 0],
-                      extrapolate: "clamp",
-                    }),
-                  }}
-                >
-                  Swipe to Pray
-                </Animated.Text>
+                    <Animated.Text
+                      style={{
+                        color: "rgba(255,255,255,0.5)",
+                        textAlign: "center",
+                        fontSize: 13,
+                        fontWeight: "700",
+                        letterSpacing: 2,
+                        textTransform: "uppercase",
+                        opacity: translateX.interpolate({
+                          inputRange: [0, SWIPE_THRESHOLD],
+                          outputRange: [1, 0],
+                          extrapolate: "clamp",
+                        }),
+                      }}
+                    >
+                      Swipe to Pray
+                    </Animated.Text>
+                  </>
+                )}
               </Animated.View>
             </Animated.View>
 

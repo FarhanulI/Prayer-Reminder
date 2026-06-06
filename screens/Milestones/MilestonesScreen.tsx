@@ -11,8 +11,8 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useMilestones } from "@/hooks/useMilestones";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useMemo } from "react";
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import DailyPerformance from "./components/dailyPerformance";
 
 /**
@@ -106,6 +106,7 @@ export default function MilestonesScreen() {
   const { user } = useAuthContext();
   const { data, isLoading: dashPending } = useDashboardData(user?.profile?.uid);
   const { data: milestonesData, isPending: milestonesPending } = useMilestones(user?.profile?.uid);
+  const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
 
   const { profile, userData } = useMemo(() => {
     return {
@@ -173,13 +174,6 @@ export default function MilestonesScreen() {
         <View className="mb-8">
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Streak Tracks</Text>
-            <TouchableOpacity
-              className="flex-row items-center border border-gold/40 bg-gold/10 px-3 py-1.5 rounded-full"
-              onPress={() => navigation.navigate("MilestoneDetails")}
-            >
-              <Ionicons name="information-circle-outline" size={14} color={colors.gold} />
-              <Text className="text-gold text-[10px] font-bold ml-1.5 tracking-widest uppercase">How it works</Text>
-            </TouchableOpacity>
           </View>
 
           <StreakTrackCard {...perfectTrack} />
@@ -193,9 +187,6 @@ export default function MilestonesScreen() {
         <View className="mb-10">
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Your Path to Nearness</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("MilestoneDetails")}>
-              <Text className="text-gold text-xs font-bold uppercase tracking-wider">Details</Text>
-            </TouchableOpacity>
           </View>
           <Text className="text-white/40 text-xs leading-relaxed mb-8">
             Every prayer is a step closer to Allah. Keep your heart firm on this path.
@@ -209,11 +200,65 @@ export default function MilestonesScreen() {
                 unlocked={m.unlocked}
                 color={m.color}
                 icon={m.icon}
+                description={m.description}
+                onPress={() => {
+                  console.log({ m });
+
+                  if (!m.unlocked) {
+                    setSelectedMilestone(m);
+                  }
+                }}
               />
             ))}
           </View>
         </View>
       </ScrollView>
+
+      {/* Milestone Details Modal */}
+      <Modal
+        visible={!!selectedMilestone}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedMilestone(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/80 justify-center items-center px-6"
+          onPress={() => setSelectedMilestone(null)}
+        >
+          <Pressable
+            className="w-full bg-[#1A1A1A] rounded-3xl p-6 items-center border border-white/10"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View
+              className="w-16 h-16 rounded-full items-center justify-center border mb-4"
+              style={{
+                borderColor: selectedMilestone?.color,
+                backgroundColor: `${selectedMilestone?.color}18`,
+              }}
+            >
+              <Ionicons
+                name={selectedMilestone?.icon as any}
+                size={28}
+                color={selectedMilestone?.color}
+              />
+            </View>
+            <Text className="text-white text-xl font-bold text-center mb-2" style={{ fontFamily: 'serif' }}>
+              {selectedMilestone?.title}
+            </Text>
+            <Text className="text-white/60 text-center text-sm leading-relaxed mb-6">
+              {selectedMilestone?.description || "You have reached this milestone. Keep up the great work!"}
+            </Text>
+
+            <TouchableOpacity
+              className="w-full py-3 rounded-xl items-center"
+              style={{ backgroundColor: selectedMilestone?.color }}
+              onPress={() => setSelectedMilestone(null)}
+            >
+              <Text className="text-white font-bold text-base">Got it.!</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -223,13 +268,21 @@ const MilestoneItem = ({
   unlocked,
   color,
   icon,
+  description,
+  onPress,
 }: {
   title: string;
   unlocked?: boolean;
   color: string;
   icon: string;
+  description?: string;
+  onPress?: () => void;
 }) => (
-  <View className="items-center w-[30%] mb-8">
+  <TouchableOpacity
+    className="items-center w-[30%] mb-8"
+    onPress={onPress}
+    activeOpacity={unlocked ? 0.7 : 1}
+  >
     <View
       className={`w-16 h-16 rounded-full items-center justify-center border ${unlocked ? "bg-white/5" : "border-white/10 bg-white/5"}`}
       style={
@@ -250,5 +303,5 @@ const MilestoneItem = ({
     >
       {title}
     </Text>
-  </View>
+  </TouchableOpacity>
 );

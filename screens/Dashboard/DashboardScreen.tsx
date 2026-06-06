@@ -1,3 +1,4 @@
+import CircularProgress from "@/components/CircularProgress";
 import Skeleton from "@/components/Skeleton";
 import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
@@ -25,28 +26,33 @@ dayjs.extend(isBetween);
 /**
  * Stat card for Salat progress.
  */
-const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount }: any) => (
-  <Card variant="large" className="flex-row justify-between items-center mb-8">
-    <View className="flex-1 pr-4">
-      <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1.5">{title}</Text>
-      <Text className="text-white text-[28px] font-semibold leading-tight mb-2" style={{ fontFamily: 'serif' }}>{subtext}</Text>
-      <Text className="text-white/30 text-[13px] font-medium">Prayed {" "}
-        <Text className="text-white/60 text-[15px] font-semibold">{completedCount}</Text>
-        {" "}Times
-      </Text>
-    </View>
+const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount }: any) => {
+  const navigation = useNavigation<any>();
 
-    <View className="items-center justify-center">
-      <View className="w-[84px] h-[84px] rounded-full border-[6px] border-white/5 items-center justify-center">
-        <View
-          className="absolute w-[84px] h-[84px] rounded-full border-[6px] border-gold"
-          style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent', transform: [{ rotate: '-15deg' }] }}
-        />
-        <Text className="text-white text-xl font-bold">{value}</Text>
+  return (
+    <Card variant="large" className="flex-row justify-between items-center mb-8">
+      <View className="flex-1 pr-4">
+        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1.5">{title}</Text>
+        <Text className="text-white text-[28px] font-semibold leading-tight mb-2" style={{ fontFamily: 'serif' }}>{subtext}</Text>
+        <Text className="text-white/30 text-[13px] font-medium">Prayed {" "}
+          <Text className="text-white/60 text-[15px] font-semibold">{completedCount}</Text>
+          {" "}Times
+        </Text>
+
+        <TouchableOpacity onPress={() => navigation.navigate("History")}>
+          <View className="flex-row items-center border border-gold bg-gold/10 px-3 py-2 rounded-xl mt-2"
+          >
+            <Ionicons name="stats-chart-outline" size={14} color={colors.gold} />
+            <Text className="text-gold text-[7px] font-bold ml-1.5 tracking-widest uppercase">Weekly Progress</Text>
+          </View>
+
+        </TouchableOpacity>
       </View>
-    </View>
-  </Card>
-);
+
+      <CircularProgress value={completedCount || 0} total={5} />
+    </Card>
+  )
+};
 
 // --- MAIN SCREEN ---
 
@@ -54,8 +60,6 @@ export default function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthContext();
   const { data, isLoading: loading, refetch, isFetching } = useDashboardData(user?.profile?.uid);
-
-
 
   const { profile, prayerData, yesterdayData } = useMemo(() => {
     return {

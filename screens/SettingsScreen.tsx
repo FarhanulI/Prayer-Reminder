@@ -1,11 +1,11 @@
 import { Card } from "@/components/ui/card";
+import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import { AppState, Platform, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
-import colors from "@/constants/colors.json";
 
 const SETUP_DONE_KEY = "prayer_lock_setup_done";
 const PRAYER_LOCK_ENABLED_KEY = "prayer_lock_enabled";
@@ -116,13 +116,13 @@ export default function SettingsScreen() {
         {/* Account Section */}
         <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-3 ml-1">Account</Text>
         <Card className="mb-6">
-          <TouchableOpacity className="flex-row items-center justify-between py-3 border-b border-white/5">
+          {/* <TouchableOpacity className="flex-row items-center justify-between py-3 border-b border-white/5">
             <View className="flex-row items-center">
               <Ionicons name="person-outline" size={20} color="white" />
               <Text className="text-white font-medium ml-3">Profile</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             className="flex-row items-center justify-between py-3"
             onPress={() => navigation.navigate('History')}
