@@ -1,19 +1,26 @@
+import colors from "@/constants/colors.json";
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
+  ImageBackground,
+  LayoutAnimation,
   Modal,
   PanResponder,
   Platform,
   StatusBar,
   Text,
   TouchableOpacity,
+  UIManager,
   Vibration,
   View,
 } from "react-native";
-import colors from "@/constants/colors.json";
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.5;
@@ -60,6 +67,11 @@ export default function PrayerOverlayScreen({
   const [remainingTime, setRemainingTime] = useState("");
   const opacity = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const toggleTimePicker = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setShowTimePicker(!showTimePicker);
+  };
 
   // Use refs to avoid stale closures in PanResponder
   const prayerNameRef = useRef(prayerName);
@@ -290,21 +302,24 @@ export default function PrayerOverlayScreen({
             </View>
 
             {/* Hadith */}
-            <View
+            <ImageBackground
+              className="p-10"
+              source={require("@/assets/images/bgOverlay.png")}
               style={{
                 backgroundColor: colors['emerald-dark'],
                 borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.06)",
                 borderRadius: 24,
-                padding: 24,
+
+                overflow: 'hidden',
+              }}
+              imageStyle={{
+                borderRadius: 24,
+                opacity: 0.3,
+                resizeMode: 'cover',
               }}
             >
-              <Ionicons
-                name="chatbubble-ellipses-outline"
-                size={20}
-                color="rgba(255,255,255,0.15)"
-                style={{ marginBottom: 12 }}
-              />
+
               <Text
                 style={{
                   color: "rgba(255,255,255,0.75)",
@@ -327,7 +342,7 @@ export default function PrayerOverlayScreen({
               >
                 — {hadith.source}
               </Text>
-            </View>
+            </ImageBackground>
           </View>
 
           {/* Bottom Actions */}
@@ -414,68 +429,68 @@ export default function PrayerOverlayScreen({
               </Animated.View>
             </Animated.View>
 
-            {/* Remind Me — Time Picker */}
-            {!showTimePicker ? (
+            {/* Remind Me — Accordion */}
+            <View
+              style={{
+                backgroundColor: showTimePicker ? colors['emerald-dark'] : "rgba(255,255,255,0.05)",
+                borderWidth: 1,
+                borderColor: showTimePicker ? `${colors.gold}33` : "rgba(255,255,255,0.1)",
+                borderRadius: showTimePicker ? 20 : 16,
+                padding: showTimePicker ? 16 : 0,
+                marginBottom: 16,
+                width: "100%",
+                overflow: 'hidden',
+              }}
+            >
               <TouchableOpacity
-                onPress={() => setShowTimePicker(true)}
+                onPress={toggleTimePicker}
                 style={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.1)",
-                  borderRadius: 16,
-                  paddingVertical: 14,
-                  paddingHorizontal: 32,
-                  marginBottom: 16,
-                  width: "100%",
-                  alignItems: "center",
                   flexDirection: "row",
-                  justifyContent: "center",
+                  alignItems: "center",
+                  justifyContent: showTimePicker ? "flex-start" : "center",
+                  paddingVertical: showTimePicker ? 0 : 14,
+                  paddingHorizontal: showTimePicker ? 0 : 32,
+                  marginBottom: showTimePicker ? 12 : 0,
                 }}
               >
-                <Ionicons name="alarm-outline" size={16} color={`${colors.gold}cc`} style={{ marginRight: 8 }} />
+                <Ionicons name="alarm-outline" size={16} color={showTimePicker ? colors.gold : `${colors.gold}cc`} style={{ marginRight: 8 }} />
                 <Text
                   style={{
-                    color: "rgba(255,255,255,0.6)",
+                    color: showTimePicker ? colors.gold : "rgba(255,255,255,0.6)",
                     fontWeight: "700",
-                    fontSize: 13,
+                    fontSize: showTimePicker ? 12 : 13,
                     letterSpacing: 1,
                     textTransform: "uppercase",
                   }}
                 >
-                  Remind me later
+                  {showTimePicker ? "Remind me at..." : "Remind me later"}
                 </Text>
-              </TouchableOpacity>
-            ) : (
-              <View
-                style={{
-                  backgroundColor: colors['emerald-dark'],
-                  borderWidth: 1,
-                  borderColor: `${colors.gold}33`,
-                  borderRadius: 20,
-                  padding: 16,
-                  marginBottom: 16,
-                  width: "100%",
-                }}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                  <Ionicons name="alarm-outline" size={16} color={colors.gold} />
-                  <Text style={{ color: colors.gold, fontWeight: "700", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", marginLeft: 8 }}>
-                    Remind me at...
-                  </Text>
-                  {endTime ? (
-                    <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginLeft: "auto" }}>
-                      ends {endTime}
-                    </Text>
-                  ) : null}
-                </View>
 
-                {/* Quick presets */}
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {[5, 10, 15, 20, 30].map((mins) => {
+                {showTimePicker && endTime ? (
+                  <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginLeft: "auto", marginRight: 8 }}>
+                    ends {endTime}
+                  </Text>
+                ) : null}
+
+                <Ionicons
+                  name={showTimePicker ? "chevron-up" : "chevron-down"}
+                  size={16}
+                  color={showTimePicker ? colors.gold : "rgba(255,255,255,0.4)"}
+                  style={{ position: showTimePicker ? "relative" : "absolute", right: showTimePicker ? 0 : 16 }}
+                />
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <View className="flex-row flex-wrap justify-center gap-3">
+                  {[5, 10, 15, 20, 30, 60].map((mins) => {
                     const targetTime = dayjs().add(mins, "minute");
                     // Cap display if beyond prayer end
-                    const endDayjs = endTime ? dayjs(`${dayjs().format("YYYY-MM-DD")} ${endTime}`) : null;
+                    let endDayjs = endTime ? dayjs(`${dayjs().format("YYYY-MM-DD")} ${endTime}`) : null;
+                    if (endDayjs && endDayjs.isBefore(dayjs())) {
+                      endDayjs = endDayjs.add(1, "day");
+                    }
                     const isBeyondEnd = endDayjs && targetTime.isAfter(endDayjs);
+
                     if (isBeyondEnd) return null;
 
                     return (
@@ -505,15 +520,8 @@ export default function PrayerOverlayScreen({
                     );
                   })}
                 </View>
-
-                <TouchableOpacity
-                  onPress={() => setShowTimePicker(false)}
-                  style={{ marginTop: 12, alignItems: "center" }}
-                >
-                  <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              )}
+            </View>
           </View>
         </View>
       </Animated.View>

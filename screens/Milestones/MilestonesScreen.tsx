@@ -9,49 +9,11 @@ import {
 import { useAuthContext } from "@/context/AuthProvider";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useMilestones } from "@/hooks/useMilestones";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useMemo } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-
-// --- COMPONENTS ---
-
-/**
- * Circular progress indicator for daily performance.
- */
-const CircularProgress = ({ value, total, size = 180 }: { value: number; total: number; size?: number }) => {
-  const percentage = (value / total) * 100;
-
-  return (
-    <View style={{ width: size, height: size }} className="items-center justify-center">
-      {/* Background Track */}
-      <View
-        style={{ width: size, height: size, borderRadius: size / 2 }}
-        className="border-[6px] border-white/5 absolute"
-      />
-
-      {/* Progress Track (Approximate with CSS-only for simplicity, would use SVG for perfect arc) */}
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderWidth: 6,
-          borderColor: colors.gold,
-          borderTopColor: 'transparent',
-          borderLeftColor: 'transparent',
-          transform: [{ rotate: `${(percentage / 100) * 360 - 45}deg` }]
-        }}
-        className="absolute"
-      />
-
-      <View className="items-center">
-        <Text className="text-white text-5xl font-bold">{value}/{total}</Text>
-        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-[4px] mt-1">Prayers Today</Text>
-      </View>
-    </View>
-  );
-};
+import DailyPerformance from "./components/dailyPerformance";
 
 /**
  * Card for each streak track (Perfect, Strong, Growth).
@@ -107,10 +69,6 @@ const StreakTrackCard = ({
           style={{ width: `${progress}%`, backgroundColor: color }}
         />
       </View>
-
-      <Text className="text-white/40 text-[10px] font-medium text-center italic">
-        "Keep the flame alive!"
-      </Text>
     </Card>
   );
 };
@@ -146,14 +104,13 @@ function streakTrackProps(category: StreakCategory, count: number, label: string
 export default function MilestonesScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthContext();
-  const uid = user?.uid;
-  const { data, isPending: dashPending } = useDashboardData(uid);
-  const { data: milestonesData, isPending: milestonesPending } = useMilestones(uid);
+  const { data, isLoading: dashPending } = useDashboardData(user?.profile?.uid);
+  const { data: milestonesData, isPending: milestonesPending } = useMilestones(user?.profile?.uid);
 
   const { profile, userData } = useMemo(() => {
     return {
       profile: data?.profile,
-      userData: data?.userData,
+      userData: data?.prayerData,
     };
   }, [data]);
 
@@ -177,9 +134,7 @@ export default function MilestonesScreen() {
     [streaks?.growth?.current]
   );
 
-  const loading = dashPending || milestonesPending;
-
-  if (loading) {
+  if (dashPending || milestonesPending) {
     return (
       <View className="flex-1 bg-emerald-darkest items-center justify-center">
         <ActivityIndicator color={colors.gold} size="large" />
@@ -193,10 +148,10 @@ export default function MilestonesScreen() {
       <View className="flex-row justify-between items-center px-6 pt-16 pb-4">
         <View className="flex-row items-center">
           <View className="w-10 h-10 rounded-full bg-emerald-soft items-center justify-center border border-gold/20 overflow-hidden mr-3">
-            {profile?.photoURL ? (
-              <Image source={{ uri: profile.photoURL }} className="w-full h-full" />
+            {profile?.profile?.photoURL ? (
+              <Image source={{ uri: profile.profile.photoURL }} className="w-full h-full" />
             ) : (
-              <Text className="text-gold font-bold">{profile?.name?.charAt(0) || "U"}</Text>
+              <Text className="text-gold font-bold">{profile?.profile?.name?.charAt(0) || "U"}</Text>
             )}
           </View>
           <Text className="text-gold text-2xl font-bold" style={{ fontFamily: 'serif' }}>Milestones</Text>
@@ -212,25 +167,7 @@ export default function MilestonesScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
       >
         {/* Daily Performance Section */}
-        <View className="items-center my-8">
-          <Text className="text-white/60 text-lg font-medium mb-8" style={{ fontFamily: 'serif' }}>Daily Performance</Text>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate("History")}
-          >
-            <CircularProgress value={completedCount} total={5} />
-          </TouchableOpacity>
-
-          <View className="mt-8 bg-gold/10 px-6 py-2.5 rounded-full border border-gold/20 flex-row items-center">
-            <MaterialCommunityIcons name="medal-outline" size={18} color={colors.gold} />
-            <Text className="text-gold text-[11px] font-bold uppercase tracking-widest ml-2">Strong Day</Text>
-          </View>
-
-          <Text className="text-white/30 text-xs font-medium italic mt-6 text-center px-10">
-            "Building solid habits, one prayer at a time."
-          </Text>
-        </View>
+        <DailyPerformance completedCount={completedCount} />
 
         {/* Streak Tracks Section */}
         <View className="mb-8">
@@ -261,7 +198,7 @@ export default function MilestonesScreen() {
             </TouchableOpacity>
           </View>
           <Text className="text-white/40 text-xs leading-relaxed mb-8">
-            Every prayer is a step closer to the Divine. Keep your heart firm on this path.
+            Every prayer is a step closer to Allah. Keep your heart firm on this path.
           </Text>
 
           <View className="flex-row flex-wrap justify-between">

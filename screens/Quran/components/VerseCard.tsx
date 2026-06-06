@@ -1,4 +1,5 @@
 import { cardClassName } from '@/components/ui/card';
+import colors from '@/constants/colors.json';
 import { useAyahAudio } from '@/hooks/Quran/useAyahAudio';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
@@ -12,7 +13,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import colors from '@/constants/colors.json';
 
 const GOLD = colors.gold;
 const CARD_BG = colors['verse-card-bg'];
@@ -24,25 +24,19 @@ type VerseCardProps = {
     english: string;
     ayah: number;
     surahId: number;
+    surahName?: string;
     transliteration?: string;
     isLastRead?: boolean;
+    isBookmarked?: boolean;
+    onBookmarkToggle?: () => void;
+    onPress?: () => void;
 };
 
 function HexVerseBadge({ number }: { number: number }) {
     return (
-        <View className="w-10 h-11 items-center justify-center">
-            <View
-                style={{
-                    position: 'absolute',
-                    width: 30,
-                    height: 30,
-                    backgroundColor: colors['verse-badge-bg'],
-                    borderWidth: 1.5,
-                    borderColor: `${GOLD}99`,
-                    transform: [{ rotate: '45deg' }],
-                    borderRadius: 5,
-                }}
-            />
+        <View className={` items-center 
+            justify-center border solid border-gold px-2 py-1 rounded-md`}>
+
             <Text className="text-gold text-[12px] font-bold z-10">{number}</Text>
         </View>
     );
@@ -54,11 +48,16 @@ const VerseCard = ({
     english,
     ayah,
     surahId,
+    surahName,
     transliteration,
     isLastRead = false,
+    isBookmarked = false,
+    onBookmarkToggle,
+    onPress,
 }: VerseCardProps) => {
     const { play, pause, isPlaying, loading } = useAyahAudio(surahId, ayah);
     const pulse = useRef(new Animated.Value(0)).current;
+    const bookmarkScale = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
         if (isPlaying) {
@@ -94,77 +93,115 @@ const VerseCard = ({
         }
     };
 
+    const handleBookmark = () => {
+        // Bounce animation on tap
+        Animated.sequence([
+            Animated.timing(bookmarkScale, { toValue: 1.4, duration: 120, useNativeDriver: true }),
+            Animated.spring(bookmarkScale, { toValue: 1, useNativeDriver: true }),
+        ]).start();
+        onBookmarkToggle?.();
+    };
+
     return (
-        <Animated.View
-            className={cardClassName('quranVerse')}
-            style={{
-                borderColor,
-                backgroundColor: isPlaying ? CARD_BG_PLAYING : CARD_BG,
-            }}
+        <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={onPress}
+            style={{ width: '100%' }}
         >
-            <Animated.View style={[styles.leftAccent, { opacity: accentOpacity }]} />
+            <Animated.View
+                className={cardClassName('quranVerse')}
+                style={{
+                    borderColor,
+                    backgroundColor: isPlaying ? CARD_BG_PLAYING : CARD_BG,
+                }}
+            >
+                <Animated.View style={[styles.leftAccent, { opacity: accentOpacity }]} />
 
-            {/* Header */}
-            <View className="flex-row justify-between items-center mb-5">
+                {/* Last Read Banner */}
+                {isLastRead && (
+                    <View style={styles.lastReadBanner}>
+                        <Ionicons name="bookmark" size={10} color={colors['emerald-darkest']} />
+                        <Text style={styles.lastReadText}>LAST READ</Text>
+                    </View>
+                )}
 
-                <View>
-                    <HexVerseBadge number={number} />
-                </View>
-
-                <View className="flex-row  items-center gap-2">
-                    <View className="flex-row items-center bg-emerald-light border border-gold/25 rounded-full px-1.5 py-1.5 ml-2">
-                        <Ionicons name="bookmark" size={12} color="bg-white/5" />
+                {/* Header */}
+                <View className="flex-row justify-between items-center mb-5">
+                    <View>
+                        <HexVerseBadge number={ayah} />
                     </View>
 
-                    <TouchableOpacity
-                        onPress={handleShare}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        className="p-2 mr-1"
-                        accessibilityLabel="Share verse"
-                    >
-                        <Ionicons name="share-social-outline" size={20} color={GOLD} />
-                    </TouchableOpacity>
+                    <View className="flex-row items-center gap-2">
+                        {/* Bookmark Button */}
+                        <Animated.View style={{ transform: [{ scale: bookmarkScale }] }}>
+                            <TouchableOpacity
+                                onPress={handleBookmark}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                className="flex-row items-center bg-emerald-light border border-gold/25 rounded-full px-1.5 py-1.5 ml-2"
+                                accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+                            >
+                                <Ionicons
+                                    name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                                    size={13}
+                                    color={isBookmarked ? GOLD : 'rgba(255,255,255,0.35)'}
+                                />
+                            </TouchableOpacity>
+                        </Animated.View>
 
-                    <TouchableOpacity
-                        onPress={isPlaying ? pause : play}
-                        disabled={loading}
-                        className="w-10 h-10 rounded-full bg-gold items-center justify-center"
-                        accessibilityLabel={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                    >
-                        {loading ? (
-                            <ActivityIndicator size="small" color={colors['emerald-darkest']} />
-                        ) : (
-                            <Ionicons
-                                name={isPlaying ? 'pause' : 'play'}
-                                size={18}
-                                color={colors['emerald-darkest']}
-                                style={{ marginLeft: isPlaying ? 0 : 2 }}
-                            />
-                        )}
-                    </TouchableOpacity>
+                        {/* Share */}
+                        <TouchableOpacity
+                            onPress={handleShare}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            className="p-2 mr-1"
+                            accessibilityLabel="Share verse"
+                        >
+                            <Ionicons name="share-social-outline" size={20} color={GOLD} />
+                        </TouchableOpacity>
+
+                        {/* Play / Pause */}
+                        <TouchableOpacity
+                            onPress={isPlaying ? pause : play}
+                            disabled={loading}
+                            className="w-10 h-10 rounded-full bg-gold items-center justify-center"
+                            accessibilityLabel={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color={colors['emerald-darkest']} />
+                            ) : (
+                                <Ionicons
+                                    name={isPlaying ? 'pause' : 'play'}
+                                    size={18}
+                                    color={colors['emerald-darkest']}
+                                    style={{ marginLeft: isPlaying ? 0 : 2 }}
+                                />
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
 
-            {/* Arabic */}
-            <Text
-                className="text-white text-[26px] text-center leading-[46px] mb-4 px-1"
-                style={{ fontFamily: Platform.OS === 'ios' ? 'Geeza Pro' : 'serif' }}
-            >
-                {arabic}
-            </Text>
-
-            {/* Transliteration */}
-            {transliteration ? (
-                <Text className="text-gold/90 text-[14px] italic leading-6 mb-3">
-                    {transliteration}
+                {/* Arabic */}
+                <Text
+                    className="text-white text-[26px] text-center leading-[46px] mb-4 px-1"
+                    style={{ fontFamily: Platform.OS === 'ios' ? 'Geeza Pro' : 'serif' }}
+                >
+                    {arabic}
                 </Text>
-            ) : null}
 
-            <View className="h-px bg-white/8 mb-4" />
+                {/* Transliteration */}
+                {transliteration ? (
+                    <Text className="text-gold/90 text-[14px] italic leading-6 mb-3">
+                        {transliteration}
+                    </Text>
+                ) : null}
 
-            {/* Translation */}
-            <Text className="text-white/85 text-[15px] leading-7">{english}</Text>
-        </Animated.View>
+                <View className="h-px bg-white/8 mb-4" />
+
+                {/* Translation */}
+                <Text className="text-white/85 text-[15px] leading-7">{english}</Text>
+
+                <Text className="text-white/15 text-right text-[10px] leading-7 mt-2">Tab to make as Last Read</Text>
+            </Animated.View>
+        </TouchableOpacity>
     );
 };
 
@@ -178,6 +215,25 @@ const styles = StyleSheet.create({
         backgroundColor: GOLD,
         borderTopRightRadius: 2,
         borderBottomRightRadius: 2,
+    },
+    lastReadBanner: {
+        position: 'absolute',
+        top: 0,
+        right: 16,
+        backgroundColor: GOLD,
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    lastReadText: {
+        color: '#0d1410',
+        fontSize: 9,
+        fontWeight: '800',
+        letterSpacing: 1,
     },
 });
 

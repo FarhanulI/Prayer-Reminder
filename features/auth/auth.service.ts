@@ -71,9 +71,11 @@ export const signupUser = async (
   try {
     // Step 2: Initialize the core user profile document in Firestore
     await setDoc(doc(db, "users", user.uid), {
-      name,
-      email: user.email ?? email,
-      subscription: "free",
+      profile: {
+        name,
+        email: user.email ?? email,
+        subscription: "free",
+      },
       createdAt: serverTimestamp(),
     });
 

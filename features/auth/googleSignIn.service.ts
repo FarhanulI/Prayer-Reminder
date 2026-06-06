@@ -1,11 +1,11 @@
+import { auth, db } from '@/lib/firebase';
 import {
   GoogleAuthProvider,
   signInWithCredential,
   User,
 } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
-import { auth, db } from '@/lib/firebase';
 import { refreshApplicationData } from '../device.service';
 
 export type GoogleSignInFailureReason =
@@ -31,6 +31,7 @@ export class GoogleSignInError extends Error {
 export type GoogleSignInResult = {
   user: User;
   isNewUser: boolean;
+  onboardingCompleted: boolean;
 };
 
 const NATIVE_UNAVAILABLE_MESSAGE =
@@ -138,24 +139,30 @@ function isNativeModuleMissingError(error: unknown): boolean {
 
 async function ensureUserProfile(
   user: User,
-  displayName: string | null,
-  email: string
-): Promise<boolean> {
+): Promise<{ isNewUser: boolean; onboardingCompleted: boolean }> {
   const userRef = doc(db, 'users', user.uid);
   const snapshot = await getDoc(userRef);
 
+  console.log({ isEx: snapshot.data() });
+
+
   if (snapshot.exists()) {
-    return false;
+    const data = snapshot.data();
+    return { isNewUser: false, onboardingCompleted: !!data?.onboardingCompleted };
   }
 
-  await setDoc(userRef, {
-    name: displayName ?? user.displayName ?? 'User',
-    email: user.email ?? email,
-    subscription: 'free',
-    createdAt: serverTimestamp(),
-  });
+  // await setDoc(userRef, {
+  //   profile: {
+  //     uid: user.uid,
+  //     email: user.email,
+  //     photoURL: user.photoURL,
+  //     name: user.displayName ?? 'User',
+  //     subscription: 'free',
+  //   },
+  //   createdAt: serverTimestamp(),
+  // });
 
-  return true;
+  return { isNewUser: true, onboardingCompleted: false };
 }
 
 export async function signInWithGoogle(): Promise<GoogleSignInResult> {
@@ -199,10 +206,8 @@ export async function signInWithGoogle(): Promise<GoogleSignInResult> {
     const userCredential = await signInWithCredential(auth, credential);
     const user = userCredential.user;
 
-    const isNewUser = await ensureUserProfile(
+    const { isNewUser, onboardingCompleted } = await ensureUserProfile(
       user,
-      response.data.user.name,
-      response.data.user.email
     );
 
     try {
@@ -211,7 +216,7 @@ export async function signInWithGoogle(): Promise<GoogleSignInResult> {
       console.log('Device setup failed on Google sign in:', err);
     }
 
-    return { user, isNewUser };
+    return { user, isNewUser, onboardingCompleted };
   } catch (error) {
     if (error instanceof GoogleSignInError) {
       throw error;

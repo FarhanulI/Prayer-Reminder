@@ -1,13 +1,14 @@
 import { Card } from '@/components/ui/card';
+import colors from '@/constants/colors.json';
 import { useAuthContext } from '@/context/AuthProvider';
 import { db } from '@/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { updateUserStreaks } from '../../../features/streaks.service';
 import { PRAYERS } from '../constants';
-import colors from '@/constants/colors.json';
 
 interface EditPrayerModalProps {
     editModalVisible: boolean;
@@ -27,6 +28,8 @@ const PRAYER_METADATA: Record<string, { label: string, icon: string }> = {
 
 const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, setSelectedDay, refetch }: EditPrayerModalProps) => {
     const { user } = useAuthContext();
+    const queryClient = useQueryClient()
+
     const [updating, setUpdating] = useState(false);
     const [localPrayers, setLocalPrayers] = useState<Record<string, boolean>>({});
 
@@ -48,12 +51,12 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
     };
 
     const handleSaveChanges = async () => {
-        if (!user?.uid || !selectedDay) return;
+        if (!user?.profile?.uid || !selectedDay) return;
 
         setUpdating(true);
         try {
             const dateStr = selectedDay.date.format('YYYY-MM-DD');
-            const logRef = doc(db, "users", user.uid, "prayer_logs", dateStr);
+            const logRef = doc(db, "users", user?.profile?.uid, "prayer_logs", dateStr);
 
             const updateData: Record<string, any> = {};
             PRAYERS.forEach(prayer => {
@@ -69,7 +72,7 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                     updateData[`prayers.${prayerKey}.skippedAt`] = null;
                 }
             });
-            
+
             // Update the total completed count for the day
             const newCompletedCount = Object.values(localPrayers).filter(status => status).length;
             updateData.prayerCount = newCompletedCount;
@@ -92,11 +95,13 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
                             };
                         });
                         const newCount = Object.values(localPrayers).filter(status => status).length;
-                        
-                        await setDoc(logRef, { 
+
+                        await setDoc(logRef, {
                             prayers: prayersObj,
-                            prayerCount: newCount 
+                            prayerCount: newCount
                         }, { merge: true });
+
+                        queryClient.invalidateQueries({ queryKey: ['dashboard', user?.profile?.uid] })
                     } else {
                         throw err;
                     }
@@ -104,7 +109,7 @@ const EditPrayerModal = ({ editModalVisible, setEditModalVisible, selectedDay, s
             }
 
             // Update streaks for this day
-            await updateUserStreaks(user.uid, dateStr);
+            await updateUserStreaks(user?.profile?.uid, dateStr);
 
             refetch();
             setEditModalVisible(false);

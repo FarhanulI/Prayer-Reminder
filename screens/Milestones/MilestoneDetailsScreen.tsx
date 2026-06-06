@@ -1,3 +1,4 @@
+import colors from "@/constants/colors.json";
 import { STREAK_MILESTONES } from "@/constants/milestones";
 import { useAuthContext } from "@/context/AuthProvider";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -6,14 +7,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useMemo } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import colors from "@/constants/colors.json";
 
 export default function MilestoneDetailsScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthContext();
-  const uid = user?.uid;
-  const { data, isPending: dashPending } = useDashboardData(uid);
-  const { data: milestonesData, isPending: milestonesPending } = useMilestones(uid);
+  const { data, isLoading: dashPending } = useDashboardData(user?.profile?.uid);
+  const { data: milestonesData, isPending: milestonesPending } = useMilestones(user?.profile?.uid);
 
   const { profile } = useMemo(() => {
     return {
@@ -24,9 +23,7 @@ export default function MilestoneDetailsScreen() {
   const streaks = milestonesData?.streaks;
   const perfectStreak = streaks?.perfect?.current ?? 0;
 
-  const loading = dashPending || milestonesPending;
-
-  if (loading) {
+  if (dashPending || milestonesPending) {
     return (
       <View className="flex-1 bg-emerald-dark items-center justify-center">
         <ActivityIndicator color={colors.gold} size="large" />
@@ -39,8 +36,8 @@ export default function MilestoneDetailsScreen() {
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 pt-16 pb-4 bg-emerald-dark">
         <View className="flex-row items-center flex-1">
-          <TouchableOpacity 
-            className="mr-3 p-2 -ml-2" 
+          <TouchableOpacity
+            className="mr-3 p-2 -ml-2"
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={24} color={colors['emerald-sage']} />
@@ -49,7 +46,7 @@ export default function MilestoneDetailsScreen() {
             Understanding Your Path
           </Text>
         </View>
-        
+
         <View className="w-10 h-10 rounded-full bg-emerald-soft items-center justify-center overflow-hidden border border-white/10">
           {profile?.photoURL ? (
             <Image source={{ uri: profile.photoURL }} className="w-full h-full" />
@@ -67,10 +64,14 @@ export default function MilestoneDetailsScreen() {
         {/* Journey of the Soul Card */}
         <View className="bg-emerald-medium-dark border-l-4 border-l-gold rounded-xl p-5 mb-8 border border-white/5">
           <Text className="text-gold text-lg font-bold mb-3" style={{ fontFamily: 'serif' }}>
-            The Journey of the Soul
+            Narrated Abu Huraira:
           </Text>
           <Text className="text-white/70 text-xs leading-relaxed">
-            As a Muslim, the five daily prayers are the foundation of our faith and a direct link to our Creator. This path is designed to help you nurture this vital habit gradually, turning each prostration into a moment of Sakinah (tranquility).
+            I heard Allah's Messenger (ﷺ) saying, "If there was a river at the door of anyone of you and he took a bath in it five times a day would you notice any dirt on him?"
+            They said, "Not a trace of dirt would be left." The Prophet (ﷺ) added, "That is the example of the five prayers with which Allah blots out (annuls) evil deeds."
+          </Text>
+          <Text className="text-gold text-xs leading-relaxed mt-2">
+            Sahih al-Bukhari 528, Book 9, Hadith 7
           </Text>
         </View>
 
@@ -90,18 +91,18 @@ export default function MilestoneDetailsScreen() {
           {STREAK_MILESTONES.perfect.map((milestone: any, index: number) => {
             const isUnlocked = perfectStreak >= milestone.days;
             const isNext = !isUnlocked && (index === 0 || perfectStreak >= STREAK_MILESTONES.perfect[index - 1].days);
-            
+
             // Icon color logic
             let iconColor = "rgba(255,255,255,0.3)";
             let borderColor = "border-white/10";
             let bgColor = "bg-emerald-soft";
-            
+
             if (isUnlocked) {
               iconColor = milestone.color;
               borderColor = "border-gold";
               bgColor = "bg-gold/10";
             } else if (isNext) {
-               borderColor = "border-white/30";
+              borderColor = "border-white/30";
             }
 
             return (
@@ -109,10 +110,10 @@ export default function MilestoneDetailsScreen() {
                 {/* Timeline Icon */}
                 <View className="z-10 mr-4 mt-1">
                   <View className={`w-12 h-12 rounded-full items-center justify-center border-2 ${borderColor} ${bgColor}`}>
-                    <Ionicons 
-                      name={milestone.icon as any} 
-                      size={20} 
-                      color={iconColor} 
+                    <Ionicons
+                      name={milestone.icon as any}
+                      size={20}
+                      color={iconColor}
                     />
                   </View>
                 </View>
@@ -141,10 +142,10 @@ export default function MilestoneDetailsScreen() {
         {/* Flexible Growth Card */}
         <View className="bg-emerald-soft rounded-xl p-5 mb-8 border border-white/5">
           <View className="flex-row items-center mb-3">
-             <Ionicons name="git-branch-outline" size={20} color={colors['emerald-sage']} className="mr-2" />
-             <Text className="text-emerald-sage text-lg font-bold ml-2" style={{ fontFamily: 'serif' }}>
+            <Ionicons name="git-branch-outline" size={20} color={colors['emerald-sage']} className="mr-2" />
+            <Text className="text-emerald-sage text-lg font-bold ml-2" style={{ fontFamily: 'serif' }}>
               Flexible Growth
-             </Text>
+            </Text>
           </View>
           <Text className="text-white/70 text-[11px] leading-relaxed mb-6">
             Every effort is seen by Allah. If you miss a step, do not lose hope. These paths are here to support your climb back to the full five daily prayers, ensuring you never stop moving toward Him.
@@ -160,7 +161,7 @@ export default function MilestoneDetailsScreen() {
               </Text>
             </View>
             <View className="flex-1 ml-3">
-               <Text className="text-white/40 text-[10px] font-bold tracking-widest mb-2">
+              <Text className="text-white/40 text-[10px] font-bold tracking-widest mb-2">
                 GROWTH TRACK
               </Text>
               <Text className="text-white/60 text-[10px] leading-relaxed">
@@ -172,14 +173,14 @@ export default function MilestoneDetailsScreen() {
 
         {/* Bottom Quote / Image Placeholder */}
         <View className="rounded-xl overflow-hidden h-40 border border-white/10 mb-8 relative bg-black items-center justify-center">
-            {/* Dark overlay */}
-            <View className="absolute inset-0 bg-gold/10" />
-            
-            <View className="absolute bottom-4 px-4 items-center w-full">
-              <Text className="text-gold text-sm font-bold text-center italic" style={{ fontFamily: 'serif' }}>
-                "Verily in the remembrance of Allah do hearts find rest."
-              </Text>
-            </View>
+          {/* Dark overlay */}
+          <View className="absolute inset-0 bg-gold/10" />
+
+          <View className="absolute bottom-4 px-4 items-center w-full">
+            <Text className="text-gold text-sm font-bold text-center italic" style={{ fontFamily: 'serif' }}>
+              "Verily in the remembrance of Allah do hearts find rest."
+            </Text>
+          </View>
         </View>
 
       </ScrollView>

@@ -5,6 +5,7 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import Skeleton from "@/components/Skeleton";
 import { Card } from "@/components/ui/card";
+import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
 import { useStreaks } from "@/hooks/useStreaks";
 import { PrayerCollection } from "@/types";
@@ -12,13 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import DateSelectorRow from "./components/DateSelectorRow";
 import { PRAYERS } from "./constants";
 import EditPrayerModal from "./modals/EditPrayerModal";
-import colors from "@/constants/colors.json";
 
 export default function HistoryScreen() {
   const { user } = useAuthContext();
 
   const [currentDate, setCurrentDate] = useState(dayjs());
-  const { data: weekData = [], isLoading: loading, refetch } = useStreaks(user?.uid, currentDate);
+  const { data: weekData = [], isLoading: loading, refetch } = useStreaks(user?.profile?.uid, currentDate);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedDay, setSelectedDay] = useState<any>(null);

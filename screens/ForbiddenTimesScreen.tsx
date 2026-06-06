@@ -2,11 +2,12 @@ import { Card } from '@/components/ui/card';
 import colors from '@/constants/colors.json';
 import { useAuthContext } from '@/context/AuthProvider';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { usePrayerTimes } from '@/hooks/usePrayerTimes';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, { useMemo } from 'react';
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ImageBackground, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 interface ForbiddenTime {
     label: string;
@@ -64,20 +65,15 @@ export default function ForbiddenTimesScreen() {
     const { user } = useAuthContext();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { data, isLoading } = useDashboardData(user?.uid);
+    const { data, isLoading } = useDashboardData(user?.profile?.uid);
+    const { data: prayerTimes, isLoading: prayerLoading } = usePrayerTimes({ latitude: user?.location?.latitude, longitude: user?.location?.longitude });
 
-    const { profile, userData } = useMemo(() => {
+    const { profile, prayerLog } = useMemo(() => {
         return {
             profile: data?.profile,
-            userData: data?.userData,
+            prayerLog: data?.prayerData,
         };
     }, [data]);
-
-    const sunTimings = route.params?.sunTimings || profile?.sunTimings;
-    const prayerTimes = route.params?.prayerTimes || userData;
-
-    console.log({});
-
 
     const addMinutes = (time: string, mins: number) => {
         if (!time) return '';
@@ -88,15 +84,13 @@ export default function ForbiddenTimesScreen() {
     };
 
     const forbiddenTimes: ForbiddenTime[] = useMemo(() => {
-        if (!sunTimings || !prayerTimes) return [];
-        console.log({ sunTimings, prayerTimes });
-
+        if (!prayerLog || !prayerTimes) return [];
         return [
             {
                 label: "Sunrise",
                 subLabel: "(Shuruq)",
-                start: sunTimings.sunrise || '',
-                end: addMinutes(sunTimings.sunrise || '', 20),
+                start: prayerTimes.prayerTimings.Sunrise || '',
+                end: addMinutes(prayerTimes.prayerTimings.Sunrise || '', 20),
                 description: "The period from when the sun begins to rise until it has risen to the height of a spear (approximately 15-20 minutes after sunrise).",
                 icon: "sunrise",
                 iconType: 'feather'
@@ -104,8 +98,8 @@ export default function ForbiddenTimesScreen() {
             {
                 label: "Zenith",
                 subLabel: "(Zawwal)",
-                start: addMinutes(prayerTimes?.dhuhr?.time || '', -10),
-                end: prayerTimes?.dhuhr?.time || '',
+                start: addMinutes(prayerLog?.prayers?.dhuhr?.time || '', -10),
+                end: prayerLog?.prayers?.dhuhr?.time || '',
                 description: "When the sun is at its highest point in the sky. This is a brief period just before the time of Dhuhr begins.",
                 icon: "sunny-outline",
                 iconType: 'ionicons'
@@ -113,21 +107,17 @@ export default function ForbiddenTimesScreen() {
             {
                 label: "Sunset",
                 subLabel: "(Ghurub)",
-                start: addMinutes(prayerTimes?.maghrib?.time || '', -15),
-                end: prayerTimes?.maghrib?.time || '',
+                start: addMinutes(prayerLog?.prayers?.maghrib?.time || '', -15),
+                end: prayerLog?.prayers?.maghrib?.time || '',
                 description: "When the sun starts to set until it has completely disappeared. Note: The obligatory Maghrib prayer is excluded from this prohibition once the sun has set.",
                 icon: "weather-sunset-down",
                 iconType: 'material'
             }
         ];
-    }, [sunTimings, prayerTimes]);
-
-    console.log({ forbiddenTimes });
+    }, [prayerLog, prayerTimes]);
 
 
-
-
-    if (isLoading && !sunTimings) {
+    if (isLoading || prayerLoading) {
         return (
             <View className="flex-1 bg-emerald-darkest items-center justify-center">
                 <ActivityIndicator color={colors.gold} size="large" />
@@ -135,7 +125,7 @@ export default function ForbiddenTimesScreen() {
         );
     }
 
-    if (!sunTimings || !prayerTimes) {
+    if (!prayerLog || !prayerTimes) {
         return (
             <View className="flex-1 bg-emerald-darkest">
                 {/* Header */}
@@ -180,10 +170,10 @@ export default function ForbiddenTimesScreen() {
                 </View>
 
                 <View className="w-10 h-10 rounded-full bg-emerald-soft items-center justify-center overflow-hidden border border-white/10">
-                    {profile?.photoURL ? (
-                        <Image source={{ uri: profile.photoURL }} className="w-full h-full" />
+                    {profile?.profile?.photoURL ? (
+                        <Image source={{ uri: profile?.profile?.photoURL }} className="w-full h-full" />
                     ) : (
-                        <Text className="text-gold font-bold">{profile?.name?.charAt(0) || "U"}</Text>
+                        <Text className="text-gold font-bold">{profile?.profile?.name?.charAt(0) || "U"}</Text>
                     )}
                 </View>
             </View>
@@ -194,22 +184,28 @@ export default function ForbiddenTimesScreen() {
                 contentContainerStyle={{ paddingBottom: 60, paddingTop: 20 }}
             >
                 {/* Introduction Callout */}
-                <View className="bg-emerald-medium-dark rounded-2xl p-6 mb-8 border border-white/5 items-center">
-                    {/* Book Icon */}
-                    <View className="w-12 h-12 rounded-full bg-emerald-dark items-center justify-center mb-5">
-                        <Feather name="book-open" size={20} color={colors.gold} />
+                <ImageBackground
+                    source={require('@/assets/images/bgOverlay.png')}
+                    imageStyle={{ opacity: 0.3, resizeMode: 'cover' }}
+                    className="w-full rounded-2xl mb-8 overflow-hidden"
+                >
+                    <View className="p-6 border border-white/5 items-center">
+                        {/* Book Icon */}
+                        <View className="w-12 h-12 rounded-full bg-emerald-dark items-center justify-center mb-5">
+                            <Feather name="book-open" size={20} color={colors.gold} />
+                        </View>
+
+                        {/* Quote Text */}
+                        <Text className="text-white/80 text-[15px] leading-relaxed text-center italic mb-6" style={{ fontFamily: 'serif' }}>
+                            "And Uqbah ibn Aamir reported: Allah’s Messenger (ﷺ) forbade us from praying in three periods: when the sun is rising until it has fully risen, when the sun is at its zenith until it has passed the meridian, and when the sun is about to set until it has fully set."
+                        </Text>
+
+                        {/* Source */}
+                        <Text className="text-gold text-[10px] font-bold uppercase tracking-widest text-center">
+                            Sahih Muslim 831
+                        </Text>
                     </View>
-
-                    {/* Quote Text */}
-                    <Text className="text-white/80 text-[15px] leading-relaxed text-center italic mb-6" style={{ fontFamily: 'serif' }}>
-                        "And Uqbah ibn Aamir reported: Allah’s Messenger (ﷺ) forbade us from praying in three periods: when the sun is rising until it has fully risen, when the sun is at its zenith until it has passed the meridian, and when the sun is about to set until it has fully set."
-                    </Text>
-
-                    {/* Source */}
-                    <Text className="text-gold text-[10px] font-bold uppercase tracking-widest text-center">
-                        Sahih Muslim 831
-                    </Text>
-                </View>
+                </ImageBackground>
 
                 {/* Timeline */}
                 <View className="mt-2 pl-2">
