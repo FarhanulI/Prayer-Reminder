@@ -18,7 +18,7 @@ const DailyPerformance = ({ completedCount }: { completedCount: number }) => {
 
     return (
         <View className="items-center my-8">
-            <Text className="text-white/60 text-lg font-medium mb-8" style={{ fontFamily: 'serif' }}>Daily Performance</Text>
+            <Text className="text-white/60 text-lg font-medium mb-8" style={{ fontFamily: 'serif' }}>Salah Prayed Today</Text>
 
             <TouchableOpacity
                 activeOpacity={0.8}

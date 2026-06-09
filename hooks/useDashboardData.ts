@@ -47,7 +47,7 @@ export function useDashboardData(uid: string | null | undefined) {
     // Only run the query if a UID is provided
     enabled: !!uid,
     // Optional: set a staleTime so it doesn't refetch on every window focus
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 60 * 12,
   });
 
   // 2. Real-time Firebase Synchronization

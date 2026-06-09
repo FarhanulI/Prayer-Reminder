@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
 import { refreshApplicationData } from "@/features/device.service";
+import { useCreateTomorrowPrayerLog } from "@/hooks/useCreateTomorrowPrayerLog";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useEndOfDayReminder } from "@/hooks/useEndOfDayReminder";
 import { usePrayerLock } from "@/hooks/usePrayerLock";
@@ -11,8 +12,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
-import React, { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import EndOfDayOverlayScreen from "../EndOfDayOverlayScreen";
 import PrayerOverlayScreen from "../PrayerOverlayScreen";
 import BookmarksCard from "./Components/BookmarksCard";
@@ -23,51 +31,122 @@ import UpcomingPrayerCard from "./Components/UpcomingPrayerCard";
 
 dayjs.extend(isBetween);
 
-/**
- * Stat card for Salat progress.
- */
-const QuickActionCard = ({ title, value, subtext, remainingCount, completedCount }: any) => {
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface QuickActionCardProps {
+  title: string;
+  subtext: string;
+  completedCount: number;
+  remainingCount: number;
+}
+
+interface PrayerEntry {
+  name: string;
+  time: string;
+  rawTime: string;
+  end: string;
+  isPrayed: boolean;
+  skipped: boolean;
+  date: string;
+}
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+
+/** Formats a raw prayer time string (e.g. "04:32 (UTC)") to "4:32 AM". */
+function formatPrayerTime(raw: string | undefined): string {
+  if (!raw) return "--:--";
+  const clean = raw.split(" ")[0];
+  return dayjs(`2000-01-01 ${clean}`).format("h:mm A");
+}
+
+/** Returns true if the prayer window has closed and it was not prayed. */
+function isPrayerMissed(prayer: PrayerEntry): boolean {
+  if (prayer.isPrayed) return false;
+  if (prayer.skipped) return true;
+  if (!prayer.end || !prayer.rawTime) return false;
+
+  const cleanEnd = prayer.end.split(" ")[0];
+  const cleanRaw = prayer.rawTime.split(" ")[0];
+  let endObj = dayjs(`${prayer.date} ${cleanEnd}`);
+  const startObj = dayjs(`${prayer.date} ${cleanRaw}`);
+
+  if (endObj.isBefore(startObj)) endObj = endObj.add(1, "day");
+
+  return endObj.isBefore(dayjs());
+}
+
+// ---------------------------------------------------------------------------
+// QuickActionCard
+// ---------------------------------------------------------------------------
+
+const QuickActionCard = ({
+  title,
+  subtext,
+  completedCount,
+  remainingCount,
+}: QuickActionCardProps) => {
   const navigation = useNavigation<any>();
 
   return (
     <Card variant="large" className="flex-row justify-between items-center mb-8">
       <View className="flex-1 pr-4">
-        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1.5">{title}</Text>
-        <Text className="text-white text-[28px] font-semibold leading-tight mb-2" style={{ fontFamily: 'serif' }}>{subtext}</Text>
-        <Text className="text-white/30 text-[13px] font-medium">Prayed {" "}
-          <Text className="text-white/60 text-[15px] font-semibold">{completedCount}</Text>
-          {" "}Times
+        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+          {title}
+        </Text>
+        <Text
+          className="text-white text-[28px] font-semibold leading-tight mb-2"
+          style={{ fontFamily: "serif" }}
+        >
+          {subtext}
+        </Text>
+
+        <Text className="text-white/30 text-[13px] font-medium">
+          Prayed{" "}
+          <Text className="text-gold text-[15px] font-bold">
+            {completedCount}
+          </Text>{" "}
+          Salah
         </Text>
 
         <TouchableOpacity onPress={() => navigation.navigate("History")}>
-          <View className="flex-row items-center border border-gold bg-gold/10 px-3 py-2 rounded-xl mt-2"
-          >
+          <View className="flex-row items-center border border-gold bg-gold/10 px-3 py-2 rounded-xl mt-4">
             <Ionicons name="stats-chart-outline" size={14} color={colors.gold} />
-            <Text className="text-gold text-[7px] font-bold ml-1.5 tracking-widest uppercase">Weekly Progress</Text>
+            <Text className="text-gold text-[7px] font-bold ml-1.5 tracking-widest uppercase">
+              Weekly Progress
+            </Text>
           </View>
-
         </TouchableOpacity>
       </View>
 
-      <CircularProgress value={completedCount || 0} total={5} />
+      <CircularProgress value={completedCount} total={5} />
     </Card>
-  )
+  );
 };
 
-// --- MAIN SCREEN ---
+// ---------------------------------------------------------------------------
+// DashboardScreen
+// ---------------------------------------------------------------------------
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthContext();
-  const { data, isLoading: loading, refetch, isFetching } = useDashboardData(user?.profile?.uid);
 
-  const { profile, prayerData, yesterdayData } = useMemo(() => {
-    return {
+  const uid = user?.profile?.uid ?? null;
+
+  const { data, isLoading: loading, refetch, isFetching } = useDashboardData(uid);
+
+  const { profile, prayerData, yesterdayData } = useMemo(
+    () => ({
       profile: data?.profile,
       prayerData: data?.prayerData,
       yesterdayData: data?.yesterdayData,
-    }
-  }, [data])
+    }),
+    [data]
+  );
 
   const [refreshing, setRefreshing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -77,189 +156,252 @@ export default function DashboardScreen() {
   const [isSkipReminder, setIsSkipReminder] = useState(false);
 
   const { visible: eodVisible, dismiss: dismissEod } = useEndOfDayReminder();
+  const { mutate: createTomorrowLog } = useCreateTomorrowPrayerLog();
+
+  // Pre-create tomorrow's log when EOD overlay becomes visible.
+  useEffect(() => {
+    if (eodVisible && uid) {
+      createTomorrowLog(uid);
+    }
+  }, [eodVisible, uid, createTomorrowLog]);
+
+  // ---------------------------------------------------------------------------
+  // Pull-to-refresh
+  // ---------------------------------------------------------------------------
 
   const onRefresh = useCallback(async () => {
-    if (!user?.profile?.uid) return;
+    if (!uid) return;
     setRefreshing(true);
     try {
-      await refreshApplicationData(user?.profile?.uid);
+      await refreshApplicationData(uid);
       await refetch();
     } catch (error) {
       console.error("Refresh failed:", error);
     } finally {
       setRefreshing(false);
     }
-  }, [user?.profile?.uid, refetch]);
+  }, [uid, refetch]);
 
-  // Auto-refresh if no data is present on load
-  // React.useEffect(() => {
-  //   if (user?.profile?.uid && !prayerData && !loading) {
-  //     onRefresh();
-  //   }
-  // }, [user?.profile?.uid, prayerData, loading, onRefresh]);
+  // ---------------------------------------------------------------------------
+  // Prayer list (display)
+  // ---------------------------------------------------------------------------
 
-  // Calculate prayer list
-  const prayerList = useMemo(() => {
-    if (!prayerData || !prayerData.prayers) return [];
+  const prayerList = useMemo<PrayerEntry[]>(() => {
+    if (!prayerData?.prayers) return [];
 
     const today = dayjs().format("YYYY-MM-DD");
-
-    const formatTime = (t: string) => {
-      if (!t) return "--:--";
-      // Ensure we only take the HH:mm part (AlAdhan sometimes adds (UTC) etc.)
-      const cleanTime = t.split(' ')[0];
-      return dayjs(`2000-01-01 ${cleanTime}`).format("h:mm A");
+    const keys = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
+    const labels: Record<typeof keys[number], string> = {
+      fajr: "Fajr",
+      dhuhr: "Dhuhr",
+      asr: "Asr",
+      maghrib: "Maghrib",
+      isha: "Isha",
     };
 
-    return [
-      { name: "Fajr", time: formatTime(prayerData.prayers.fajr?.time), rawTime: prayerData.prayers.fajr?.time, end: prayerData.prayers.fajr?.end, isPrayed: prayerData.prayers.fajr?.isPrayed, skipped: prayerData.prayers.fajr?.skipped, date: today },
-      { name: "Dhuhr", time: formatTime(prayerData.prayers.dhuhr?.time), rawTime: prayerData.prayers.dhuhr?.time, end: prayerData.prayers.dhuhr?.end, isPrayed: prayerData.prayers.dhuhr?.isPrayed, skipped: prayerData.prayers.dhuhr?.skipped, date: today },
-      { name: "Asr", time: formatTime(prayerData.prayers.asr?.time), rawTime: prayerData.prayers.asr?.time, end: prayerData.prayers.asr?.end, isPrayed: prayerData.prayers.asr?.isPrayed, skipped: prayerData.prayers.asr?.skipped, date: today },
-      { name: "Maghrib", time: formatTime(prayerData.prayers.maghrib?.time), rawTime: prayerData.prayers.maghrib?.time, end: prayerData.prayers.maghrib?.end, isPrayed: prayerData.prayers.maghrib?.isPrayed, skipped: prayerData.prayers.maghrib?.skipped, date: today },
-      { name: "Isha", time: formatTime(prayerData.prayers.isha?.time), rawTime: prayerData.prayers.isha?.time, end: prayerData.prayers.isha?.end, isPrayed: prayerData.prayers.isha?.isPrayed, skipped: prayerData.prayers.isha?.skipped, date: today },
-    ];
+    return keys.map((key) => {
+      const p = prayerData.prayers[key];
+      return {
+        name: labels[key],
+        time: formatPrayerTime(p?.time),
+        rawTime: p?.time ?? "",
+        end: p?.end ?? "",
+        isPrayed: !!p?.isPrayed,
+        skipped: !!p?.skipped,
+        date: today,
+      };
+    });
   }, [prayerData]);
 
-  // Calculate prayer list for locking (uses raw times for robust comparison)
+  // ---------------------------------------------------------------------------
+  // Prayer list for locking (includes yesterday's Isha)
+  // ---------------------------------------------------------------------------
+
   const lockPrayers = useMemo(() => {
-    const list: any[] = [];
-    const today = dayjs().format("YYYY-MM-DD");
-    const yesterday = dayjs().subtract(1, 'day').format("YYYY-MM-DD");
+    const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const result: PrayerEntry[] = [];
 
     if (yesterdayData?.prayers?.isha) {
-      list.push({
+      const isha = yesterdayData.prayers.isha;
+      result.push({
         name: "Isha",
-        time: yesterdayData.prayers.isha.time,
-        end: yesterdayData.prayers.isha.end,
-        isPrayed: yesterdayData.prayers.isha.isPrayed,
-        skipped: yesterdayData.prayers.isha.skipped,
+        time: isha.time ?? "",
+        rawTime: isha.time ?? "",
+        end: isha.end ?? "",
+        isPrayed: !!isha.isPrayed,
+        skipped: !!isha.skipped,
         date: yesterday,
       });
     }
 
-    prayerList.forEach(p => {
-      list.push({
-        ...p,
-        time: p.rawTime, // Use raw 24h time for internal logic
-      });
-    });
+    prayerList.forEach((p) =>
+      result.push({ ...p, time: p.rawTime })
+    );
 
-    return list;
+    return result;
   }, [yesterdayData, prayerList]);
 
-  // Find next prayer
+  // ---------------------------------------------------------------------------
+  // Current / upcoming prayer info
+  // ---------------------------------------------------------------------------
+
   const currentInfo = useMemo(() => {
     if (prayerList.length === 0) return null;
 
     const now = dayjs();
     const today = now.format("YYYY-MM-DD");
-    const yesterday = now.subtract(1, 'day').format("YYYY-MM-DD");
+    const yesterday = now.subtract(1, "day").format("YYYY-MM-DD");
 
-    const times: any[] = [];
-
-    // Prepend yesterday's Isha if we have it
-    if (yesterdayData?.prayers?.isha) {
-      times.push({
-        name: "Isha",
-        time: yesterdayData.prayers.isha.time,
-        end: yesterdayData.prayers.isha.end,
-        isPrayed: yesterdayData.prayers.isha.isPrayed,
-        skipped: yesterdayData.prayers.isha.skipped,
-        date: yesterday,
-        dateTime: dayjs(`${yesterday} ${yesterdayData.prayers.isha.time}`),
-        isYesterday: true,
-      });
-    }
-
-    // Convert today's prayer times to dayjs objects
-    prayerList.forEach(p => {
-      times.push({
+    const times = [
+      ...(yesterdayData?.prayers?.isha
+        ? [
+          {
+            name: "Isha",
+            time: yesterdayData.prayers.isha.time,
+            end: yesterdayData.prayers.isha.end,
+            isPrayed: !!yesterdayData.prayers.isha.isPrayed,
+            skipped: !!yesterdayData.prayers.isha.skipped,
+            date: yesterday,
+            dateTime: dayjs(`${yesterday} ${yesterdayData.prayers.isha.time}`),
+            isYesterday: true,
+          },
+        ]
+        : []),
+      ...prayerList.map((p) => ({
         ...p,
         date: today,
         dateTime: dayjs(`${today} ${p.rawTime}`),
         isYesterday: false,
-      });
-    });
+      })),
+    ];
 
-    // Find the one that is currently active (last one that passed)
-    const active = [...times].reverse().find(p => p.dateTime.isBefore(now) || p.dateTime.isSame(now));
+    const active = [...times]
+      .reverse()
+      .find((p) => !p.dateTime.isAfter(now));
 
-    // Find the upcoming one
-    let upcoming = times.find(p => p.dateTime.isAfter(now));
-
-    // Handle wrap around
-    const nextDayFirst = times[0].dateTime.add(1, 'day');
+    const upcoming = times.find((p) => p.dateTime.isAfter(now));
 
     if (active) {
       let endTime = dayjs(`${active.date} ${active.end}`);
-      const adjustedEnd = endTime.isBefore(active.dateTime) ? endTime.add(1, 'day') : endTime;
+      if (endTime.isBefore(active.dateTime)) endTime = endTime.add(1, "day");
 
-      if (!now.isAfter(adjustedEnd)) {
+      if (!now.isAfter(endTime)) {
         return {
           title: "Current Prayer",
           name: active.name,
           time: active.time,
           date: active.date,
-          countdownTarget: adjustedEnd.toISOString(),
+          countdownTarget: endTime.toISOString(),
           isYesterday: active.isYesterday,
-          isPrayed: !!active.isPrayed,
-          isSkipped: !!active.skipped,
+          isPrayed: active.isPrayed,
+          isSkipped: active.skipped,
         };
       }
     }
 
-    const displayUpcoming = upcoming || { ...times[0], dateTime: nextDayFirst, date: dayjs(today).add(1, 'day').format('YYYY-MM-DD') };
+    const fallback = upcoming ?? {
+      ...times[0],
+      dateTime: times[0].dateTime.add(1, "day"),
+      date: dayjs(today).add(1, "day").format("YYYY-MM-DD"),
+    };
+
     return {
       title: "Upcoming Prayer",
-      name: displayUpcoming.name,
-      time: displayUpcoming.time,
-      date: displayUpcoming.date,
-      countdownTarget: displayUpcoming.dateTime.toISOString(),
+      name: fallback.name,
+      time: fallback.time,
+      date: fallback.date,
+      countdownTarget: fallback.dateTime.toISOString(),
       isYesterday: false,
       isPrayed: false,
       isSkipped: false,
     };
   }, [prayerList, yesterdayData]);
 
-  const completedCount = prayerList.filter(p => p.isPrayed).length;
-  const remainingCount = 5 - completedCount;
+  // ---------------------------------------------------------------------------
+  // Overlay handlers
+  // ---------------------------------------------------------------------------
 
   const onShowOverlay = useCallback(
     (prayerName: string, prayerEnd: string, prayerDate: string) => {
+      const prayer = lockPrayers.find(
+        (p) => p.name === prayerName && p.date === prayerDate
+      );
       setOverlayPrayerName(prayerName);
       setOverlayEndTime(prayerEnd);
       setOverlayPrayerDate(prayerDate);
-
-      const prayer = lockPrayers.find(
-        (p) => p.name === prayerName && p.date === prayerDate,
-      );
-
       setIsSkipReminder(!!prayer?.skipped);
       setOverlayVisible(true);
     },
-    [lockPrayers],
+    [lockPrayers]
   );
 
-  // --- Prayer Lock Hook ---
   const { markPrayerComplete, snoozeUntilTime } = usePrayerLock({
-    uid: user?.profile?.uid ?? null,
+    uid,
     prayers: lockPrayers,
     onShowOverlay,
   });
 
-  const handlePray = async (name: string) => {
-    const finalName = name || overlayPrayerName;
-    const logDate = overlayPrayerDate || dayjs().format("YYYY-MM-DD");
-    // Sync completion to native storage before hiding overlay so blocked apps
-    // cannot relaunch this app while Firestore/dashboard data is still stale.
-    await markPrayerComplete(finalName, logDate);
-    setOverlayVisible(false);
-  };
+  const handlePray = useCallback(
+    async (name: string) => {
+      const finalName = name || overlayPrayerName;
+      const logDate = overlayPrayerDate || dayjs().format("YYYY-MM-DD");
 
-  const handleRemindAt = async (targetTime: string, prayerEndTime: string) => {
-    setOverlayVisible(false);
-    await snoozeUntilTime(targetTime, prayerEndTime);
-  };
+      await markPrayerComplete(finalName, logDate);
+      setOverlayVisible(false);
+
+      if (finalName === "Isha" && uid) {
+        createTomorrowLog(uid);
+      }
+    },
+    [overlayPrayerName, overlayPrayerDate, markPrayerComplete, uid, createTomorrowLog]
+  );
+
+  const handleRemindAt = useCallback(
+    async (targetTime: string, prayerEndTime: string) => {
+      setOverlayVisible(false);
+      await snoozeUntilTime(targetTime, prayerEndTime);
+    },
+    [snoozeUntilTime]
+  );
+
+  // ---------------------------------------------------------------------------
+  // EOD missed prayers
+  // ---------------------------------------------------------------------------
+
+  const missedPrayers = useMemo(
+    () => prayerList.filter(isPrayerMissed),
+    [prayerList]
+  );
+
+  const handleEodLogPrayer = useCallback(
+    async (name: string, date?: string) => {
+      await markPrayerComplete(name, date ?? dayjs().format("YYYY-MM-DD"));
+
+      if (name === "Isha" && uid) {
+        createTomorrowLog(uid);
+      }
+
+      const remaining = prayerList.filter(
+        (p) => p.name !== name && isPrayerMissed(p)
+      );
+      if (remaining.length === 0) dismissEod();
+    },
+    [markPrayerComplete, uid, createTomorrowLog, prayerList, dismissEod]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Derived counts
+  // ---------------------------------------------------------------------------
+
+  const completedCount = useMemo(
+    () => prayerList.filter((p) => p.isPrayed).length,
+    [prayerList]
+  );
+  const remainingCount = 5 - completedCount;
+
+  // ---------------------------------------------------------------------------
+  // Loading state
+  // ---------------------------------------------------------------------------
 
   if (loading || isFetching) {
     return (
@@ -269,66 +411,46 @@ export default function DashboardScreen() {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
     <View className="flex-1 bg-emerald-darkest">
+      {/* End-of-day overlay */}
       <EndOfDayOverlayScreen
         visible={eodVisible}
-        missedPrayers={prayerList.filter(p => {
-          if (p.isPrayed) return false;
-          if (p.skipped) return true;
-          if (!p.end || !p.rawTime) return false;
-          const cleanEnd = p.end.split(' ')[0];
-          const cleanTime = p.rawTime.split(' ')[0];
-          let endObj = dayjs(`${p.date} ${cleanEnd}`);
-          const startObj = dayjs(`${p.date} ${cleanTime}`);
-          if (endObj.isBefore(startObj)) {
-            endObj = endObj.add(1, 'day');
-          }
-          return endObj.isBefore(dayjs());
-        })}
+        missedPrayers={missedPrayers}
         currentPrayer={currentInfo}
         onClose={dismissEod}
-        onLogPrayer={async (name, date) => {
-          await markPrayerComplete(name, date || dayjs().format("YYYY-MM-DD"));
-          // If no more missed prayers, close overlay
-          const remaining = prayerList.filter(p => {
-            if (p.isPrayed || p.name === name) return false;
-            if (p.skipped) return true;
-            if (!p.end || !p.rawTime) return false;
-            const cleanEnd = p.end.split(' ')[0];
-            const cleanTime = p.rawTime.split(' ')[0];
-            let endObj = dayjs(`${p.date} ${cleanEnd}`);
-            const startObj = dayjs(`${p.date} ${cleanTime}`);
-            if (endObj.isBefore(startObj)) {
-              endObj = endObj.add(1, 'day');
-            }
-            return endObj.isBefore(dayjs());
-          });
-          if (remaining.length === 0) dismissEod();
-        }}
+        onLogPrayer={handleEodLogPrayer}
       />
-      {/* Prayer Lock Overlay */}
+
+      {/* Prayer lock overlay */}
       <PrayerOverlayScreen
         visible={overlayVisible}
         prayerName={overlayPrayerName}
-        prayerTime={prayerList.find(p => p.name === overlayPrayerName)?.time ?? ""}
+        prayerTime={prayerList.find((p) => p.name === overlayPrayerName)?.time ?? ""}
         endTime={overlayEndTime}
         onPray={handlePray}
         onRemindAt={handleRemindAt}
         isSkipReminder={isSkipReminder}
       />
+
       <ScrollView
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 60, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.gold}
+          />
         }
       >
-        {/* Header Header */}
         <Header profile={profile} />
 
-        {/* Upcoming Card (Unified with Prayer Times) */}
         {currentInfo ? (
           <UpcomingPrayerCard
             title={currentInfo.title}
@@ -345,37 +467,41 @@ export default function DashboardScreen() {
           <Skeleton height={230} className="w-full mb-8" borderRadius={24} />
         )}
 
-        {/* Quick Stats Row */}
-        <View className="">
-          <QuickActionCard
-            title="Daily Salat"
-            value={`${completedCount}/5`}
-            subtext="Today's Progress"
-            remainingCount={remainingCount}
-            completedCount={completedCount}
-          />
-        </View>
+        <QuickActionCard
+          title="Daily Salah"
+          subtext="Today's Progress"
+          completedCount={completedCount}
+          remainingCount={remainingCount}
+        />
 
-        {/* Feature Cards Row — Last Read + Bookmarks */}
         <View className="flex-row justify-between mb-8">
-          <ContinueReadingCard onPress={(lastRead) => navigation.navigate("Quran", { surahNumber: lastRead?.surahNumber, ayahNumber: lastRead?.ayahNumber })} />
+          <ContinueReadingCard
+            onPress={(lastRead) =>
+              navigation.navigate("Quran", {
+                surahNumber: lastRead?.surahNumber,
+                ayahNumber: lastRead?.ayahNumber,
+              })
+            }
+          />
           <BookmarksCard onPress={() => navigation.navigate("Bookmarks")} />
         </View>
 
-        {/* Verse Card */}
         <View className="mb-10">
-          {/* <Text className="text-white text-lg font-semibold mb-4" style={{ fontFamily: 'serif' }}>Daily Verse</Text> */}
           <DailyVerseCard />
         </View>
       </ScrollView>
 
-      {/* Floating Action Button for Streaks */}
+      {/* Streaks FAB */}
       <TouchableOpacity
-        style={{ position: 'absolute', right: 24, bottom: 24 }}
+        style={{ position: "absolute", right: 24, bottom: 24 }}
         className="bg-gold w-14 h-14 rounded-full items-center justify-center shadow-lg"
         onPress={() => navigation.navigate("Streaks")}
       >
-        <Ionicons name="bar-chart" size={24} color={colors['emerald-login-bg']} />
+        <Ionicons
+          name="bar-chart"
+          size={24}
+          color={colors["emerald-login-bg"]}
+        />
       </TouchableOpacity>
     </View>
   );

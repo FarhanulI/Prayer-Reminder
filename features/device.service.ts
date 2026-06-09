@@ -24,11 +24,13 @@ export const getDeviceToken = async () => {
 
 export const fetchPrayerTimes = async (
     latitude: number | undefined,
-    longitude: number | undefined): Promise<PrayerTimesMethodResponse | null> => {
+    longitude: number | undefined,
+    targetDate: Date = new Date()
+): Promise<PrayerTimesMethodResponse | null> => {
     if (!latitude || !longitude) return null;
     try {
-        // 2. Format today's date (DD-MM-YYYY)
-        const date = new Date();
+        // 2. Format target date (DD-MM-YYYY)
+        const date = targetDate;
         const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
 
         // 3. Call AlAdhan API
@@ -125,6 +127,53 @@ export const saveDailyPrayerTimes = async (uid: string, timings: Timings) => {
         console.log("Daily prayer logs initialized for:", today);
     } catch (error) {
         console.error("Error saving daily prayer logs:", error);
+    }
+};
+
+export const createTomorrowPrayerLog = async (uid: string) => {
+    try {
+        const tomorrow = dayjs().add(1, 'day');
+        const tomorrowStr = tomorrow.format("YYYY-MM-DD");
+        const prayerLogsRef = doc(db, "users", uid, "prayer_logs", tomorrowStr);
+
+        const docSnap = await getDoc(prayerLogsRef);
+        if (docSnap.exists()) {
+            return;
+        }
+
+        const userDoc = await getDoc(doc(db, "users", uid));
+        const location = userDoc.data()?.location;
+
+        if (!location?.latitude || !location?.longitude) {
+            console.log("No location found to create tomorrow's prayer log.");
+            return;
+        }
+
+        const prayerTimes = await fetchPrayerTimes(location.latitude, location.longitude, tomorrow.toDate());
+        
+        if (!prayerTimes?.prayerTimings) {
+            return;
+        }
+
+        const timings = prayerTimes.prayerTimings;
+
+        await setDoc(
+            prayerLogsRef,
+            {
+                prayers: {
+                    fajr: { isPrayed: false, time: timings.Fajr, end: timings.Sunrise, status: null, completedAt: null, skippedAt: null },
+                    dhuhr: { isPrayed: false, time: timings.Dhuhr, end: timings.Asr, status: null, completedAt: null, skippedAt: null },
+                    asr: { isPrayed: false, time: timings.Asr, end: timings.Sunset, status: null, completedAt: null, skippedAt: null },
+                    maghrib: { isPrayed: false, time: timings.Maghrib, end: timings.Isha, status: null, completedAt: null, skippedAt: null },
+                    isha: { isPrayed: false, time: timings.Isha, end: timings.Fajr, status: null, completedAt: null, skippedAt: null },
+                },
+                prayerCount: 0,
+            },
+            { merge: true }
+        );
+        console.log("Tomorrow's prayer logs initialized for:", tomorrowStr);
+    } catch (error) {
+        console.error("Error creating tomorrow's prayer logs:", error);
     }
 };
 

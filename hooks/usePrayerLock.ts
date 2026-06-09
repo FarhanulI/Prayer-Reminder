@@ -104,11 +104,20 @@ function getActivePrayer(
     if (completedKeys.has(makePrayerSessionKey(prayer.name, prayerDate))) continue;
     if (!prayer.time || !prayer.end) continue;
 
-    const startTime = dayjs(`${prayerDate} ${prayer.time}`);
+    let startTime = dayjs(`${prayerDate} ${prayer.time}`);
     let endTime = dayjs(`${prayerDate} ${prayer.end}`);
 
     // Handle overnight windows (e.g. Isha ending after midnight)
-    if (endTime.isBefore(startTime)) endTime = endTime.add(1, "day");
+    if (endTime.isBefore(startTime)) {
+      // If current time is after midnight but before the end, shift start back one day
+      if (now.isBefore(endTime)) {
+        startTime = startTime.subtract(1, "day");
+      }
+      endTime = endTime.add(1, "day");
+    }
+
+    // Determine effective date for overlay (use startTime's date)
+    const effectiveDate = startTime.format("YYYY-MM-DD");
 
     if (
       (now.isSame(startTime) || now.isAfter(startTime)) &&
@@ -117,12 +126,15 @@ function getActivePrayer(
       console.log(
         `[usePrayerLock] Active prayer: ${prayer.name} (${prayer.time}–${prayer.end})`,
       );
-      return prayer;
+      // Return prayer with corrected date for overnight cases
+      return { ...prayer, date: effectiveDate };
     }
   }
 
   return null;
 }
+
+
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────
 
@@ -401,7 +413,16 @@ export function usePrayerLock({
     if (!activePrayer) return;
 
     const today = dayjs().format("YYYY-MM-DD");
-    const prayerDate = activePrayer.date ?? today;
+    let prayerDate = activePrayer.date ?? today;
+    // If the prayer spans midnight and no explicit date is set, adjust to previous day when after midnight
+    if (!activePrayer.date) {
+      const start = dayjs(`${today} ${activePrayer.time}`, "YYYY-MM-DD HH:mm");
+      const end = dayjs(`${today} ${activePrayer.end}`, "YYYY-MM-DD HH:mm");
+      // Detect overnight window where end is before start
+      if (end.isBefore(start) && dayjs().isBefore(end)) {
+        prayerDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+      }
+    }
     const deadlineKey = `${activePrayer.name}|${prayerDate}`;
     const skipDeadline = skipDeadlines[deadlineKey];
 
