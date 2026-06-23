@@ -1,7 +1,9 @@
 import { useFocusEffect } from "@react-navigation/native";
 import dayjs from "dayjs";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   ImageBackground,
   Platform,
   ScrollView,
@@ -34,11 +36,52 @@ export default function HistoryScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedDay, setSelectedDay] = useState<any>(null);
 
+  // Ref for the horizontal ScrollView to run the scroll-hint animation
+  const horizontalScrollRef = useRef<ScrollView>(null);
+  const scrollHintAnimated = useRef(new Animated.Value(0)).current;
+
   useFocusEffect(
     useCallback(() => {
       refetch();
+
+      // Scroll-hint animation: scroll right then back to start
+      const scrollHint = () => {
+        horizontalScrollRef.current?.scrollTo({ x: 0, animated: false });
+
+        Animated.sequence([
+          Animated.delay(600),
+          Animated.timing(scrollHintAnimated, {
+            toValue: 110,
+            duration: 550,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: false,
+          }),
+          Animated.delay(250),
+          Animated.timing(scrollHintAnimated, {
+            toValue: 0,
+            duration: 500,
+            easing: Easing.inOut(Easing.cubic),
+            useNativeDriver: false,
+          }),
+        ]).start();
+      };
+
+      scrollHint();
+
+      return () => {
+        scrollHintAnimated.stopAnimation();
+        scrollHintAnimated.setValue(0);
+      };
     }, [refetch]),
   );
+
+  // Drive the horizontal ScrollView's scroll offset from the animated value
+  useEffect(() => {
+    const listener = scrollHintAnimated.addListener(({ value }) => {
+      horizontalScrollRef.current?.scrollTo({ x: value, animated: false });
+    });
+    return () => scrollHintAnimated.removeListener(listener);
+  }, [scrollHintAnimated]);
 
   const handlePrevWeek = () => {
     setCurrentDate((prev) => prev.subtract(7, "day"));
@@ -110,9 +153,11 @@ export default function HistoryScreen() {
             />
           </View>
           <ScrollView
+            ref={horizontalScrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 20 }}
+            scrollEventThrottle={16}
           >
             {loading
               ? [...Array(3)].map((_, index) => (
