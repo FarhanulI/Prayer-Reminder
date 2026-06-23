@@ -15,6 +15,7 @@ export interface UserDocument {
     createdAt: Date | FieldValue;
     date?: DateInfo; // represented as null in your snippet, typed flexibly
     deviceToken?: string;
+    lastPrayerRefreshDate?: string;
     goal?: {
         targetDaily: number;
         type: string; // 'improve' seems to be a specific status/mode
@@ -200,4 +201,31 @@ export interface OnboardingData {
         targetDaily: number;
     };
 }
+
+export interface QiblaCoordinates {
+    latitude: number;
+    longitude: number;
+}
+
+export interface QiblaData {
+    qibla_direction: number;
+    compass_bearing: string;
+    location: QiblaCoordinates;
+    kaaba_coordinates: QiblaCoordinates;
+    distance_km: number;
+    distance_miles: number;
+    note: string;
+}
+
+export interface QiblaResponse {
+    success: boolean;
+    service: string;
+    data: QiblaData;
+    timestamp: string;
+    api_info: {
+        sadaqah_jariah: string;
+        usage: string;
+    };
+}
+
 

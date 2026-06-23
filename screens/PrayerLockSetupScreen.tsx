@@ -11,8 +11,15 @@ import {
   View,
 } from "react-native";
 
-export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () => void }) {
-  const [permissions, setPermissions] = useState({ usage: false, overlay: false });
+export default function PrayerLockSetupScreen({
+  onComplete,
+}: {
+  onComplete: () => void;
+}) {
+  const [permissions, setPermissions] = useState({
+    usage: false,
+    overlay: false,
+  });
 
   const checkPermissions = async () => {
     if (Platform.OS !== "android") {
@@ -20,7 +27,8 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
       return;
     }
     try {
-      const { hasUsageStatsPermission, hasOverlayPermission } = await import("../modules/prayer-lock");
+      const { hasUsageStatsPermission, hasOverlayPermission } =
+        await import("../modules/prayer-lock");
       setPermissions({
         usage: hasUsageStatsPermission(),
         overlay: hasOverlayPermission(),
@@ -61,40 +69,71 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
     {
       icon: "stats-chart-outline",
       title: "Usage Access",
-      description: "Allows Salah Reminder to detect when you open distracting apps during prayer time.",
+      description:
+        "Allows Salah Reminder to detect when you open distracting apps during prayer time.",
       granted: permissions.usage,
       onPress: requestUsage,
     },
     {
       icon: "layers-outline",
       title: "Display Over Other Apps",
-      description: "Allows Salah Reminder to show the prayer reminder overlay on top of any app.",
+      description:
+        "Allows Salah Reminder to show the prayer reminder overlay on top of any app.",
       granted: permissions.overlay,
       onPress: requestOverlay,
     },
   ];
 
   return (
-    <LinearGradient colors={[colors['emerald-login-bg-end'], colors['emerald-login-bg']]} style={{ flex: 1 }}>
+    <LinearGradient
+      colors={[colors["emerald-login-bg-end"], colors["emerald-login-bg"]]}
+      style={{ flex: 1 }}
+    >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 28, paddingVertical: 60 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingHorizontal: 28,
+          paddingVertical: 60,
+        }}
       >
         {/* Header */}
         <View style={{ alignItems: "center", marginBottom: 48 }}>
-          <View style={{
-            backgroundColor: `${colors.gold}1a`,
-            borderWidth: 1,
-            borderColor: `${colors.gold}40`,
-            borderRadius: 999,
-            padding: 20,
-            marginBottom: 20,
-          }}>
-            <Ionicons name="shield-checkmark-outline" size={40} color={colors.gold} />
+          <View
+            style={{
+              backgroundColor: `${colors.gold}1a`,
+              borderWidth: 1,
+              borderColor: `${colors.gold}40`,
+              borderRadius: 999,
+              padding: 20,
+              marginBottom: 20,
+            }}
+          >
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={40}
+              color={colors.gold}
+            />
           </View>
-          <Text style={{ color: "#fff", fontSize: 26, fontWeight: "700", marginBottom: 8, textAlign: "center" }}>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 26,
+              fontWeight: "700",
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
             Salah Reminder Setup
           </Text>
-          <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, textAlign: "center", lineHeight: 22 }}>
+          <Text
+            style={{
+              color: "rgba(255,255,255,0.45)",
+              fontSize: 14,
+              textAlign: "center",
+              lineHeight: 22,
+            }}
+          >
             Grant these permissions to remind you of your salah.
           </Text>
         </View>
@@ -107,21 +146,27 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
               onPress={item.granted ? undefined : item.onPress}
               activeOpacity={item.granted ? 1 : 0.7}
               style={{
-                backgroundColor: colors['emerald-dark'],
+                backgroundColor: colors["emerald-dark"],
                 borderWidth: 1.5,
-                borderColor: item.granted ? `${colors.success}66` : "rgba(255,255,255,0.07)",
+                borderColor: item.granted
+                  ? `${colors.success}66`
+                  : "rgba(255,255,255,0.07)",
                 borderRadius: 24,
                 padding: 20,
                 flexDirection: "row",
                 alignItems: "center",
               }}
             >
-              <View style={{
-                backgroundColor: item.granted ? `${colors.success}1a` : `${colors.gold}1a`,
-                borderRadius: 16,
-                padding: 12,
-                marginRight: 16,
-              }}>
+              <View
+                style={{
+                  backgroundColor: item.granted
+                    ? `${colors.success}1a`
+                    : `${colors.gold}1a`,
+                  borderRadius: 16,
+                  padding: 12,
+                  marginRight: 16,
+                }}
+              >
                 <Ionicons
                   name={item.icon as any}
                   size={24}
@@ -129,10 +174,23 @@ export default function PrayerLockSetupScreen({ onComplete }: { onComplete: () =
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15, marginBottom: 4 }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "700",
+                    fontSize: 15,
+                    marginBottom: 4,
+                  }}
+                >
                   {item.title}
                 </Text>
-                <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, lineHeight: 18 }}>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.45)",
+                    fontSize: 12,
+                    lineHeight: 18,
+                  }}
+                >
                   {item.description}
                 </Text>
               </View>

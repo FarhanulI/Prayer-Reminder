@@ -170,8 +170,7 @@ class PrayerLockService : Service() {
         return try {
             val prayers = JSONArray(prayersJson)
             val now = Calendar.getInstance()
-            val currentTimeInMins =
-                now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
             for (i in 0 until prayers.length()) {
                 val prayer = prayers.getJSONObject(i)
@@ -180,30 +179,57 @@ class PrayerLockService : Service() {
                              prayer.optBoolean("completed", false)
 
                 if (isDone) continue
-
                 if (prayer.optBoolean("skipped", false)) continue
 
-                val prayerDate = prayer.optString(
+                val prayerDateStr = prayer.optString(
                     "date",
-                    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                    dateFormat.format(Date())
                 )
-                if (isSessionCompleted(prefs, prayer.optString("name", ""), prayerDate)) continue
 
-                val startParts = prayer.getString("time").split(":")
-                val endParts = prayer.getString("end").split(":")
+                val name = prayer.optString("name", "")
+                val timeStr = prayer.optString("time", "")
+                val endStr = prayer.optString("end", "")
 
+                val startParts = timeStr.split(":")
+                val endParts = endStr.split(":")
                 if (startParts.size != 2 || endParts.size != 2) continue
 
-                val startMins = startParts[0].toInt() * 60 + startParts[1].toInt()
-                val endMins = endParts[0].toInt() * 60 + endParts[1].toInt()
-
-                val inWindow = if (endMins < startMins) {
-                    currentTimeInMins >= startMins || currentTimeInMins < endMins
-                } else {
-                    currentTimeInMins in startMins until endMins
+                val startCal = Calendar.getInstance().apply {
+                    time = dateFormat.parse(prayerDateStr) ?: Date()
+                    set(Calendar.HOUR_OF_DAY, startParts[0].toInt())
+                    set(Calendar.MINUTE, startParts[1].toInt())
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
                 }
 
-                if (inWindow) return prayer
+                val endCal = Calendar.getInstance().apply {
+                    time = dateFormat.parse(prayerDateStr) ?: Date()
+                    set(Calendar.HOUR_OF_DAY, endParts[0].toInt())
+                    set(Calendar.MINUTE, endParts[1].toInt())
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+                // Handle overnight windows
+                if (endCal.before(startCal)) {
+                    if (now.before(endCal)) {
+                        startCal.add(Calendar.DAY_OF_YEAR, -1)
+                    }
+                    endCal.add(Calendar.DAY_OF_YEAR, 1)
+                }
+
+                val effectiveDate = dateFormat.format(startCal.time)
+                if (isSessionCompleted(prefs, name, effectiveDate)) continue
+
+                val nowMs = now.timeInMillis
+                val startMs = startCal.timeInMillis
+                val endMs = endCal.timeInMillis
+
+                val isCurrent = nowMs in startMs until endMs
+                if (isCurrent) {
+                    prayer.put("date", effectiveDate)
+                    return prayer
+                }
             }
             null
         } catch (e: Exception) {

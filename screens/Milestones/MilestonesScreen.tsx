@@ -12,7 +12,16 @@ import { useMilestones } from "@/hooks/useMilestones";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import DailyPerformance from "./components/dailyPerformance";
 
 /**
@@ -40,26 +49,41 @@ const StreakTrackCard = ({
   return (
     <Card className="mb-4">
       <View className="flex-row items-center mb-4">
-        <View className="w-12 h-12 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: `${color}15` }}>
+        <View
+          className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
+          style={{ backgroundColor: `${color}15` }}
+        >
           <Ionicons name={icon as any} size={24} color={color} />
         </View>
 
         <View className="flex-1">
           <View className="flex-row justify-between items-center mb-0.5">
-            <Text className="text-white text-[16px] font-semibold">{category}</Text>
-            <Text className="font-bold text-[16px]" style={{ color }}>{count} Days</Text>
+            <Text className="text-white text-[16px] font-semibold">
+              {category}
+            </Text>
+            <Text className="font-bold text-[16px]" style={{ color }}>
+              {count} Days
+            </Text>
           </View>
           <View className="flex-row justify-between items-center">
-            <Text className="text-white/40 text-[10px] uppercase font-bold tracking-widest">{currentTitle}</Text>
-            <Text className="text-white/30 text-[10px] font-bold uppercase">Current</Text>
+            <Text className="text-white/40 text-[10px] uppercase font-bold tracking-widest">
+              {currentTitle}
+            </Text>
+            <Text className="text-white/30 text-[10px] font-bold uppercase">
+              Current
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Progress Info */}
       <View className="flex-row justify-between items-center mb-2">
-        <Text className="text-white/60 text-[10px] font-bold uppercase">Next: {nextTitle}</Text>
-        <Text className="text-white/40 text-[10px] font-bold">{nextMilestoneDays} Days</Text>
+        <Text className="text-white/60 text-[10px] font-bold uppercase">
+          Next: {nextTitle}
+        </Text>
+        <Text className="text-white/40 text-[10px] font-bold">
+          {nextMilestoneDays} Days
+        </Text>
       </View>
 
       {/* Progress Bar */}
@@ -75,7 +99,11 @@ const StreakTrackCard = ({
 
 // --- MAIN SCREEN ---
 
-function streakTrackProps(category: StreakCategory, count: number, label: string) {
+function streakTrackProps(
+  category: StreakCategory,
+  count: number,
+  label: string,
+) {
   const achieved = getMilestoneForStreak(category, count);
   const next = getNextMilestone(category, count);
   const list = STREAK_MILESTONES[category];
@@ -105,7 +133,9 @@ export default function MilestonesScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthContext();
   const { data, isLoading: dashPending } = useDashboardData(user?.profile?.uid);
-  const { data: milestonesData, isPending: milestonesPending } = useMilestones(user?.profile?.uid);
+  const { data: milestonesData, isPending: milestonesPending } = useMilestones(
+    user?.profile?.uid,
+  );
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
 
   const { profile, userData } = useMemo(() => {
@@ -119,20 +149,37 @@ export default function MilestonesScreen() {
 
   const completedCount = useMemo(() => {
     if (!userData || !userData.prayers) return 0;
-    return Object.values(userData.prayers).filter((p: any) => typeof p === 'object' && p?.isPrayed).length;
+    return Object.values(userData.prayers).filter(
+      (p: any) => typeof p === "object" && p?.isPrayed,
+    ).length;
   }, [userData]);
 
   const perfectTrack = useMemo(
-    () => streakTrackProps("perfect", streaks?.perfect?.current ?? 0, "Perfect Streak"),
-    [streaks?.perfect?.current]
+    () =>
+      streakTrackProps(
+        "perfect",
+        streaks?.perfect?.current ?? 0,
+        "Perfect Streak",
+      ),
+    [streaks?.perfect?.current],
   );
   const strongTrack = useMemo(
-    () => streakTrackProps("strong", streaks?.strong?.current ?? 0, "Strong Streak"),
-    [streaks?.strong?.current]
+    () =>
+      streakTrackProps(
+        "strong",
+        streaks?.strong?.current ?? 0,
+        "Strong Streak",
+      ),
+    [streaks?.strong?.current],
   );
   const growthTrack = useMemo(
-    () => streakTrackProps("growth", streaks?.growth?.current ?? 0, "Growth Streak"),
-    [streaks?.growth?.current]
+    () =>
+      streakTrackProps(
+        "growth",
+        streaks?.growth?.current ?? 0,
+        "Growth Streak",
+      ),
+    [streaks?.growth?.current],
   );
 
   if (dashPending || milestonesPending) {
@@ -150,14 +197,27 @@ export default function MilestonesScreen() {
         <View className="flex-row items-center">
           <View className="w-10 h-10 rounded-full bg-emerald-soft items-center justify-center border border-gold/20 overflow-hidden mr-3">
             {profile?.profile?.photoURL ? (
-              <Image source={{ uri: profile.profile.photoURL }} className="w-full h-full" />
+              <Image
+                source={{ uri: profile.profile.photoURL }}
+                className="w-full h-full"
+              />
             ) : (
-              <Text className="text-gold font-bold">{profile?.profile?.name?.charAt(0) || "U"}</Text>
+              <Text className="text-gold font-bold">
+                {profile?.profile?.name?.charAt(0) || "U"}
+              </Text>
             )}
           </View>
-          <Text className="text-gold text-2xl font-bold" style={{ fontFamily: 'serif' }}>Milestones</Text>
+          <Text
+            className="text-gold text-2xl font-bold"
+            style={{ fontFamily: "serif" }}
+          >
+            Milestones
+          </Text>
         </View>
-        <TouchableOpacity className="bg-white/5 p-2 rounded-xl border border-gold/40" onPress={() => navigation.navigate("History")}>
+        <TouchableOpacity
+          className="bg-white/5 p-2 rounded-xl border border-gold/40"
+          onPress={() => navigation.navigate("History")}
+        >
           <Ionicons name="settings-outline" size={20} color={colors.gold} />
         </TouchableOpacity>
       </View>
@@ -173,7 +233,12 @@ export default function MilestonesScreen() {
         {/* Streak Tracks Section */}
         <View className="mb-8">
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Streak Tracks</Text>
+            <Text
+              className="text-white text-xl font-bold"
+              style={{ fontFamily: "serif" }}
+            >
+              Streak Tracks
+            </Text>
           </View>
 
           <StreakTrackCard {...perfectTrack} />
@@ -186,10 +251,16 @@ export default function MilestonesScreen() {
         {/* Your Path to Nearness Section */}
         <View className="mb-10">
           <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-white text-xl font-bold" style={{ fontFamily: 'serif' }}>Your Path to Nearness</Text>
+            <Text
+              className="text-white text-xl font-bold"
+              style={{ fontFamily: "serif" }}
+            >
+              Your Path to Nearness
+            </Text>
           </View>
           <Text className="text-white/40 text-xs leading-relaxed mb-8">
-            Every prayer is a step closer to Allah. Keep your heart firm on this path.
+            Every prayer is a step closer to Allah. Keep your heart firm on this
+            path.
           </Text>
 
           <View className="flex-row flex-wrap justify-between">
@@ -202,8 +273,6 @@ export default function MilestonesScreen() {
                 icon={m.icon}
                 description={m.description}
                 onPress={() => {
-                  console.log({ m });
-
                   if (!m.unlocked) {
                     setSelectedMilestone(m);
                   }
@@ -242,11 +311,15 @@ export default function MilestonesScreen() {
                 color={selectedMilestone?.color}
               />
             </View>
-            <Text className="text-white text-xl font-bold text-center mb-2" style={{ fontFamily: 'serif' }}>
+            <Text
+              className="text-white text-xl font-bold text-center mb-2"
+              style={{ fontFamily: "serif" }}
+            >
               {selectedMilestone?.title}
             </Text>
             <Text className="text-white/60 text-center text-sm leading-relaxed mb-6">
-              {selectedMilestone?.description || "You have reached this milestone. Keep up the great work!"}
+              {selectedMilestone?.description ||
+                "You have reached this milestone. Keep up the great work!"}
             </Text>
 
             <TouchableOpacity

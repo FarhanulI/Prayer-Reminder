@@ -1,5 +1,5 @@
-import { AudioPlayer, createAudioPlayer } from 'expo-audio';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { AudioPlayer, createAudioPlayer } from "expo-audio";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Use a simple global variable to store the CURRENTLY LOADED sound object
 // This ensures we can stop any sound from ANY instance of the hook.
@@ -17,7 +17,9 @@ export const useAyahAudio = (surahId: number, ayahInSurah: number) => {
       try {
         globalSoundInstance.pause();
         globalSoundInstance.remove();
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
       globalSoundInstance = null;
     }
   };
@@ -30,10 +32,10 @@ export const useAyahAudio = (surahId: number, ayahInSurah: number) => {
       await stopGlobalAudio();
 
       // 2. Fetch Audio URL
-      const response = await fetch(`https://api.alquran.cloud/v1/ayah/${ayahInSurah}/ar.alafasy`);
+      const response = await fetch(
+        `https://api.alquran.cloud/v1/ayah/${ayahInSurah}/ar.alafasy`,
+      );
       const data = await response.json();
-      console.log({ data });
-
       const url = data?.data?.audio;
 
       if (!url) throw new Error("No audio URL");
@@ -47,7 +49,7 @@ export const useAyahAudio = (surahId: number, ayahInSurah: number) => {
       localSoundRef.current = player;
       setIsPlaying(true);
 
-      player.addListener('playbackStatusUpdate', (status) => {
+      player.addListener("playbackStatusUpdate", (status) => {
         if (status.isLoaded) {
           setIsPlaying(status.playing);
           if (status.didJustFinish) {

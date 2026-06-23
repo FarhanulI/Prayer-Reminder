@@ -1,8 +1,8 @@
+import colors from "@/constants/colors.json";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
-import colors from "@/constants/colors.json";
 
 import MilestonesScreen from "@/screens/Milestones/MilestonesScreen";
 import DashboardScreen from "../screens/Dashboard/DashboardScreen";
@@ -17,13 +17,13 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     <View
       className="flex-row items-center justify-between bg-emerald-dark border-t border-white/5 px-6 pb-8 pt-4"
       style={{
-        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+        paddingBottom: Platform.OS === "ios" ? 34 : 20,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        position: 'absolute',
+        position: "absolute",
         bottom: 0,
         left: 0,
-        right: 0
+        right: 0,
       }}
     >
       {state.routes.map((route: any, index: number) => {
@@ -64,7 +64,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             accessibilityLabel={options.tabBarAccessibilityLabel}
             testID={options.tabBarTestID}
             onPress={onPress}
-            className={`items-center justify-center py-3 px-6 rounded-2xl ${isFocused ? 'bg-emerald-light' : ''}`}
+            className={`items-center justify-center py-3 px-6 rounded-2xl ${isFocused ? "bg-emerald-light" : ""}`}
             style={{ minWidth: 80 }}
           >
             <IconComponent
@@ -74,8 +74,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               style={{ marginBottom: 4 }}
             />
             <Text
-              className={`text-[10px] font-bold tracking-widest ${isFocused ? 'text-gold' : 'text-white/40'}`}
-              style={{ textTransform: 'uppercase' }}
+              className={`text-[10px] font-bold tracking-widest ${isFocused ? "text-gold" : "text-white/40"}`}
+              style={{ textTransform: "uppercase" }}
             >
               {route.name}
             </Text>

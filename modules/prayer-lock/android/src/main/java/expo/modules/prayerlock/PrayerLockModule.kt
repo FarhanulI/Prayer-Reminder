@@ -11,6 +11,10 @@ import android.os.Process
 import android.provider.Settings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class PrayerLockModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -152,11 +156,50 @@ class PrayerLockModule : Module() {
           org.json.JSONArray()
         }
 
+        fun getEffectivePrayerDate(prayer: org.json.JSONObject): String {
+          val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+          val storedDate = prayer.optString("date", dateFormat.format(Date()))
+          val timeStr = prayer.optString("time", "")
+          val endStr = prayer.optString("end", "")
+          val startParts = timeStr.split(":")
+          val endParts = endStr.split(":")
+
+          if (startParts.size != 2 || endParts.size != 2) {
+            return storedDate
+          }
+
+          return try {
+            val startCal = Calendar.getInstance().apply {
+              time = dateFormat.parse(storedDate) ?: Date()
+              set(Calendar.HOUR_OF_DAY, startParts[0].toInt())
+              set(Calendar.MINUTE, startParts[1].toInt())
+              set(Calendar.SECOND, 0)
+              set(Calendar.MILLISECOND, 0)
+            }
+
+            val endCal = Calendar.getInstance().apply {
+              time = dateFormat.parse(storedDate) ?: Date()
+              set(Calendar.HOUR_OF_DAY, endParts[0].toInt())
+              set(Calendar.MINUTE, endParts[1].toInt())
+              set(Calendar.SECOND, 0)
+              set(Calendar.MILLISECOND, 0)
+            }
+
+            if (endCal.before(startCal) && Calendar.getInstance().before(endCal)) {
+              startCal.add(Calendar.DAY_OF_YEAR, -1)
+            }
+
+            dateFormat.format(startCal.time)
+          } catch (_: Exception) {
+            storedDate
+          }
+        }
+
         for (i in 0 until prayers.length()) {
           val prayer = prayers.getJSONObject(i)
           if (
             prayer.optString("name") == prayerName &&
-            prayer.optString("date") == prayerDate
+            getEffectivePrayerDate(prayer) == prayerDate
           ) {
             prayer.put("isPrayed", true)
             prayer.put("completed", true)

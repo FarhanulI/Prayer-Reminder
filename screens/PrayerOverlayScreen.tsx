@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   ImageBackground,
@@ -16,30 +17,59 @@ import {
   UIManager,
   Vibration,
   View,
-  ActivityIndicator,
 } from "react-native";
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.5;
 
-const HADITHS = [
-  {
-    text: "Whoever guards the prayer, Allah honors him.",
-    source: "Ahmad",
+const HADITHS = {
+  fajr: {
+    text: 'The Prophet (ﷺ) said, "Whoever performs the dawn prayer (Fajr) will be under the protection of Allah.',
+    source: "Sunan Ibn Majah 3946",
   },
-  {
-    text: "The first matter that the servant will be brought to account for on the Day of Judgment is the prayer.",
-    source: "Abu Dawud",
+
+  asr: {
+    text: 'The Prophet (ﷺ) said, "He who misses the afternoon prayer (Asr) will be like one who has been deprived of his family and his wealth."',
+    source: "Sahih al-Bukhari 552",
   },
-  {
-    text: "Prayer is the pillar of religion.",
-    source: "Al-Bayhaqi",
+
+  isha: {
+    text: ' The Prophet (ﷺ) said, "If the people knew what [reward] there is in the Isha and Fajr prayers, they would come to them even if they had to crawl."',
+    source: " Sahih al-Bukhari 615",
   },
-];
+
+  dhuhr: {
+    text: "The Messenger of Allah (ﷺ) said: ‘Whoever persists in performing twelve Rak’ah from the Sunnah, a house will be built for him in Paradise: four before the Zuhr, two Rak’ah after Zuhr, two Rak’ah after Maghrib, two Rak’ah after the ‘Isha’ and two Rak’ah before Fajr.",
+    source: "Sunan Ibn Majah 1140",
+  },
+
+  maghrib: {
+    text: 'The Prophet (ﷺ) said, "The time for Maghrib continues until the twilight has disappeared."',
+    source: "Sahih Muslim 612a",
+  },
+};
+
+// const HADITHS = [
+//   {
+//     text: "Whoever guards the prayer, Allah honors him.",
+//     source: "Ahmad",
+//   },
+//   {
+//     text: "The first matter that the servant will be brought to account for on the Day of Judgment is the prayer.",
+//     source: "Abu Dawud",
+//   },
+//   {
+//     text: "Prayer is the pillar of religion.",
+//     source: "Al-Bayhaqi",
+//   },
+// ];
 
 type Props = {
   visible: boolean;
@@ -61,9 +91,7 @@ export default function PrayerOverlayScreen({
   isSkipReminder,
 }: Props) {
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [hadith] = useState(
-    HADITHS[Math.floor(Math.random() * HADITHS.length)],
-  );
+
   const translateX = useRef(new Animated.Value(0)).current;
   const [remainingTime, setRemainingTime] = useState("");
   const [currentTime, setCurrentTime] = useState(dayjs().format("h:mm A"));
@@ -232,12 +260,15 @@ export default function PrayerOverlayScreen({
       <Animated.View
         style={{
           flex: 1,
-          backgroundColor: colors['emerald-login-bg-end'],
+          backgroundColor: colors["emerald-login-bg-end"],
           opacity,
           paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 60,
         }}
       >
-        <StatusBar barStyle="light-content" backgroundColor={colors['emerald-login-bg-end']} />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={colors["emerald-login-bg-end"]}
+        />
 
         <View
           style={{
@@ -322,20 +353,19 @@ export default function PrayerOverlayScreen({
               className="p-10"
               source={require("@/assets/images/bgOverlay.png")}
               style={{
-                backgroundColor: colors['emerald-dark'],
+                backgroundColor: colors["emerald-dark"],
                 borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.06)",
                 borderRadius: 24,
 
-                overflow: 'hidden',
+                overflow: "hidden",
               }}
               imageStyle={{
                 borderRadius: 24,
                 opacity: 0.3,
-                resizeMode: 'cover',
+                resizeMode: "cover",
               }}
             >
-
               <Text
                 style={{
                   color: "rgba(255,255,255,0.75)",
@@ -345,7 +375,10 @@ export default function PrayerOverlayScreen({
                   marginBottom: 12,
                 }}
               >
-                "{hadith.text}"
+                {prayerName
+                  ? HADITHS[prayerName.toLowerCase() as keyof typeof HADITHS]
+                      .text
+                  : ""}
               </Text>
               <Text
                 style={{
@@ -356,7 +389,11 @@ export default function PrayerOverlayScreen({
                   letterSpacing: 2,
                 }}
               >
-                — {hadith.source}
+                —{" "}
+                {prayerName
+                  ? HADITHS[prayerName.toLowerCase() as keyof typeof HADITHS]
+                      .source
+                  : ""}
               </Text>
             </ImageBackground>
           </View>
@@ -374,7 +411,7 @@ export default function PrayerOverlayScreen({
               <Animated.View
                 {...panResponder.panHandlers}
                 style={{
-                  backgroundColor: colors['emerald-dark'],
+                  backgroundColor: colors["emerald-dark"],
                   borderWidth: 2,
                   borderColor: `${colors.gold}4d`, // Fixed color for native driver compatibility
                   borderRadius: 64,
@@ -403,8 +440,22 @@ export default function PrayerOverlayScreen({
                 />
 
                 {isProcessing ? (
-                  <View style={{ position: "absolute", width: "100%", height: "100%", flexDirection: "row", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
-                    <ActivityIndicator size="small" color={colors.gold} style={{ marginRight: 8 }} />
+                  <View
+                    style={{
+                      position: "absolute",
+                      width: "100%",
+                      height: "100%",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 20,
+                    }}
+                  >
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.gold}
+                      style={{ marginRight: 8 }}
+                    />
                     <Text
                       style={{
                         color: "rgba(255,255,255,0.7)",
@@ -438,7 +489,11 @@ export default function PrayerOverlayScreen({
                           justifyContent: "center",
                         }}
                       >
-                        <Ionicons name="arrow-forward" size={26} color={colors['emerald-login-bg-end']} />
+                        <Ionicons
+                          name="arrow-forward"
+                          size={26}
+                          color={colors["emerald-login-bg-end"]}
+                        />
                       </Animated.View>
                     </Animated.View>
 
@@ -467,14 +522,18 @@ export default function PrayerOverlayScreen({
             {/* Remind Me — Accordion */}
             <View
               style={{
-                backgroundColor: showTimePicker ? colors['emerald-dark'] : "rgba(255,255,255,0.05)",
+                backgroundColor: showTimePicker
+                  ? colors["emerald-dark"]
+                  : "rgba(255,255,255,0.05)",
                 borderWidth: 1,
-                borderColor: showTimePicker ? `${colors.gold}33` : "rgba(255,255,255,0.1)",
+                borderColor: showTimePicker
+                  ? `${colors.gold}33`
+                  : "rgba(255,255,255,0.1)",
                 borderRadius: showTimePicker ? 20 : 16,
                 padding: showTimePicker ? 16 : 0,
                 marginBottom: 16,
                 width: "100%",
-                overflow: 'hidden',
+                overflow: "hidden",
               }}
             >
               <TouchableOpacity
@@ -488,10 +547,17 @@ export default function PrayerOverlayScreen({
                   marginBottom: showTimePicker ? 12 : 0,
                 }}
               >
-                <Ionicons name="alarm-outline" size={16} color={showTimePicker ? colors.gold : `${colors.gold}cc`} style={{ marginRight: 8 }} />
+                <Ionicons
+                  name="alarm-outline"
+                  size={16}
+                  color={showTimePicker ? colors.gold : `${colors.gold}cc`}
+                  style={{ marginRight: 8 }}
+                />
                 <Text
                   style={{
-                    color: showTimePicker ? colors.gold : "rgba(255,255,255,0.6)",
+                    color: showTimePicker
+                      ? colors.gold
+                      : "rgba(255,255,255,0.6)",
                     fontWeight: "700",
                     fontSize: showTimePicker ? 12 : 13,
                     letterSpacing: 1,
@@ -502,7 +568,14 @@ export default function PrayerOverlayScreen({
                 </Text>
 
                 {showTimePicker && endTime ? (
-                  <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginLeft: "auto", marginRight: 8 }}>
+                  <Text
+                    style={{
+                      color: "rgba(255,255,255,0.3)",
+                      fontSize: 10,
+                      marginLeft: "auto",
+                      marginRight: 8,
+                    }}
+                  >
                     ends {endTime}
                   </Text>
                 ) : null}
@@ -511,7 +584,10 @@ export default function PrayerOverlayScreen({
                   name={showTimePicker ? "chevron-up" : "chevron-down"}
                   size={16}
                   color={showTimePicker ? colors.gold : "rgba(255,255,255,0.4)"}
-                  style={{ position: showTimePicker ? "relative" : "absolute", right: showTimePicker ? 0 : 16 }}
+                  style={{
+                    position: showTimePicker ? "relative" : "absolute",
+                    right: showTimePicker ? 0 : 16,
+                  }}
                 />
               </TouchableOpacity>
 
@@ -520,11 +596,14 @@ export default function PrayerOverlayScreen({
                   {[5, 10, 15, 20, 30, 60].map((mins) => {
                     const targetTime = dayjs().add(mins, "minute");
                     // Cap display if beyond prayer end
-                    let endDayjs = endTime ? dayjs(`${dayjs().format("YYYY-MM-DD")} ${endTime}`) : null;
+                    let endDayjs = endTime
+                      ? dayjs(`${dayjs().format("YYYY-MM-DD")} ${endTime}`)
+                      : null;
                     if (endDayjs && endDayjs.isBefore(dayjs())) {
                       endDayjs = endDayjs.add(1, "day");
                     }
-                    const isBeyondEnd = endDayjs && targetTime.isAfter(endDayjs);
+                    const isBeyondEnd =
+                      endDayjs && targetTime.isAfter(endDayjs);
 
                     if (isBeyondEnd) return null;
 
@@ -545,10 +624,22 @@ export default function PrayerOverlayScreen({
                           alignItems: "center",
                         }}
                       >
-                        <Text style={{ color: colors.gold, fontWeight: "700", fontSize: 13 }}>
+                        <Text
+                          style={{
+                            color: colors.gold,
+                            fontWeight: "700",
+                            fontSize: 13,
+                          }}
+                        >
                           {mins}m
                         </Text>
-                        <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 }}>
+                        <Text
+                          style={{
+                            color: "rgba(255,255,255,0.4)",
+                            fontSize: 10,
+                            marginTop: 2,
+                          }}
+                        >
                           {targetTime.format("h:mm A")}
                         </Text>
                       </TouchableOpacity>
