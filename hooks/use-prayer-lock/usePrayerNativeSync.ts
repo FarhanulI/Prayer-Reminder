@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCallback, useEffect } from "react";
-import { Platform } from "react-native";
+import { useCallback, useEffect, useRef } from "react";
+import { AppState, AppStateStatus, Platform } from "react-native";
 import { loadPrayerLock } from "./prayer-lock.loader";
 import { Prayer, toNativePrayer } from "./utils/prayer.helpers";
 import { STORAGE_KEYS } from "./utils/prayer.storage";
@@ -10,6 +10,8 @@ import { STORAGE_KEYS } from "./utils/prayer.storage";
  * - Syncs the prayer list whenever uid or prayers change
  * - Provides `syncImmediately` for instant post-action syncs
  * - Propagates snooze state to native
+ * - Re-syncs prayer data when app comes back to foreground after a long absence
+ *   so the native service doesn't act on stale (6+ hour old) prayer times.
  *
  * All native calls are wrapped in try/catch (Bug Fix #4).
  */
@@ -18,6 +20,13 @@ export function usePrayerNativeSync(
   prayers: Prayer[],
   checkPermissions: () => Promise<boolean>,
 ) {
+  // Keep a stable ref to the latest prayers so the AppState handler can
+  // access current data without creating a stale-closure bug.
+  const prayersRef = useRef<Prayer[]>(prayers);
+  useEffect(() => {
+    prayersRef.current = prayers;
+  }, [prayers]);
+
   // ── Snooze propagation ────────────────────────────────────────────────────
 
   const syncSnoozeToNative = useCallback(
@@ -61,7 +70,7 @@ export function usePrayerNativeSync(
 
     let active = true;
 
-    const sync = async () => {
+    const sync = async (currentPrayers: Prayer[]) => {
       let native: Awaited<ReturnType<typeof loadPrayerLock>>;
       try {
         native = await loadPrayerLock();
@@ -74,6 +83,8 @@ export function usePrayerNativeSync(
 
       if (!uid) {
         native.stopService();
+        // Persist disabled state so boot/watchdog receivers don't restart it.
+        try { native.setEnabled(false); } catch (_) {}
         return;
       }
 
@@ -81,6 +92,9 @@ export function usePrayerNativeSync(
         STORAGE_KEYS.PRAYER_LOCK_ENABLED,
       );
       const isEnabled = enabledVal === null || enabledVal === "true";
+
+      // Persist current enabled state to SharedPreferences for boot receiver.
+      try { native.setEnabled(isEnabled); } catch (_) {}
 
       if (!isEnabled) {
         native.stopService();
@@ -93,11 +107,11 @@ export function usePrayerNativeSync(
         return;
       }
 
-      native.syncPrayers(JSON.stringify(prayers.map(toNativePrayer)));
+      native.syncPrayers(JSON.stringify(currentPrayers.map(toNativePrayer)));
       native.startService();
     };
 
-    sync();
+    sync(prayers);
 
     // NOTE: We intentionally do NOT stop the service in cleanup — the native
     // foreground monitor must outlive Dashboard unmounts. Stop only on logout
@@ -106,6 +120,48 @@ export function usePrayerNativeSync(
       active = false;
     };
   }, [uid, prayers, checkPermissions]);
+
+  // ── Re-sync on foreground resume ──────────────────────────────────────────
+
+  /**
+   * When the app transitions from background → active after being closed for
+   * several hours, the native service may have stale prayer data (yesterday's
+   * times). Re-syncing here ensures the service always has up-to-date prayer
+   * windows as soon as the user opens the app.
+   */
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const handleAppStateChange = async (nextState: AppStateStatus) => {
+      if (nextState !== "active") return;
+
+      console.log("[usePrayerNativeSync] App resumed — re-syncing prayers to native");
+
+      try {
+        const native = await loadPrayerLock();
+
+        const enabledVal = await AsyncStorage.getItem(STORAGE_KEYS.PRAYER_LOCK_ENABLED);
+        const isEnabled = enabledVal === null || enabledVal === "true";
+
+        if (!uid || !isEnabled) return;
+
+        const granted = await checkPermissions();
+        if (!granted) return;
+
+        // Re-push current prayer data so the staleness guard in the native
+        // service sees a fresh `last_synced_at` and resumes blocking.
+        native.syncPrayers(JSON.stringify(prayersRef.current.map(toNativePrayer)));
+        native.startService();
+
+        console.log("[usePrayerNativeSync] Re-sync complete on foreground resume");
+      } catch (e) {
+        console.warn("[usePrayerNativeSync] Foreground re-sync failed:", e);
+      }
+    };
+
+    const sub = AppState.addEventListener("change", handleAppStateChange);
+    return () => sub.remove();
+  }, [uid, checkPermissions]);
 
   return { syncImmediately, syncSnoozeToNative };
 }

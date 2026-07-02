@@ -5,7 +5,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
 
-import DashboardScreen from "@/screens/Dashboard/DashboardScreen";
 import { AppBootstrap } from "../components/AppBootstrap";
 import { useAuthContext } from "../context/AuthProvider";
 import HistoryScreen from "../screens/History/HistoryScreen";
@@ -14,6 +13,7 @@ import MilestoneDetailsScreen from "../screens/Milestones/MilestoneDetailsScreen
 import OnBoardingScreen from "../screens/OnBoarding/OnBoardingScreen";
 import SignupScreen from "../screens/SignupScreen";
 import WelcomeScreen from "../screens/WelcomeScreen";
+import MainTabNavigator from "./MainTabNavigator";
 
 // Single Master Stack used across the entire root file
 const Stack = createNativeStackNavigator();
@@ -38,9 +38,9 @@ export function OnboardingNavigator() {
 export function MainAppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* <Stack.Screen name="Main" component={MainTabNavigator} /> */}
+      <Stack.Screen name="Main" component={MainTabNavigator} />
 
-      <Stack.Screen name="Home" component={DashboardScreen} />
+      {/* <Stack.Screen name="Home" component={DashboardScreen} /> */}
       {/* <Stack.Screen name="Quran" component={QuranScreen} />
       <Stack.Screen name="Progress" component={MilestonesScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />

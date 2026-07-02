@@ -1,6 +1,8 @@
 package expo.modules.prayerlock
 
 import android.app.*
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.app.usage.UsageStatsManager
 import android.app.usage.UsageEvents
 import android.content.Context
@@ -23,6 +25,24 @@ class PrayerLockService : Service() {
 
     private val NOTIFICATION_ID = 101
     private val CHANNEL_ID = "prayer_lock_service_channel"
+
+    /**
+     * If the JS layer hasn't synced prayers in more than this many milliseconds,
+     * treat the stored prayer data as stale and skip blocking until fresh data
+     * arrives. This prevents false negatives when the app has been closed for
+     * 6+ hours and the stored times belong to a previous day.
+     *
+     * 26 hours gives a full day's worth of slack so the service still blocks
+     * correctly if the user closes the app mid-day and reopens it the same night.
+     */
+    private val STALE_THRESHOLD_MS = 26 * 60 * 60 * 1000L // 26 hours
+
+    /**
+     * How often (ms) the AlarmManager watchdog re-fires to ensure this service
+     * is still running. 15 min is the minimum interval Android allows for
+     * inexact repeating alarms.
+     */
+    private val WATCHDOG_INTERVAL_MS = 15 * 60 * 1000L // 15 minutes
 
     private val BLOCKED_APPS = listOf(
         "com.instagram.android",
@@ -50,8 +70,62 @@ class PrayerLockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startPolling()
-        return START_STICKY
+        scheduleWatchdog()
+        // START_REDELIVER_INTENT: Android will re-deliver the last intent if the
+        // service is killed, giving it another chance to restart cleanly.
+        return START_REDELIVER_INTENT
     }
+
+    // ── Watchdog ─────────────────────────────────────────────────────────────
+
+    /**
+     * Sets a repeating AlarmManager alarm that fires every 15 minutes and
+     * sends a broadcast to [WatchdogReceiver]. If the service was killed in
+     * between, the receiver restarts it.
+     *
+     * This is the key mechanism that keeps the service alive on manufacturer
+     * ROMs (Samsung, Xiaomi, etc.) that aggressively kill background services.
+     */
+    private fun scheduleWatchdog() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, WatchdogReceiver::class.java).apply {
+            action = "expo.modules.prayerlock.WATCHDOG_RESTART"
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, flags)
+
+        // Use inexact repeating — exact alarms require special permission on API 31+
+        // and still don't fire if the app is in Doze. Inexact is a reasonable trade-off.
+        alarmManager.setInexactRepeating(
+            AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + WATCHDOG_INTERVAL_MS,
+            WATCHDOG_INTERVAL_MS,
+            pendingIntent
+        )
+
+        Log.d("PrayerLockService", "Watchdog alarm scheduled every ${WATCHDOG_INTERVAL_MS / 60000} min")
+    }
+
+    private fun cancelWatchdog() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, WatchdogReceiver::class.java).apply {
+            action = "expo.modules.prayerlock.WATCHDOG_RESTART"
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, flags)
+        alarmManager.cancel(pendingIntent)
+        Log.d("PrayerLockService", "Watchdog alarm cancelled")
+    }
+
+    // ── Polling ───────────────────────────────────────────────────────────────
 
     private fun startPolling() {
         if (runnable != null) return
@@ -69,6 +143,8 @@ class PrayerLockService : Service() {
 
         handler.post(runnable!!)
     }
+
+    // ── Snooze ────────────────────────────────────────────────────────────────
 
     private fun isSnoozed(): Boolean {
         val prefs = getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
@@ -106,7 +182,42 @@ class PrayerLockService : Service() {
         return null
     }
 
+    // ── Staleness guard ───────────────────────────────────────────────────────
+
+    /**
+     * Returns true if the prayer data stored in SharedPreferences was written
+     * more than [STALE_THRESHOLD_MS] ago. When stale, blocking is skipped
+     * because the stored prayer time windows belong to a previous day and the
+     * service would never find an active window, effectively being broken.
+     *
+     * The JS layer writes `last_synced_at` every time it calls syncPrayers(),
+     * so this value is always fresh when the app is open.
+     */
+    private fun isPrayerDataStale(): Boolean {
+        val prefs = getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
+        val lastSynced = prefs.getLong("last_synced_at", 0L)
+        if (lastSynced == 0L) {
+            // Never synced — treat as stale so we don't block with empty/wrong data
+            Log.d("PrayerLockService", "No last_synced_at found — prayer data considered stale")
+            return true
+        }
+        val ageMs = System.currentTimeMillis() - lastSynced
+        val isStale = ageMs > STALE_THRESHOLD_MS
+        if (isStale) {
+            Log.d(
+                "PrayerLockService",
+                "Prayer data is stale (${ageMs / 3600000}h old, threshold ${STALE_THRESHOLD_MS / 3600000}h) — skipping block"
+            )
+        }
+        return isStale
+    }
+
+    // ── Core foreground check ─────────────────────────────────────────────────
+
     private fun checkForegroundApp() {
+        // Skip blocking when prayer data is stale (app closed 6+ hours)
+        if (isPrayerDataStale()) return
+
         val activePrayer = getActivePrayer() ?: return
 
         if (isSnoozed()) {
@@ -149,6 +260,8 @@ class PrayerLockService : Service() {
             triggerOverlay(activePrayer)
         }
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun isSessionCompleted(prefs: android.content.SharedPreferences, name: String, date: String): Boolean {
         val sessionKey = "$name|$date"
@@ -257,6 +370,8 @@ class PrayerLockService : Service() {
         }
     }
 
+    // ── Notification channel ──────────────────────────────────────────────────
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -277,6 +392,8 @@ class PrayerLockService : Service() {
             .setSmallIcon(android.R.drawable.ic_lock_lock)
             .build()
     }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onDestroy() {
         runnable?.let { handler.removeCallbacks(it) }

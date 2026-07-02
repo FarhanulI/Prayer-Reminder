@@ -63,3 +63,12 @@ export function getOverlayLaunchPayload(): OverlayLaunchPayload | null {
   return PrayerLock.getOverlayLaunchPayload();
 }
 
+/**
+ * Persists the prayer-lock enabled/disabled state to SharedPreferences so
+ * that BootReceiver and WatchdogReceiver know whether to restart the service
+ * after a phone reboot or process kill.
+ */
+export function setEnabled(enabled: boolean): void {
+  PrayerLock.setEnabled(enabled);
+}
+

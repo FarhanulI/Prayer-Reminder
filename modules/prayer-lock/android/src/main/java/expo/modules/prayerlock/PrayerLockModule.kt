@@ -120,9 +120,26 @@ class PrayerLockModule : Module() {
         val prefs =
           context.getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
 
-        prefs.edit().putString("prayers", prayersJson).commit()
+        prefs.edit()
+          .putString("prayers", prayersJson)
+          // Record when the JS layer last pushed fresh data so the native
+          // service can skip blocking if the data is stale (> 24 h old).
+          .putLong("last_synced_at", System.currentTimeMillis())
+          .commit()
       }
 
+      return@Function true
+    }
+
+    // Persist the enabled/disabled state so BootReceiver and WatchdogReceiver
+    // know whether to restart the service after the phone reboots or the
+    // process is killed by the OS.
+    Function("setEnabled") { enabled: Boolean ->
+      appContext.reactContext?.let { context ->
+        val prefs =
+          context.getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("prayer_lock_enabled", if (enabled) "true" else "false").commit()
+      }
       return@Function true
     }
 

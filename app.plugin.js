@@ -15,6 +15,8 @@ function withPrayerLockPermissions(config) {
       "android.permission.FOREGROUND_SERVICE",
       "android.permission.RECEIVE_BOOT_COMPLETED",
       "android.permission.VIBRATE",
+      "android.permission.SCHEDULE_EXACT_ALARM",
+      "android.permission.USE_EXACT_ALARM",
     ];
 
     if (!mainApplication["uses-permission"]) {
