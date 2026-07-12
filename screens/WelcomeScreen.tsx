@@ -8,7 +8,7 @@ import Animated, {
     withSequence,
     withTiming
 } from 'react-native-reanimated';
-import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Star Component to replicate the dynamic web starfield
@@ -141,21 +141,20 @@ export default function WelcomeScreen({ navigation }: any) {
             </View>
 
             {/* 3. Main Layout Canvas */}
-            <View className="items-center max-w-sm px-6 w-full z-10">
+            <View className="items-center max-w-sm px-6 w-full z-10 rounded-full">
 
                 {/* Animated Logo Container */}
-                <Animated.View style={[animatedLogoStyle, styles.logoShadow]} className="mb-12">
+                <Animated.View style={[animatedLogoStyle, styles.logoShadow]} className="mb-12 rounded-full overflow-hidden">
                     <Image
-                        source={{ uri: 'https://lh3.googleusercontent.com/aida/ADBb0ujH_zn3RtggBx3xcRlsKGRW3HVL5bGKU3yO2aW-vkD_MpkuKOL6GNY4FVbrElyDbbpoMmvyOK1zNdXZt9WBprL9q3O44GcHLytM0_Wkl3NkQgQSn7kA5wDZwwnERG7w58SprGSqsTSg6kdFcWVsnOlrjvv3JiHTqxMeU8s8-ibh-OX8EVaAJB22V-WT19cwLvYJumJlFFW7tqLoWKCq8AZYD2V99P8wAcuftQMI1hLmh7dKGbmjJqtQIA' }}
-                        className="w-44 h-44 object-contain"
-                        style={{ tintColor: '#e9c349' }} // Falling back to theme tertiary if image relies on CSS filters
+                        source={require('../assets/images/icon.png')}
+                        className="w-40 h-40 object-contain"
                     />
                 </Animated.View>
 
                 {/* Typography Cluster */}
                 <View className="space-y-3 items-center">
                     <Text className="text-center font-serif text-4xl text-[#e9c349] tracking-tight font-bold">
-                        Welcome to your Sanctuary
+                        Salah Reminder
                     </Text>
                     <Text className="text-center text-base text-[#c3c8c1] max-w-[260px] leading-relaxed mt-3">
                         Step away from the noise and find peace in every moment of your journey.
@@ -184,17 +183,17 @@ export default function WelcomeScreen({ navigation }: any) {
             </View>
 
             {/* 4. Visual Footer Accent */}
-            <View className="absolute bottom-6 left-6 right-6 flex-row justify-between items-end z-10">
-                <View className="space-y-1">
+            {/* <View className="absolute bottom-6 left-6 right-6 flex-row justify-between items-end z-10"> */}
+            {/* <View className="space-y-1">
                     <View className="h-1 w-12 bg-[#e9c349]/40 rounded-full" />
                     <View className="h-1 w-6 bg-[#e9c349]/20 rounded-full mt-1" />
-                </View>
+                </View> */}
 
-                {/* Replaced Material Symbols with a custom thin SVG Sparkle indicator */}
-                <Svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            {/* Replaced Material Symbols with a custom thin SVG Sparkle indicator */}
+            {/* <Svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                     <Path d="M12 2V22M2 12H22M19.07 4.93L4.93 19.07M19.07 19.07L4.93 4.93" stroke="#e9c349" strokeOpacity="0.4" strokeWidth="1.5" strokeLinecap="round" />
-                </Svg>
-            </View>
+                </Svg> */}
+            {/* </View> */}
 
         </View>
     );

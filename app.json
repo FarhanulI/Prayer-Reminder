@@ -55,7 +55,13 @@
         }
       ],
       "@react-native-google-signin/google-signin",
-      "expo-audio"
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "staysActiveInBackground": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

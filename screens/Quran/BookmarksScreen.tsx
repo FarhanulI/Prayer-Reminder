@@ -1,3 +1,8 @@
+import colors from '@/constants/colors.json';
+import { useBookmarks } from '@/hooks/Quran/useBookmarks';
+import { Bookmark } from '@/types/quranLogs';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -6,11 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import colors from '@/constants/colors.json';
-import { useBookmarks } from '@/hooks/Quran/useBookmarks';
-import { Bookmark } from '@/types/quranLogs';
 
 function BookmarkItem({ item, onPress, onRemove }: {
   item: Bookmark;
@@ -95,8 +95,9 @@ export default function BookmarksScreen() {
   const { bookmarks, loading, toggle } = useBookmarks();
 
   const handleOpenAyah = (item: Bookmark) => {
-    // Navigate to Quran tab — QuranScreen will pick up the surah from the dropdown.
-    // We pass surahNumber so the screen can pre-select it.
+    // Navigate to the Quran tab pre-selecting the bookmarked surah and scrolling to the ayah.
+    // BookmarksScreen lives outside the Main tab navigator (it's a stack screen),
+    // so we navigate to 'Main' with nested params — same pattern as ContinueReadingCard.
     navigation.navigate('Main', {
       screen: 'Quran',
       params: { surahNumber: item.surahNumber, ayahNumber: item.ayahNumber },

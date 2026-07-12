@@ -192,15 +192,22 @@ class PrayerLockService : Service() {
      *
      * The JS layer writes `last_synced_at` every time it calls syncPrayers(),
      * so this value is always fresh when the app is open.
+     *
+     * IMPORTANT: If `last_synced_at` has never been written (= 0, e.g. on
+     * existing installs before this field was added), we do NOT treat the data
+     * as stale. Blocking will still use getActivePrayer() which checks actual
+     * time windows — if those windows haven't passed, blocking works normally.
      */
     private fun isPrayerDataStale(): Boolean {
         val prefs = getSharedPreferences("PrayerLockPrefs", Context.MODE_PRIVATE)
         val lastSynced = prefs.getLong("last_synced_at", 0L)
+
+        // No timestamp recorded yet (fresh install / first launch before this
+        // field existed) — do NOT treat as stale; let getActivePrayer() decide.
         if (lastSynced == 0L) {
-            // Never synced — treat as stale so we don't block with empty/wrong data
-            Log.d("PrayerLockService", "No last_synced_at found — prayer data considered stale")
-            return true
+            return false
         }
+
         val ageMs = System.currentTimeMillis() - lastSynced
         val isStale = ageMs > STALE_THRESHOLD_MS
         if (isStale) {

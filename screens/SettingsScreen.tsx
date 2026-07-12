@@ -128,8 +128,8 @@ export default function SettingsScreen() {
             onPress={() => navigation.navigate('History')}
           >
             <View className="flex-row items-center">
-              <Ionicons name="time-outline" size={20} color="white" />
-              <Text className="text-white font-medium ml-3">History</Text>
+              <Ionicons name="time-outline" size={20} color={colors.gold} />
+              <Text className="text-white font-medium ml-3">Weekly Progress</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color="white" opacity={0.5} />
           </TouchableOpacity>
@@ -154,6 +154,7 @@ export default function SettingsScreen() {
                   value={lockEnabled}
                   onValueChange={toggleLock}
                   trackColor={{ false: colors["emerald-track"], true: colors.gold }}
+                  disabled={true}
                   // @ts-ignore
                   thumbColor={Platform.OS === 'ios' ? '#fff' : lockEnabled ? '#fff' : colors["emerald-muted"]}
                 />

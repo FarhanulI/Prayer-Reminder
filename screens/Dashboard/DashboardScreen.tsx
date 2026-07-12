@@ -26,6 +26,8 @@ import {
 } from "react-native";
 import PrayerLockSetupScreen from "../PrayerLockSetupScreen";
 import PrayerOverlayScreen from "../PrayerOverlayScreen";
+import BookmarksCard from "./Components/BookmarksCard";
+import ContinueReadingCard from "./Components/ContinueReadingCard";
 import DailyVerseCard from "./Components/DailyVerseCard";
 import Header from "./Components/Header";
 import UpcomingPrayerCard from "./Components/UpcomingPrayerCard/UpcomingPrayerCard";
@@ -115,7 +117,7 @@ const QuickActionCard = ({
             <Ionicons
               name="stats-chart-outline"
               size={14}
-              // color={colors.gold}
+            // color={colors.gold}
             />
             <Text className="text-black text-[7px] font-bold ml-1.5 tracking-widest uppercase">
               Weekly Progress
@@ -176,7 +178,7 @@ export default function DashboardScreen() {
         setShowPermissionSetup(
           !hasUsageStatsPermission() || !hasOverlayPermission(),
         );
-      } catch {}
+      } catch { }
     };
     checkPerms();
     const sub = AppState.addEventListener("change", (s) => {
@@ -349,7 +351,7 @@ export default function DashboardScreen() {
   // ---------------------------------------------------------------------------
 
   return (
-    <View className="flex-1 bg-emerald-darkest">
+    <View className="flex-1 bg-emerald-darkest mb-20">
       {/* End-of-day overlay */}
       {/* <EndOfDayOverlayScreen
         visible={eodVisible}
@@ -410,7 +412,7 @@ export default function DashboardScreen() {
           remainingCount={remainingCount}
         />
 
-        {/* <View className="flex-row justify-between mb-8">
+        <View className="flex-row justify-between mb-8">
           <ContinueReadingCard
             onPress={(lastRead) =>
               navigation.navigate("Quran", {
@@ -420,7 +422,7 @@ export default function DashboardScreen() {
             }
           />
           <BookmarksCard onPress={() => navigation.navigate("Bookmarks")} />
-        </View>*/}
+        </View>
 
         <View className="mb-10">
           <DailyVerseCard />

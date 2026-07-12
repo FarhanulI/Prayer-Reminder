@@ -83,8 +83,7 @@ export function usePrayerNativeSync(
 
       if (!uid) {
         native.stopService();
-        // Persist disabled state so boot/watchdog receivers don't restart it.
-        try { native.setEnabled(false); } catch (_) {}
+        try { native.setEnabled(false); } catch (_) {} // persist for boot receiver
         return;
       }
 
@@ -93,11 +92,9 @@ export function usePrayerNativeSync(
       );
       const isEnabled = enabledVal === null || enabledVal === "true";
 
-      // Persist current enabled state to SharedPreferences for boot receiver.
-      try { native.setEnabled(isEnabled); } catch (_) {}
-
       if (!isEnabled) {
         native.stopService();
+        try { native.setEnabled(false); } catch (_) {}
         return;
       }
 
@@ -107,8 +104,11 @@ export function usePrayerNativeSync(
         return;
       }
 
+      // Sync prayers and start service FIRST — these are critical.
+      // setEnabled is best-effort (it's a new API; may not exist on old builds).
       native.syncPrayers(JSON.stringify(currentPrayers.map(toNativePrayer)));
       native.startService();
+      try { native.setEnabled(true); } catch (_) {}
     };
 
     sync(prayers);
@@ -152,6 +152,7 @@ export function usePrayerNativeSync(
         // service sees a fresh `last_synced_at` and resumes blocking.
         native.syncPrayers(JSON.stringify(prayersRef.current.map(toNativePrayer)));
         native.startService();
+        try { native.setEnabled(true); } catch (_) {}
 
         console.log("[usePrayerNativeSync] Re-sync complete on foreground resume");
       } catch (e) {

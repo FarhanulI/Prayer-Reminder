@@ -1,31 +1,9 @@
 import colors from "@/constants/colors.json";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
 import { Magnetometer } from "expo-sensors";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
-
-const KAABA_LAT = 21.4225;
-const KAABA_LNG = 39.8262;
-
-const toRadians = (deg: number) => deg * (Math.PI / 180);
-const toDegrees = (rad: number) => rad * (180 / Math.PI);
-
-const calculateQiblaBearing = (userLat: number, userLng: number): number => {
-  const lat1 = toRadians(userLat);
-  const lon1 = toRadians(userLng);
-  const lat2 = toRadians(KAABA_LAT);
-  const lon2 = toRadians(KAABA_LNG);
-
-  const dLon = lon2 - lon1;
-
-  const y = Math.sin(dLon);
-  const x = Math.cos(lat1) * Math.tan(lat2) - Math.sin(lat1) * Math.cos(dLon);
-
-  let bearing = toDegrees(Math.atan2(y, x));
-
-  return (bearing + 360) % 360;
-};
+import { useQibla } from "@/hooks/useQibla";
 
 const getHeading = (data: any) => {
   let { x, y } = data;
@@ -37,14 +15,14 @@ const getHeading = (data: any) => {
 };
 
 export default function Qibla() {
-  const [qiblaDirection, setQiblaDirection] = useState(0);
+  const { data: qiblaData } = useQibla();
+  const qiblaDirection = qiblaData?.data?.qibla_direction || 0;
+
   const [heading, setHeading] = useState(0);
 
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    getLocation();
-
     Magnetometer.setUpdateInterval(200);
 
     const subscription = Magnetometer.addListener((data) => {
@@ -61,27 +39,7 @@ export default function Qibla() {
     return () => subscription.remove();
   }, []);
 
-  const getLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== "granted") return;
-
-    const location = await Location.getCurrentPositionAsync({});
-
-    const bearing = calculateQiblaBearing(
-      location.coords.latitude,
-      location.coords.longitude,
-    );
-
-    setQiblaDirection(bearing);
-  };
-
   const relativeRotation = qiblaDirection - heading;
-
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 360],
-    outputRange: ["0deg", "360deg"],
-  });
 
   return (
     <TouchableOpacity>

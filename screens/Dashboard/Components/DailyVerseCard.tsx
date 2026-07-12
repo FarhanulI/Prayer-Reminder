@@ -5,12 +5,12 @@ import { useBookmarks } from "@/hooks/Quran/useBookmarks";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
 import {
-    ActivityIndicator,
-    ImageBackground,
-    Share,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ImageBackground,
+  Share,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const DailyVerseCard = () => {
@@ -18,14 +18,14 @@ const DailyVerseCard = () => {
   const { toggle, isBookmarked } = useBookmarks();
 
   const bookmarked = ayah
-    ? isBookmarked(ayah.surah.number, ayah.numberInSurah)
+    ? isBookmarked(ayah.surah.number, ayah.verse.ayah)
     : false;
 
   const handleShare = async () => {
     if (!ayah) return;
     try {
       await Share.share({
-        message: `"${ayah.text}"\n\n- Surah ${ayah.surah.englishName} ${ayah.surah.number}:${ayah.numberInSurah}`,
+        message: `"${ayah.verse.translations.sahih_international}"\n\n- Surah ${ayah.surah.englishName} ${ayah.surah.number}:${ayah.verse.ayah}`,
       });
     } catch (error) {
       console.error("Error sharing ayah:", error);
@@ -34,7 +34,7 @@ const DailyVerseCard = () => {
 
   const handleBookmark = () => {
     if (!ayah) return;
-    toggle(ayah.surah.number, ayah.surah.englishName, ayah.numberInSurah);
+    toggle(ayah.surah.number, ayah.surah.englishName, ayah.verse.ayah);
   };
 
   return (
@@ -66,12 +66,12 @@ const DailyVerseCard = () => {
         ) : (
           <>
             <Text className="text-white/80 text-[15px] leading-7 italic mb-6 mt-2">
-              "{ayah.text}"
+              "{ayah.verse.translations.sahih_international}"
             </Text>
             <View className="flex-row justify-between items-center">
               <Text className="text-gold text-[11px] font-bold uppercase tracking-widest flex-1 mr-4">
                 Surah {ayah.surah.englishName} {ayah.surah.number}:
-                {ayah.numberInSurah}
+                {ayah.verse.ayah}
               </Text>
               <View className="flex-row">
                 <TouchableOpacity className="mr-4" onPress={handleShare}>

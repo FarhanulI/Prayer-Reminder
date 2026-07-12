@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { AudioElement, VerseList } from "./types";
 
 export interface Edition {
   identifier: string;
@@ -20,23 +21,14 @@ export interface Surah {
 }
 
 export interface AyahData {
-  number: number;
-  text: string;
-  edition: Edition;
   surah: Surah;
-  numberInSurah: number;
-  juz: number;
-  manzil: number;
-  page: number;
-  ruku: number;
-  hizbQuarter: number;
-  sajda: boolean | object; // Handled as boolean based on payload, but can be an object in some Quran APIs
+  audio: AudioElement[];
+  total_verses: number;
+  verse: VerseList;
 }
 
 export interface RandomAyahApiResponse {
-  code: number;
-  status: string;
-  data: AyahData[];
+  data: AyahData;
 }
 
 export const useGetRandomAyah = () => {
@@ -44,22 +36,13 @@ export const useGetRandomAyah = () => {
   return useQuery<AyahData>({
     queryKey: ['random-ayah', dateString],
     queryFn: async () => {
-      // Create a daily seed from the date string
-      let hash = 0;
-      for (let i = 0; i < dateString.length; i++) {
-        const char = dateString.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      
       // The Quran has exactly 6236 ayahs
-      const randomAyahNumber = (Math.abs(hash) % 6236) + 1;
-      const response = await fetch(`https://api.alquran.cloud/v1/ayah/${randomAyahNumber}/editions/en.asad`);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_BASE_URL}/api/quran/random`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      const result: RandomAyahApiResponse = await response.json();
-      return result.data?.[0];
+      const { data }: RandomAyahApiResponse = await response.json();
+      return data;
     },
     refetchOnWindowFocus: false,
   });

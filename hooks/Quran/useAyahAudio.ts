@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // This ensures we can stop any sound from ANY instance of the hook.
 let globalSoundInstance: AudioPlayer | null = null;
 
-export const useAyahAudio = (surahId: number, ayahInSurah: number) => {
+export const useAyahAudio = (audioUrl?: string) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -31,17 +31,10 @@ export const useAyahAudio = (surahId: number, ayahInSurah: number) => {
       // 1. Stop whatever is playing globally
       await stopGlobalAudio();
 
-      // 2. Fetch Audio URL
-      const response = await fetch(
-        `https://api.alquran.cloud/v1/ayah/${ayahInSurah}/ar.alafasy`,
-      );
-      const data = await response.json();
-      const url = data?.data?.audio;
-
-      if (!url) throw new Error("No audio URL");
+      if (!audioUrl) throw new Error("No audio URL");
 
       // 3. Create and Play
-      const player = createAudioPlayer(url);
+      const player = createAudioPlayer(audioUrl);
       player.play();
 
       // 4. Assign to global and local
@@ -66,7 +59,7 @@ export const useAyahAudio = (surahId: number, ayahInSurah: number) => {
     } finally {
       setLoading(false);
     }
-  }, [ayahInSurah]);
+  }, [audioUrl]);
 
   const pause = useCallback(async () => {
     if (localSoundRef.current) {

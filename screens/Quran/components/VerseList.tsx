@@ -10,12 +10,13 @@ import VerseCard from './VerseCard';
 
 interface VerseListProps {
     surah?: SurahDetail;
-    ayahNumber?: number;
+    ayahNumber?: string;
     onPageChange?: () => void;
     onScrollToOffset?: (y: number) => void;
+    isFullAudioPlaying?: boolean;
 }
 
-const VerseList = ({ surah, ayahNumber, onPageChange, onScrollToOffset }: VerseListProps) => {
+const VerseList = ({ surah, ayahNumber, onPageChange, onScrollToOffset, isFullAudioPlaying }: VerseListProps) => {
     const { isBookmarked, toggle } = useBookmarks();
     const { lastRead, savePosition } = useLastRead();
 
@@ -39,8 +40,10 @@ const VerseList = ({ surah, ayahNumber, onPageChange, onScrollToOffset }: VerseL
     });
 
     useEffect(() => {
+        console.log({ ayahNumber, surah: !!surah, is: surah && surah.verses && ayahNumber });
+
         if (surah && surah.verses && ayahNumber) {
-            const verseIndex = surah.verses.findIndex((v) => v.ayah === ayahNumber);
+            const verseIndex = surah.verses.findIndex((v) => v.id.toString() === ayahNumber.toString());
             if (verseIndex >= 0) {
                 const targetPage = Math.floor(verseIndex / 20) + 1;
                 setPage(targetPage);
@@ -67,7 +70,7 @@ const VerseList = ({ surah, ayahNumber, onPageChange, onScrollToOffset }: VerseL
                     <View
                         key={v.id}
                         onLayout={(event) => {
-                            if (v.ayah === ayahNumber && onScrollToOffset) {
+                            if (ayahNumber && v.id.toString() === ayahNumber.toString() && onScrollToOffset) {
                                 // Add 260px offset to account for ScrollView paddingTop and Surah Info Card height
                                 onScrollToOffset(event.nativeEvent.layout.y + 260);
                             }
@@ -79,15 +82,15 @@ const VerseList = ({ surah, ayahNumber, onPageChange, onScrollToOffset }: VerseL
                             arabic={v.text}
                             english={v.translation}
                             ayah={v.ayah}
-                            surahId={surah.id}
-                            surahName={surah.transliteration}
+                            audioUrl={v.audio}
                             isLastRead={
                                 lastRead?.surahNumber === surah.id &&
-                                lastRead?.ayahNumber === v.ayah
+                                lastRead?.ayahNumber === v.id
                             }
-                            isBookmarked={isBookmarked(surah.id, v.ayah)}
-                            onBookmarkToggle={() => toggle(surah.id, surah.transliteration, v.ayah)}
-                            onPress={() => savePosition(surah.id, surah.transliteration, v.ayah)}
+                            isBookmarked={isBookmarked(surah.id, v.id)}
+                            onBookmarkToggle={() => toggle(surah.id, surah.transliteration, v.id)}
+                            onPress={() => savePosition(surah.id, surah.name, v.id)}
+                            isFullAudioPlaying={isFullAudioPlaying}
                         />
                     </View>
                 ))}

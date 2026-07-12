@@ -22,17 +22,17 @@ type VerseCardProps = {
     number: number;
     arabic: string;
     english: string;
-    ayah: number;
-    surahId: number;
-    surahName?: string;
+    ayah: string;
+    audioUrl?: string;
     transliteration?: string;
     isLastRead?: boolean;
     isBookmarked?: boolean;
     onBookmarkToggle?: () => void;
     onPress?: () => void;
+    isFullAudioPlaying?: boolean;
 };
 
-function HexVerseBadge({ number }: { number: number }) {
+function HexVerseBadge({ number }: { number: number | string }) {
     return (
         <View className={` items-center 
             justify-center border solid border-gold px-2 py-1 rounded-md`}>
@@ -43,19 +43,18 @@ function HexVerseBadge({ number }: { number: number }) {
 }
 
 const VerseCard = ({
-    number,
     arabic,
     english,
     ayah,
-    surahId,
-    surahName,
+    audioUrl,
     transliteration,
     isLastRead = false,
     isBookmarked = false,
     onBookmarkToggle,
     onPress,
+    isFullAudioPlaying = false,
 }: VerseCardProps) => {
-    const { play, pause, isPlaying, loading } = useAyahAudio(surahId, ayah);
+    const { play, pause, isPlaying, loading } = useAyahAudio(audioUrl);
     const pulse = useRef(new Animated.Value(0)).current;
     const bookmarkScale = useRef(new Animated.Value(1)).current;
 
@@ -161,8 +160,8 @@ const VerseCard = ({
                         {/* Play / Pause */}
                         <TouchableOpacity
                             onPress={isPlaying ? pause : play}
-                            disabled={loading}
-                            className="w-10 h-10 rounded-full bg-gold items-center justify-center"
+                            disabled={loading || isFullAudioPlaying}
+                            className={`w-10 h-10 rounded-full bg-gold items-center justify-center ${isFullAudioPlaying ? 'opacity-50' : ''}`}
                             accessibilityLabel={isPlaying ? 'Pause recitation' : 'Play recitation'}
                         >
                             {loading ? (

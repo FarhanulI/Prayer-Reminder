@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
 
+import BookmarksScreen from "@/screens/Quran/BookmarksScreen";
 import { AppBootstrap } from "../components/AppBootstrap";
 import { useAuthContext } from "../context/AuthProvider";
 import HistoryScreen from "../screens/History/HistoryScreen";
@@ -30,6 +31,7 @@ export function AuthNavigator() {
 export function OnboardingNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="welcome" component={WelcomeScreen} />
       <Stack.Screen name="OnBoarding" component={OnBoardingScreen} />
     </Stack.Navigator>
   );
@@ -43,8 +45,8 @@ export function MainAppNavigator() {
       {/* <Stack.Screen name="Home" component={DashboardScreen} /> */}
       {/* <Stack.Screen name="Quran" component={QuranScreen} />
       <Stack.Screen name="Progress" component={MilestonesScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen name="Bookmarks" component={BookmarksScreen} /> */}
+      <Stack.Screen name="Settings" component={SettingsScreen} />*/}
+      <Stack.Screen name="Bookmarks" component={BookmarksScreen} />
       <Stack.Screen
         name="MilestoneDetails"
         component={MilestoneDetailsScreen}

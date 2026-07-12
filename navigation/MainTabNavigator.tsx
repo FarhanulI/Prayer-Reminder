@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
-import MilestonesScreen from "@/screens/Milestones/MilestonesScreen";
+import HistoryScreen from "@/screens/History/HistoryScreen";
 import DashboardScreen from "../screens/Dashboard/DashboardScreen";
 import QuranScreen from "../screens/Quran/QuranScreen";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -96,7 +96,19 @@ export default function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen name="Quran" component={QuranScreen} />
-      <Tab.Screen name="Progress" component={MilestonesScreen} />
+      {/* <Tab.Screen name="Progress" component={MilestonesScreen} /> */}
+      <Tab.Screen
+        name="Progress"
+        component={HistoryScreen}
+        options={{
+          headerShown: true,
+          headerTitle: "Weekly Progress",
+          headerStyle: {
+            backgroundColor: colors["emerald-darkest"],
+          },
+          headerTintColor: colors.gold,
+        }}
+      />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

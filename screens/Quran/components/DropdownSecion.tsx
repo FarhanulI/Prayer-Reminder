@@ -4,7 +4,7 @@ import colors from '@/constants/colors.json';
 import { useSurahsLists } from '@/hooks/Quran/use-surah-list';
 import { Feather } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 interface DropdownSecionProps {
