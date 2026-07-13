@@ -10,6 +10,7 @@ import colors from "@/constants/colors.json";
 import { PrayerCollection, PrayerLogDocument, UserDocument } from "@/types";
 
 import Qibla from "../Qibla";
+import { sendPrayerNotificationIfNeeded } from "@/features/prayerNotificationService";
 import { useCountdown } from "./hook/useCountdown";
 import { useDateSwitcher } from "./hook/useDateSwitcher";
 import { NextPrayerBadge } from "./NextPrayerBadge";
@@ -56,8 +57,12 @@ const UpcomingPrayerCard: React.FC<UpcomingPrayerCardProps> = ({
   );
 
   // Destructure computed variables safely
-  const { title, name, time, countdownTarget, isPrayed, isSkipped } =
-    currentInfo ?? {};
+  const { title, name, time, countdownTarget, isPrayed, isSkipped } = currentInfo ?? {};
+
+  // Trigger local notification when the active prayer changes
+  useEffect(() => {
+    sendPrayerNotificationIfNeeded(name, title, time);
+  }, [name, title, time]);
 
   // Hook for handling prayer countdown and current time live updates
   const { timeLeft, currentTime } = useCountdown(

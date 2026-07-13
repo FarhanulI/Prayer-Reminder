@@ -5,7 +5,6 @@ import { Platform } from "react-native";
 import { updateUserStreaks } from "../../features/streaks.service";
 import { loadPrayerLock } from "./prayer-lock.loader";
 import { usePrayerNativeSync } from "./usePrayerNativeSync";
-import { usePrayerNotifications } from "./usePrayerNotifications";
 import { usePrayerPermissions } from "./usePrayerPermissions";
 import { usePrayerPolling } from "./usePrayerPolling";
 import { upsertPrayerLog } from "./utils/prayer.firestore";
@@ -75,8 +74,6 @@ export function usePrayerLock({
     prayers,
     checkPermissions,
   );
-
-  usePrayerNotifications(prayers);
 
   usePrayerPolling({
     uid,
