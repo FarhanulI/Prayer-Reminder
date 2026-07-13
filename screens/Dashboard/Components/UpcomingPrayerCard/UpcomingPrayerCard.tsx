@@ -9,13 +9,14 @@ import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
 import { PrayerCollection, PrayerLogDocument, UserDocument } from "@/types";
 
-import Qibla from "../Qibla";
 import { sendPrayerNotificationIfNeeded } from "@/features/prayerNotificationService";
+import Qibla from "../Qibla";
 import { useCountdown } from "./hook/useCountdown";
 import { useDateSwitcher } from "./hook/useDateSwitcher";
-import { NextPrayerBadge } from "./NextPrayerBadge";
-import { PrayerGrid } from "./PrayerGrid/PrayerGrid";
-import SunTimings from "./SunTimings";
+
+import { NextPrayerBadge } from "./components/NextPrayerBadge";
+import { PrayerGrid } from "./components/PrayerGrid/PrayerGrid";
+import SunTimings from "./components/SunTimings";
 import {
   createPrayerList,
   formatLocationName,
