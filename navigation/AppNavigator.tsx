@@ -1,3 +1,4 @@
+import { AppBootstrap } from "@/bootstrap/AppBootstrap";
 import colors from "@/constants/colors.json";
 import ForbiddenTimesScreen from "@/screens/ForbiddenTimesScreen";
 import { NavigationContainer } from "@react-navigation/native";
@@ -6,7 +7,6 @@ import React from "react";
 import { ActivityIndicator, View } from "react-native";
 
 import BookmarksScreen from "@/screens/Quran/BookmarksScreen";
-import { AppBootstrap } from "../components/AppBootstrap";
 import { useAuthContext } from "../context/AuthProvider";
 import HistoryScreen from "../screens/History/HistoryScreen";
 import LoginScreen from "../screens/LoginScreen";
@@ -94,7 +94,11 @@ const RootNavigator = () => {
       return <OnboardingNavigator />;
 
     case "authenticated":
-      return <MainAppNavigator />;
+      return (
+        <AppBootstrap>
+          <MainAppNavigator />
+        </AppBootstrap>
+      );
 
     default:
       return <SplashScreen />;
@@ -104,9 +108,7 @@ const RootNavigator = () => {
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <AppBootstrap>
-        <RootNavigator />
-      </AppBootstrap>
+      <RootNavigator />
     </NavigationContainer>
   );
 }

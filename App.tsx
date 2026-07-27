@@ -14,6 +14,7 @@ import { DeviceSync } from "./components/DeviceSync";
 import { AuthProvider } from "./context/AuthProvider";
 import "./global.css";
 import AppNavigator from "./navigation/AppNavigator";
+import { AudioProvider } from "./providers/AudioProvider";
 
 // Register components for NativeWind support
 cssInterop(LinearGradient, {
@@ -53,13 +54,15 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <View style={{ flex: 1 }}>
-        <AuthProvider>
-          <DeviceSync />
-          <AppNavigator />
-          <Toast />
-        </AuthProvider>
-      </View>
+      <AudioProvider>
+        <View style={{ flex: 1 }}>
+          <AuthProvider>
+            <DeviceSync />
+            <AppNavigator />
+            <Toast />
+          </AuthProvider>
+        </View>
+      </AudioProvider>
     </QueryClientProvider>
   );
 }

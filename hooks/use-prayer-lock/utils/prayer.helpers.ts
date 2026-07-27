@@ -84,18 +84,9 @@ export function getEffectivePrayerDate(prayer: Prayer): string {
   const now = dayjs();
   const prayerDate = prayer.date ?? now.format("YYYY-MM-DD");
 
-  if (!prayer.time || !prayer.end) {
-    return prayerDate;
-  }
-
-  let startTime = dayjs(`${prayerDate} ${prayer.time}`);
-  let endTime = dayjs(`${prayerDate} ${prayer.end}`);
-
-  if (endTime.isBefore(startTime) && now.isBefore(endTime)) {
-    startTime = startTime.subtract(1, "day");
-  }
-
-  return startTime.format("YYYY-MM-DD");
+  // The stored date already represents the correct start date.
+  // No need to subtract a day — just return the stored date.
+  return prayerDate;
 }
 
 // ─── Native prayer shape ──────────────────────────────────────────────────────
@@ -149,12 +140,10 @@ export function getActivePrayer(
     let startTime = dayjs(`${prayerDate} ${prayer.time}`);
     let endTime = dayjs(`${prayerDate} ${prayer.end}`);
 
-    // Handle overnight windows (e.g. Isha ending after midnight)
+    // Handle overnight windows (e.g. Isha ending after midnight):
+    // Only push end forward. The stored date already represents the correct
+    // start date, so we never subtract a day from startTime.
     if (endTime.isBefore(startTime)) {
-      // If current time is after midnight but before the end, shift start back one day
-      if (now.isBefore(endTime)) {
-        startTime = startTime.subtract(1, "day");
-      }
       endTime = endTime.add(1, "day");
     }
 

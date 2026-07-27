@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import GoogleIcon from "@/components/GoogleIcon";
 import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
@@ -15,7 +16,6 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { loginUser } from "../features/auth/auth.service";
 import { GoogleSignInError } from "../features/auth/googleSignIn.service";
 import { useGoogleSignIn } from "../hooks/useGoogleSignIn";
 
@@ -39,26 +39,26 @@ const LoginScreen = ({ navigation }: any) => {
     return true;
   };
 
-  const handleLogin = async () => {
-    if (!validate()) return;
-    setLoading(true);
-    try {
-      await loginUser(email.trim(), password);
-    } catch (err: any) {
-      const message =
-        err.code === "auth/invalid-credential" ||
-        err.code === "auth/wrong-password"
-          ? "Invalid email or password."
-          : err.code === "auth/user-not-found"
-            ? "No account found with this email."
-            : err.code === "auth/too-many-requests"
-              ? "Too many attempts. Try again later."
-              : err.message;
-      Toast.show({ type: "error", text1: "Login Failed", text2: message });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleLogin = async () => {
+  //   if (!validate()) return;
+  //   setLoading(true);
+  //   try {
+  //     await loginUser(email.trim(), password);
+  //   } catch (err: any) {
+  //     const message =
+  //       err.code === "auth/invalid-credential" ||
+  //       err.code === "auth/wrong-password"
+  //         ? "Invalid email or password."
+  //         : err.code === "auth/user-not-found"
+  //           ? "No account found with this email."
+  //           : err.code === "auth/too-many-requests"
+  //             ? "Too many attempts. Try again later."
+  //             : err.message;
+  //     Toast.show({ type: "error", text1: "Login Failed", text2: message });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleGoogleSignIn = async () => {
     try {

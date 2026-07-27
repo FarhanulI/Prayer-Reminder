@@ -202,11 +202,13 @@ class PrayerLockModule : Module() {
               set(Calendar.MILLISECOND, 0)
             }
 
-            if (endCal.before(startCal) && Calendar.getInstance().before(endCal)) {
-              startCal.add(Calendar.DAY_OF_YEAR, -1)
+            // Handle overnight windows: only push end forward.
+            // The stored date already represents the correct start date.
+            if (endCal.before(startCal)) {
+              endCal.add(Calendar.DAY_OF_YEAR, 1)
             }
 
-            dateFormat.format(startCal.time)
+            storedDate
           } catch (_: Exception) {
             storedDate
           }

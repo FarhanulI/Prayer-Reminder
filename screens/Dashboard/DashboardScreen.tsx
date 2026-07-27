@@ -1,14 +1,10 @@
-import CircularProgress from "@/components/CircularProgress";
-import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
 import { refreshApplicationData } from "@/features/device.service";
 import { usePrayerLock } from "@/hooks/use-prayer-lock/usePrayerLock";
 import { useCreateTomorrowPrayerLog } from "@/hooks/useCreateTomorrowPrayerLog";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { useEndOfDayReminder } from "@/hooks/useEndOfDayReminder";
 import { PrayerLogDocument } from "@/types";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -20,16 +16,15 @@ import {
   Platform,
   RefreshControl,
   ScrollView,
-  Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import PrayerLockSetupScreen from "../PrayerLockSetupScreen";
-import PrayerOverlayScreen from "../PrayerOverlayScreen";
+import PrayerOverlayScreen from "../PrayerOverlayScreen/PrayerOverlayScreen";
 import BookmarksCard from "./Components/BookmarksCard";
 import ContinueReadingCard from "./Components/ContinueReadingCard";
 import DailyVerseCard from "./Components/DailyVerseCard";
 import Header from "./Components/Header";
+import QuickActionCard from "./Components/QuickActionCard";
 import UpcomingPrayerCard from "./Components/UpcomingPrayerCard/UpcomingPrayerCard";
 import { createPrayerList } from "./Components/UpcomingPrayerCard/utils";
 
@@ -38,13 +33,6 @@ dayjs.extend(isBetween);
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface QuickActionCardProps {
-  title: string;
-  subtext: string;
-  completedCount: number;
-  remainingCount: number;
-}
 
 interface PrayerEntry {
   name: string;
@@ -75,61 +63,6 @@ function isPrayerMissed(prayer: PrayerEntry): boolean {
 
   return endObj.isBefore(dayjs());
 }
-
-// ---------------------------------------------------------------------------
-// QuickActionCard
-// ---------------------------------------------------------------------------
-
-const QuickActionCard = ({
-  title,
-  subtext,
-  completedCount,
-  remainingCount,
-}: QuickActionCardProps) => {
-  const navigation = useNavigation<any>();
-
-  return (
-    <Card
-      variant="large"
-      className="flex-row justify-between items-center mb-8"
-    >
-      <View className="flex-1 pr-4">
-        <Text className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1.5">
-          {title}
-        </Text>
-        <Text
-          className="text-white text-[28px] font-semibold leading-tight mb-2"
-          style={{ fontFamily: "serif" }}
-        >
-          {subtext}
-        </Text>
-
-        <Text className="text-white/30 text-[13px] font-medium">
-          Prayed{" "}
-          <Text className="text-gold text-[15px] font-bold">
-            {completedCount}
-          </Text>{" "}
-          Salah
-        </Text>
-
-        <TouchableOpacity onPress={() => navigation.navigate("History")}>
-          <View className="flex-row items-center border bg-gold  px-3 py-2 rounded-md shadow-gold mt-4">
-            <Ionicons
-              name="stats-chart-outline"
-              size={14}
-            // color={colors.gold}
-            />
-            <Text className="text-black text-[7px] font-bold ml-1.5 tracking-widest uppercase">
-              Weekly Progress
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <CircularProgress value={completedCount} total={5} />
-    </Card>
-  );
-};
 
 // ---------------------------------------------------------------------------
 // DashboardScreen
@@ -164,7 +97,7 @@ export default function DashboardScreen() {
   const [overlayEndTime, setOverlayEndTime] = useState("");
   const [isSkipReminder, setIsSkipReminder] = useState(false);
 
-  const { visible: eodVisible, dismiss: dismissEod } = useEndOfDayReminder();
+  // const { visible: eodVisible, dismiss: dismissEod } = useEndOfDayReminder();
   const { mutate: createTomorrowLog } = useCreateTomorrowPrayerLog();
 
   const [showPermissionSetup, setShowPermissionSetup] = useState(false);
@@ -178,7 +111,7 @@ export default function DashboardScreen() {
         setShowPermissionSetup(
           !hasUsageStatsPermission() || !hasOverlayPermission(),
         );
-      } catch { }
+      } catch {}
     };
     checkPerms();
     const sub = AppState.addEventListener("change", (s) => {
@@ -188,16 +121,15 @@ export default function DashboardScreen() {
   }, []);
 
   // Pre-create tomorrow's log when EOD overlay becomes visible.
-  useEffect(() => {
-    if (eodVisible && uid) {
-      createTomorrowLog(uid);
-    }
-  }, [eodVisible, uid, createTomorrowLog]);
+  // useEffect(() => {
+  //   if (eodVisible && uid) {
+  //     createTomorrowLog(uid);
+  //   }
+  // }, [eodVisible, uid, createTomorrowLog]);
 
   // ---------------------------------------------------------------------------
   // Pull-to-refresh
   // ---------------------------------------------------------------------------
-
   const onRefresh = useCallback(async () => {
     if (!uid) return;
     setRefreshing(true);
@@ -303,26 +235,26 @@ export default function DashboardScreen() {
   // EOD missed prayers
   // ---------------------------------------------------------------------------
 
-  const missedPrayers = useMemo(
-    () => prayerList.filter(isPrayerMissed),
-    [prayerList],
-  );
+  // const missedPrayers = useMemo(
+  //   () => prayerList.filter(isPrayerMissed),
+  //   [prayerList],
+  // );
 
-  const handleEodLogPrayer = useCallback(
-    async (name: string, date?: string) => {
-      await markPrayerComplete(name, date ?? dayjs().format("YYYY-MM-DD"));
+  // const handleEodLogPrayer = useCallback(
+  //   async (name: string, date?: string) => {
+  //     await markPrayerComplete(name, date ?? dayjs().format("YYYY-MM-DD"));
 
-      if (name === "Isha" && uid) {
-        createTomorrowLog(uid);
-      }
+  //     if (name === "Isha" && uid) {
+  //       createTomorrowLog(uid);
+  //     }
 
-      const remaining = prayerList.filter(
-        (p) => p.name !== name && isPrayerMissed(p),
-      );
-      if (remaining.length === 0) dismissEod();
-    },
-    [markPrayerComplete, uid, createTomorrowLog, prayerList, dismissEod],
-  );
+  //     const remaining = prayerList.filter(
+  //       (p) => p.name !== name && isPrayerMissed(p),
+  //     );
+  //     if (remaining.length === 0) dismissEod();
+  //   },
+  //   [markPrayerComplete, uid, createTomorrowLog, prayerList, dismissEod],
+  // );
 
   // ---------------------------------------------------------------------------
   // Derived counts

@@ -330,15 +330,14 @@ class PrayerLockService : Service() {
                     set(Calendar.MILLISECOND, 0)
                 }
 
-                // Handle overnight windows
+                // Handle overnight windows: only push end forward.
+                // The stored date already represents the correct start date,
+                // so we never subtract a day from startCal.
                 if (endCal.before(startCal)) {
-                    if (now.before(endCal)) {
-                        startCal.add(Calendar.DAY_OF_YEAR, -1)
-                    }
                     endCal.add(Calendar.DAY_OF_YEAR, 1)
                 }
 
-                val effectiveDate = dateFormat.format(startCal.time)
+                val effectiveDate = prayerDateStr
                 if (isSessionCompleted(prefs, name, effectiveDate)) continue
 
                 val nowMs = now.timeInMillis

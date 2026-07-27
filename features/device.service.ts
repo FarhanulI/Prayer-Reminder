@@ -1,9 +1,5 @@
 import { db } from "@/lib/firebase";
-import {
-  OnboardingData,
-  PrayerTimesMethodResponse,
-  Timings
-} from "@/types";
+import { OnboardingData, PrayerTimesMethodResponse, Timings } from "@/types";
 import dayjs from "dayjs";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -468,47 +464,50 @@ export const createPrayerLogIfNeeded = async (
   userLocation: Location.LocationObjectCoords | null,
 ) => {
   const now = dayjs();
-
   const today = now.format("YYYY-MM-DD");
-
   const yesterday = now.subtract(1, "day").format("YYYY-MM-DD");
 
   const userRef = doc(db, "users", uid);
 
-  // Validate user
-  const userSnap = await getDoc(userRef);
+  // 1. Check if today's log exists first (fastest path)
+  const todayLogRef = getPrayerLogRef(uid, today);
+  const todayLogSnap = await getDoc(todayLogRef);
 
+  // If today's log already exists, no heavy operations are needed
+  if (todayLogSnap.exists()) {
+    return true;
+  }
+
+  // 2. Validate user existence
+  const userSnap = await getDoc(userRef);
   if (!userSnap.exists()) {
     throw new Error("User document not found");
   }
 
-  // Resolve location
+  // 3. Resolve location only when we know we need to create/update logs
   const location = await resolveLocation(userLocation);
 
-  // Determine required dates
-  const requiredDates = [today];
-
+  // 4. Determine if yesterday's log is also required
   const needYesterday = await shouldCreateYesterdayLog(location);
+  const datesToCheck = needYesterday ? [today, yesterday] : [today];
 
-  if (needYesterday) {
-    requiredDates.push(yesterday);
-  }
-
-  // Check all required logs in parallel
+  // 5. Fetch required log snapshots in parallel
   const logSnapshots = await Promise.all(
-    requiredDates.map((date) => getDoc(getPrayerLogRef(uid, date))),
+    datesToCheck.map((date) =>
+      date === today ? todayLogSnap : getDoc(getPrayerLogRef(uid, date)),
+    ),
   );
 
-  // Create missing logs
-  const createJobs = requiredDates
+  // 6. Create missing logs
+  const createJobs = datesToCheck
     .filter((_, index) => !logSnapshots[index].exists())
     .map((date) => createPrayerLog(uid, date, location));
 
-  if (createJobs.length) {
+  if (createJobs.length > 0) {
     await Promise.all(createJobs);
   }
 
-  // Update user metadata
+  // 7. Update user metadata
   await updateDoc(userRef, {
     location,
     lastPrayerRefreshDate: today,

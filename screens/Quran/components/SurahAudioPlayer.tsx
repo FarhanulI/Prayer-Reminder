@@ -1,146 +1,99 @@
 import colors from "@/constants/colors.json";
+import { useAudio } from "@/hooks/useAudio";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  setAudioModeAsync, // <-- Added global Audio object for mode configuration
-  useAudioPlayer,
-  useAudioPlayerStatus,
-} from "expo-audio";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import LottieView from "lottie-react-native";
+import React, { useCallback, useEffect, useMemo } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 interface SurahAudioPlayerProps {
+  surah?: any;
   audioUrl?: string;
   onPlayingChange?: (isPlaying: boolean) => void;
 }
-
 export default function SurahAudioPlayer({
+  surah,
   audioUrl,
   onPlayingChange,
 }: SurahAudioPlayerProps) {
-  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
+  const {
+    currentTrack,
+    playing,
+    playTrack,
+    play,
+    pause,
+    stop,
+    duration,
+    currentTime,
+    progress,
+    skipForward,
+    skipBackward,
+    loading,
+  } = useAudio();
 
-  // Configure background execution globally
+  const isCurrentSurah = useMemo(
+    () => currentTrack?.url === audioUrl && !!audioUrl,
+    [audioUrl, currentTrack],
+  );
+
   useEffect(() => {
-    async function configureAudioMode() {
-      try {
-        await setAudioModeAsync({
-          playsInSilentMode: true,
-          shouldPlayInBackground: true,
-          interruptionMode: 'mixWithOthers'
-        });
-      } catch (error) {
-        console.error("Failed to set audio mode:", error);
-      }
+    if (isCurrentSurah) {
+      onPlayingChange?.(playing);
+    } else {
+      onPlayingChange?.(false);
     }
-    configureAudioMode();
-  }, []);
-
-  // Create player only when URL exists
-  const player = useAudioPlayer(audioUrl ?? "");
-  const status = useAudioPlayerStatus(player);
-
-  useEffect(() => {
-    onPlayingChange?.(status.playing);
-  }, [status.playing, onPlayingChange]);
-
-  /**
-   * Reset player when audio changes
-   */
-  useEffect(() => {
-    if (!audioUrl) {
-      setIsPlayerVisible(false);
-    }
-  }, [audioUrl]);
-
-  /**
-   * Auto reset when playback finishes
-   */
-  useEffect(() => {
-    if (
-      status.duration > 0 &&
-      status.currentTime >= status.duration &&
-      !status.playing
-    ) {
-      player.seekTo(0);
-    }
-  }, [
-    status.currentTime,
-    status.duration,
-    status.playing,
-    player,
-  ]);
+  }, [playing, isCurrentSurah, onPlayingChange]);
 
   const handleListenClick = useCallback(() => {
     if (!audioUrl) return;
 
-    setIsPlayerVisible(true);
-
-    if (!status.playing) {
-      player.play();
-    }
-  }, [audioUrl, player, status.playing]);
-
-  const togglePlayPause = useCallback(() => {
-    if (status.playing) {
-      player.pause();
+    if (isCurrentSurah) {
+      if (!playing) play();
     } else {
-      player.play();
+      playTrack({
+        id: surah?.id?.toString() || audioUrl,
+        title: surah?.name || "Surah Audio",
+        artist: "Al-Quran",
+        url: audioUrl,
+        reciter: "Mishary Rashid Alafasy",
+        surahNumber: surah?.id,
+      });
     }
-  }, [player, status.playing]);
+  }, [audioUrl, isCurrentSurah, playing, play, playTrack, surah]);
 
-  const skipBackward = useCallback(() => {
-    player.seekTo(Math.max(0, status.currentTime - 10));
-  }, [player, status.currentTime]);
+  // const togglePlayPause = useCallback(() => {
+  //   if (playing) {
+  //     pause();
+  //   } else {
+  //     play();
+  //   }
+  // }, [playing, pause, play]);
 
-  const skipForward = useCallback(() => {
-    player.seekTo(
-      Math.min(status.duration || 0, status.currentTime + 10)
-    );
-  }, [player, status.currentTime, status.duration]);
+  // const closePlayer = useCallback(() => {
+  //   stop();
+  // }, [stop]);
 
-  const closePlayer = useCallback(() => {
-    player.pause();
-    player.seekTo(0);
-    setIsPlayerVisible(false);
-  }, [player]);
+  // const formatTime = useCallback((seconds: number) => {
+  //   if (!seconds || Number.isNaN(seconds)) {
+  //     return "00:00";
+  //   }
 
-  const progress = useMemo(() => {
-    if (!status.duration) return 0;
-    return (status.currentTime / status.duration) * 100;
-  }, [status.currentTime, status.duration]);
+  //   const mins = Math.floor(seconds / 60);
+  //   const secs = Math.floor(seconds % 60);
 
-  const formatTime = useCallback((seconds: number) => {
-    if (!seconds || Number.isNaN(seconds)) {
-      return "00:00";
-    }
+  //   return `${mins.toString().padStart(2, "0")}:${secs
+  //     .toString()
+  //     .padStart(2, "0")}`;
+  // }, []);
 
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
+  // const currentTimeStr = useMemo(
+  //   () => formatTime(currentTime),
+  //   [formatTime, currentTime],
+  // );
 
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  }, []);
-
-  const currentTime = useMemo(
-    () => formatTime(status.currentTime),
-    [formatTime, status.currentTime]
-  );
-
-  const duration = useMemo(
-    () => formatTime(status.duration),
-    [formatTime, status.duration]
-  );
+  // const durationStr = useMemo(
+  //   () => formatTime(duration),
+  //   [formatTime, duration],
+  // );
 
   if (!audioUrl) {
     return (
@@ -152,110 +105,46 @@ export default function SurahAudioPlayer({
     );
   }
 
-  if (!isPlayerVisible) {
+  if (!!audioUrl && currentTrack?.url === audioUrl && playing) {
     return (
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={handleListenClick}
-        className="bg-gold rounded-full flex-row items-center justify-center px-6 py-3.5 w-[90%]"
+        className="border border-gold rounded-full  flex-col items-center justify-center overflow-hidden"
       >
-        <Ionicons
-          name="play-circle-outline"
-          size={22}
-          color={colors["emerald-darkest"]}
+        <LottieView
+          source={require("@/assets/images/audioLoader.json")}
+          autoPlay
+          loop
+          style={{ width: 220, height: 38, borderRadius: 20 }}
         />
-
-        <Text className="text-emerald-darkest font-bold uppercase tracking-widest text-xs ml-2">
-          Listen to Surah
-        </Text>
       </TouchableOpacity>
     );
   }
 
+  if (loading) {
+    return (
+      <View className="bg-gold rounded-full flex-row items-center justify-center px-6 py-3.5 w-[90%]">
+        <ActivityIndicator size="small" color={colors["emerald-dark"]} />
+      </View>
+    );
+  }
+
   return (
-    <View className="bg-emerald-dark rounded-2xl w-[90%] p-4 border border-gold/20">
-      {/* Controls */}
-      <View className="flex-row items-center justify-between mb-4">
-        <TouchableOpacity
-          onPress={skipBackward}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="play-back"
-            size={26}
-            color={colors.gold}
-          />
-        </TouchableOpacity>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={handleListenClick}
+      className="bg-gold rounded-full flex-row items-center justify-center px-6 py-3.5 w-[90%]"
+    >
+      <Ionicons
+        name="play-circle-outline"
+        size={22}
+        color={colors["emerald-darkest"]}
+      />
 
-        <TouchableOpacity
-          onPress={togglePlayPause}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={
-              status.playing
-                ? "pause-circle"
-                : "play-circle"
-            }
-            size={52}
-            color={colors.gold}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={skipForward}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="play-forward"
-            size={26}
-            color={colors.gold}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={closePlayer}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="close-circle-outline"
-            size={26}
-            color={colors.gold}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Loading */}
-      {status.duration === 0 && (
-        <View className="items-center py-3">
-          <ActivityIndicator color={colors.gold} />
-          <Text className="text-white/60 text-xs mt-2">
-            Loading audio...
-          </Text>
-        </View>
-      )}
-
-      {/* Progress */}
-      <View className="w-full">
-        <View className="h-1.5 rounded-full bg-white/15 overflow-hidden">
-          <View
-            className="h-full bg-gold rounded-full"
-            style={{
-              width: `${progress}%`,
-            }}
-          />
-        </View>
-
-        <View className="flex-row justify-between mt-2">
-          <Text className="text-white/60 text-xs">
-            {currentTime}
-          </Text>
-
-          <Text className="text-white/60 text-xs">
-            {duration}
-          </Text>
-        </View>
-      </View>
-    </View>
+      <Text className="text-emerald-darkest font-bold uppercase tracking-widest text-xs ml-2">
+        Listen to Surah
+      </Text>
+    </TouchableOpacity>
   );
 }

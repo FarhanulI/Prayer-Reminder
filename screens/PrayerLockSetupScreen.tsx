@@ -3,12 +3,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import {
-  AppState,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    AppState,
+    Platform,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function PrayerLockSetupScreen({
