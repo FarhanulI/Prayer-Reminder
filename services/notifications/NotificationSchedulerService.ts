@@ -220,13 +220,14 @@ export class NotificationSchedulerService {
         return null;
       }
 
-      // Ensure minimum 2 seconds in the future to avoid race conditions
-      const adjustedSeconds = Math.max(2, secondsUntilTrigger);
-
       console.info(
-        `[NotificationScheduler] Scheduling ${notification.name} in ${adjustedSeconds}s (at ${dayjs(notification.triggerTime).format("HH:mm")})`,
+        `[NotificationScheduler] Scheduling ${notification.name} at ${dayjs(notification.triggerTime).format("HH:mm")} (in ${secondsUntilTrigger}s)`,
       );
 
+      // Use DATE trigger (absolute timestamp) instead of TIME_INTERVAL (relative seconds).
+      // DATE triggers are scheduled as system-level alarms and survive process kills,
+      // Doze mode, and OEM battery optimisers — ensuring the notification fires even
+      // if the app has been force-stopped or the phone has been sleeping for hours.
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: formatNotificationTitle(notification.name),
@@ -236,9 +237,9 @@ export class NotificationSchedulerService {
           vibrate: NOTIFICATION_CONFIG.VIBRATE ? [0, 250, 250, 250] : undefined,
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
           channelId: NOTIFICATION_CONFIG.CHANNEL_ID,
-          seconds: adjustedSeconds,
+          date: notification.triggerTime,
         },
       });
 

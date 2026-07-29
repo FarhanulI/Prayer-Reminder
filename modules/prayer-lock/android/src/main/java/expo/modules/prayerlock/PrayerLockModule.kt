@@ -126,6 +126,10 @@ class PrayerLockModule : Module() {
           // service can skip blocking if the data is stale (> 24 h old).
           .putLong("last_synced_at", System.currentTimeMillis())
           .commit()
+
+        // Schedule an exact alarm for each upcoming prayer start time so the
+        // blocking service wakes up precisely at prayer time even during Doze.
+        PrayerAlarmReceiver.schedulePrayerAlarms(context)
       }
 
       return@Function true

@@ -36,6 +36,15 @@
         <action android:name="expo.modules.prayerlock.WATCHDOG_RESTART" />
       </intent-filter>
     </receiver>
+
+    <receiver
+      android:name=".PrayerAlarmReceiver"
+      android:enabled="true"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="expo.modules.prayerlock.PRAYER_ALARM" />
+      </intent-filter>
+    </receiver>
   </application>
 
 </manifest>

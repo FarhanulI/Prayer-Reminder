@@ -65,12 +65,19 @@ class PrayerLockService : Service() {
         val notification = createNotification("Monitoring for prayer distractions")
         startForeground(NOTIFICATION_ID, notification)
 
+        // Enqueue the WorkManager keep-alive task so the service is restarted
+        // even if both the foreground service and the watchdog alarm are killed.
+        PrayerLockWorker.schedule(this)
+
         Log.d("PrayerLockService", "Service started")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startPolling()
         scheduleWatchdog()
+        // Re-schedule exact prayer alarms every time the service starts so that
+        // after a reboot or crash the alarms are recreated from stored data.
+        PrayerAlarmReceiver.schedulePrayerAlarms(this)
         // START_REDELIVER_INTENT: Android will re-deliver the last intent if the
         // service is killed, giving it another chance to restart cleanly.
         return START_REDELIVER_INTENT
@@ -185,10 +192,20 @@ class PrayerLockService : Service() {
     // ── Staleness guard ───────────────────────────────────────────────────────
 
     /**
-     * Returns true if the prayer data stored in SharedPreferences was written
-     * more than [STALE_THRESHOLD_MS] ago. When stale, blocking is skipped
-     * because the stored prayer time windows belong to a previous day and the
-     * service would never find an active window, effectively being broken.
+     * Returns true if the prayer data stored in SharedPreferences is genuinely
+     * outdated and should not be used for blocking decisions.
+     *
+     * Previous behaviour: skip any time the sync timestamp was > 26 h old.
+     * Problem: after a 15-hour sleep (< 26 h) this guard did not trigger, yet
+     * after a longer absence it would skip valid same-day data.
+     *
+     * New behaviour:
+     * 1. If the data is fresh (< STALE_THRESHOLD_MS) → not stale.
+     * 2. If the data is old BUT stored prayers contain today's date → still
+     *    valid; the service just hasn't been synced recently (e.g. user slept
+     *    with the app closed).  Use it.
+     * 3. If the data is old AND no prayer has today's date → genuinely stale
+     *    (yesterday's data); skip blocking until the app re-syncs.
      *
      * The JS layer writes `last_synced_at` every time it calls syncPrayers(),
      * so this value is always fresh when the app is open.
@@ -209,14 +226,30 @@ class PrayerLockService : Service() {
         }
 
         val ageMs = System.currentTimeMillis() - lastSynced
-        val isStale = ageMs > STALE_THRESHOLD_MS
-        if (isStale) {
+
+        // Data is fresh — definitely not stale.
+        if (ageMs <= STALE_THRESHOLD_MS) return false
+
+        // Data is old. Check if any stored prayer belongs to today.
+        // This handles the case where the user sleeps > 26 h with the app
+        // closed but the prayer data in SharedPreferences is still for today.
+        val prayersJson = prefs.getString("prayers", "[]") ?: "[]"
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val hasTodayPrayer = prayersJson.contains("\"$today\"")
+
+        if (hasTodayPrayer) {
             Log.d(
                 "PrayerLockService",
-                "Prayer data is stale (${ageMs / 3600000}h old, threshold ${STALE_THRESHOLD_MS / 3600000}h) — skipping block"
+                "Sync timestamp is old (${ageMs / 3600000}h) but stored prayers include today ($today) — continuing"
             )
+            return false
         }
-        return isStale
+
+        Log.d(
+            "PrayerLockService",
+            "Prayer data is stale (${ageMs / 3600000}h old, no prayers for $today) — skipping block"
+        )
+        return true
     }
 
     // ── Core foreground check ─────────────────────────────────────────────────

@@ -11,6 +11,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
+import * as Notifications from "expo-notifications";
 
 import { NOTIFICATION_STORAGE_KEYS } from "./notification.constants";
 import { StoredNotificationData } from "./notification.types";
@@ -200,6 +201,34 @@ export const isRollingScheduleValid = async (
 
       if (locationChanged) {
         console.info("[NotificationStorage] Location has changed");
+        return false;
+      }
+    }
+
+    // Verify that the stored IDs still exist as pending notifications in the OS.
+    // TIME_INTERVAL triggers are lost on process kill; DATE triggers survive but
+    // we cross-check regardless so any unexpected wipe forces a reschedule.
+    const storedIds = [
+      ...data.today.notificationIds,
+      ...data.tomorrow.notificationIds,
+    ];
+    if (storedIds.length > 0) {
+      try {
+        const pending = await Notifications.getAllScheduledNotificationsAsync();
+        const pendingIds = new Set(pending.map((n) => n.identifier));
+        const anyStillScheduled = storedIds.some((id) => pendingIds.has(id));
+        if (!anyStillScheduled) {
+          console.info(
+            "[NotificationStorage] No stored IDs found in OS pending list — forcing reschedule",
+          );
+          return false;
+        }
+      } catch (e) {
+        // If we can't query OS notifications, be conservative and reschedule.
+        console.warn(
+          "[NotificationStorage] Could not query OS pending notifications:",
+          e,
+        );
         return false;
       }
     }
