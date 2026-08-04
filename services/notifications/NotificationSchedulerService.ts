@@ -427,11 +427,11 @@ export class NotificationSchedulerService {
 
       // Log results
       if (todayNotifications.length > 0) {
-        console.info("📅 Today's scheduled prayers:");
+        console.info(`📅 Today's scheduled prayers: ${new Date()}`);
         logScheduledNotifications(todayNotifications);
       }
       if (tomorrowNotifications.length > 0) {
-        console.info("📅 Tomorrow's scheduled prayers:");
+        console.info(`📅 Tomorrow's scheduled prayers: ${tomorrowData}`);
         logScheduledNotifications(tomorrowNotifications);
       }
 

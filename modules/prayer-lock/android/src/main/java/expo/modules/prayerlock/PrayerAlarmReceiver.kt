@@ -98,12 +98,17 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
                     val parts = timeStr.split(":")
                     if (parts.size != 2) continue
 
+                    val hourOfDay = parts[0].toIntOrNull()
+                    if (hourOfDay == null) continue
+                    val minuteOfDay = parts[1].toIntOrNull()
+                    if (minuteOfDay == null) continue
+
                     val startCal = Calendar.getInstance().apply {
                         time = try {
                             dateFormat.parse(prayerDate) ?: Date()
                         } catch (_: Exception) { Date() }
-                        set(Calendar.HOUR_OF_DAY, parts[0].toIntOrNull() ?: continue)
-                        set(Calendar.MINUTE,      parts[1].toIntOrNull() ?: continue)
+                        set(Calendar.HOUR_OF_DAY, hourOfDay)
+                        set(Calendar.MINUTE,      minuteOfDay)
                         set(Calendar.SECOND, 0)
                         set(Calendar.MILLISECOND, 0)
                     }

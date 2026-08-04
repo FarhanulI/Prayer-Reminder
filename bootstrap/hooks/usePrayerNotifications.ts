@@ -8,24 +8,6 @@ import { useTodayAndTomorrowPrayerData } from "./useTodayAndTomorrowPrayerData";
 const STALE_TIME_MS = 1000 * 60 * 5;
 const GC_TIME_MS = 1000 * 60 * 15;
 
-/**
- * usePrayerNotifications Hook
- *
- * Responsibilities:
- * - Fetch today's and tomorrow's prayer data
- * - Watch for changes in prayer data, date, and location
- * - Delegate scheduling to NotificationSchedulerService (rolling schedule)
- * - Automatically reschedule when any dependency changes
- * - Expose loading and error states
- *
- * Dependencies that trigger rescheduling:
- * - Current date (automatic daily refetch via React Query)
- * - User location (latitude/longitude)
- * - Prayer data changes
- *
- * This hook is called by AppBootstrap after authentication
- * and prayer log creation are complete.
- */
 export const usePrayerNotifications = (): BootstrapTaskState => {
   const { user } = useAuthContext();
   const uid = user?.profile?.uid ?? null;

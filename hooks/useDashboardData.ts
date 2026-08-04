@@ -27,16 +27,18 @@ export function useDashboardData(uid: string | null | undefined) {
     queryKey: ["dashboard", uid, currentDate],
     queryFn: async () => {
       // Safety check: if no UID, return null structure
-      if (!uid) return { profile: null, prayerData: null, yesterdayData: null };
+      if (!uid) return { profile: null, prayerData: null, yesterdayData: null, tomorrowData: null };
 
       const today = dayjs().format("YYYY-MM-DD");
       const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+      const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
 
       // Execute fetches in parallel for better performance
-      const [profileSnap, prayerSnap, yesterdaySnap] = await Promise.all([
+      const [profileSnap, prayerSnap, yesterdaySnap, tomorrowSnap] = await Promise.all([
         getDoc(doc(db, "users", uid)),
         getDoc(doc(db, "users", uid, "prayer_logs", today)),
         getDoc(doc(db, "users", uid, "prayer_logs", yesterday)),
+        getDoc(doc(db, "users", uid, "prayer_logs", tomorrow)),
       ]);
 
       if (!profileSnap.exists()) {
@@ -54,6 +56,9 @@ export function useDashboardData(uid: string | null | undefined) {
         yesterdayData: yesterdaySnap.exists()
           ? (yesterdaySnap.data() as PrayerLogDocument)
           : null,
+        tomorrowData: tomorrowSnap.exists()
+          ? (tomorrowSnap.data() as PrayerLogDocument)
+          : null,
         streaks: profileSnap.exists() ? profileSnap.data()?.streaks : null,
       };
     },
@@ -70,6 +75,7 @@ export function useDashboardData(uid: string | null | undefined) {
 
     const today = dayjs().format("YYYY-MM-DD");
     const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
     console.log({ useDashboardData: "useDashboardData" });
 
     // Listener for User Profile updates
@@ -120,11 +126,28 @@ export function useDashboardData(uid: string | null | undefined) {
       },
     );
 
+    // Listener for Tomorrow's Prayer data (for blocking and notifications)
+    const unsubTomorrow = onSnapshot(
+      doc(db, "users", uid, "prayer_logs", tomorrow),
+      (snap) => {
+        if (snap.exists()) {
+          queryClient.setQueryData(
+            ["dashboard", uid, currentDate],
+            (oldData: any) => ({
+              ...oldData,
+              tomorrowData: snap.data() as PrayerLogDocument,
+            }),
+          );
+        }
+      },
+    );
+
     // Cleanup: Unsubscribe from all listeners when the component unmounts or UID changes
     return () => {
       unsubProfile();
       unsubPrayers();
       unsubYesterday();
+      unsubTomorrow();
     };
   }, [uid, queryClient, currentDate, logout]);
 

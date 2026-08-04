@@ -5,6 +5,7 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import {
   doc,
+  DocumentSnapshot,
   getDoc,
   serverTimestamp,
   setDoc,
@@ -464,50 +465,66 @@ export const createPrayerLogIfNeeded = async (
   userLocation: Location.LocationObjectCoords | null,
 ) => {
   const now = dayjs();
+
   const today = now.format("YYYY-MM-DD");
   const yesterday = now.subtract(1, "day").format("YYYY-MM-DD");
+  const tomorrow = now.add(1, "day").format("YYYY-MM-DD");
 
   const userRef = doc(db, "users", uid);
 
-  // 1. Check if today's log exists first (fastest path)
-  const todayLogRef = getPrayerLogRef(uid, today);
-  const todayLogSnap = await getDoc(todayLogRef);
+  // Fast path: if today's log exists, we may still need tomorrow's log
+  const [todayLogSnap, tomorrowLogSnap] = await Promise.all([
+    getDoc(getPrayerLogRef(uid, today)),
+    getDoc(getPrayerLogRef(uid, tomorrow)),
+  ]);
 
-  // If today's log already exists, no heavy operations are needed
-  if (todayLogSnap.exists()) {
+  // If both today's and tomorrow's logs already exist, we're done.
+  if (todayLogSnap.exists() && tomorrowLogSnap.exists()) {
     return true;
   }
 
-  // 2. Validate user existence
+  // Validate user
   const userSnap = await getDoc(userRef);
   if (!userSnap.exists()) {
     throw new Error("User document not found");
   }
 
-  // 3. Resolve location only when we know we need to create/update logs
+  // Resolve location only if we need to create/update logs
   const location = await resolveLocation(userLocation);
 
-  // 4. Determine if yesterday's log is also required
+  // Determine whether yesterday's log is also needed
   const needYesterday = await shouldCreateYesterdayLog(location);
-  const datesToCheck = needYesterday ? [today, yesterday] : [today];
 
-  // 5. Fetch required log snapshots in parallel
-  const logSnapshots = await Promise.all(
-    datesToCheck.map((date) =>
-      date === today ? todayLogSnap : getDoc(getPrayerLogRef(uid, date)),
-    ),
-  );
+  const datesToCheck = [...(needYesterday ? [yesterday] : []), today, tomorrow];
 
-  // 6. Create missing logs
+  // Fetch missing snapshots
+  const snapshotMap = new Map<string, DocumentSnapshot>([
+    [today, todayLogSnap],
+    [tomorrow, tomorrowLogSnap],
+  ]);
+
+  const remainingDates = datesToCheck.filter((date) => !snapshotMap.has(date));
+
+  if (remainingDates.length > 0) {
+    const remainingSnapshots = await Promise.all(
+      remainingDates.map((date) => getDoc(getPrayerLogRef(uid, date))),
+    );
+
+    remainingDates.forEach((date, index) => {
+      snapshotMap.set(date, remainingSnapshots[index]);
+    });
+  }
+
+  // Create missing logs
   const createJobs = datesToCheck
-    .filter((_, index) => !logSnapshots[index].exists())
+    .filter((date) => !snapshotMap.get(date)?.exists())
     .map((date) => createPrayerLog(uid, date, location));
 
   if (createJobs.length > 0) {
     await Promise.all(createJobs);
   }
 
-  // 7. Update user metadata
+  // Update user metadata
   await updateDoc(userRef, {
     location,
     lastPrayerRefreshDate: today,

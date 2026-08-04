@@ -1,9 +1,10 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import colors from "../../constants/colors.json";
-import { AUTHSTATUS, useAuthContext } from "../../context/AuthProvider";
+import { useAuthContext } from "../../context/AuthProvider";
 import { saveOnboardingData } from "../../features/device.service";
 import { OnboardingData } from "../../types";
 import FirstStep from "./components/FirstStep";
@@ -11,7 +12,7 @@ import SecondStep from "./components/SecondStep";
 import ThirdStep from "./components/ThirdStep";
 
 const OnBoardingScreen = () => {
-  const { user, setAuthStatus } = useAuthContext();
+  const { user } = useAuthContext();
   const [currentStep, setCurrentStep] = useState(0); // 0: Questions, 1: Insight, 2: Commitment
   const [prayerFreq, setPrayerFreq] = useState("");
   const [screenTime, setScreenTime] = useState("");
@@ -22,8 +23,6 @@ const OnBoardingScreen = () => {
   const {
     data,
     isLoading: loadingUserInfo,
-    refetch,
-    isFetching,
   } = useDashboardData(user?.profile?.uid);
 
   const prayerOptions = ["5 times", "3-4 times", "1-2 times", "Rarely"];
@@ -107,7 +106,6 @@ const OnBoardingScreen = () => {
 
     try {
       await saveOnboardingData(user?.profile?.uid, onboardingData);
-      setAuthStatus(AUTHSTATUS.authenticated);
     } catch (error) {
       console.error("Failed to save onboarding:", error);
     } finally {

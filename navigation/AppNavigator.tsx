@@ -38,9 +38,15 @@ export function OnboardingNavigator() {
 }
 
 export function MainAppNavigator() {
+  const BootstrappedMainTabNavigator = () => (
+    <AppBootstrap>
+      <MainTabNavigator />
+    </AppBootstrap>
+  );
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Main" component={MainTabNavigator} />
+      <Stack.Screen name="Main" component={BootstrappedMainTabNavigator} />
 
       {/* <Stack.Screen name="Home" component={DashboardScreen} /> */}
       {/* <Stack.Screen name="Quran" component={QuranScreen} />
@@ -94,11 +100,7 @@ const RootNavigator = () => {
       return <OnboardingNavigator />;
 
     case "authenticated":
-      return (
-        <AppBootstrap>
-          <MainAppNavigator />
-        </AppBootstrap>
-      );
+      return <MainAppNavigator />;
 
     default:
       return <SplashScreen />;

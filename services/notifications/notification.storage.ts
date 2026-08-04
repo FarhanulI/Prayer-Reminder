@@ -224,12 +224,14 @@ export const isRollingScheduleValid = async (
           return false;
         }
       } catch (e) {
-        // If we can't query OS notifications, be conservative and reschedule.
+        // If we CAN'T query OS (transient error, permissions issue, etc.),
+        // don't assume the worst. Log it but trust AsyncStorage and continue.
         console.warn(
-          "[NotificationStorage] Could not query OS pending notifications:",
+          "[NotificationStorage] Could not query OS pending notifications (non-fatal):",
           e,
         );
-        return false;
+        // Return true here: the stored metadata still looks valid; let it pass.
+        // If notifications are actually missing, we'll detect it on the NEXT check.
       }
     }
 

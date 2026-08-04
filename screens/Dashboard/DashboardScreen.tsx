@@ -81,11 +81,12 @@ export default function DashboardScreen() {
     isFetching,
   } = useDashboardData(uid);
 
-  const { profile, prayerData, yesterdayData } = useMemo(
+  const { profile, prayerData, yesterdayData, tomorrowData } = useMemo(
     () => ({
       profile: data?.profile,
       prayerData: data?.prayerData,
       yesterdayData: data?.yesterdayData,
+      tomorrowData: data?.tomorrowData,
     }),
     [data],
   );
@@ -158,8 +159,10 @@ export default function DashboardScreen() {
 
   const lockPrayers = useMemo(() => {
     const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
     const result: PrayerEntry[] = [];
 
+    // Yesterday's Isha (overnight window)
     if (yesterdayData?.prayers?.isha) {
       const isha = yesterdayData.prayers.isha;
       result.push({
@@ -173,10 +176,38 @@ export default function DashboardScreen() {
       });
     }
 
+    // Today's 5 prayers
     prayerList.forEach((p) => result.push({ ...p, time: p.rawTime }));
 
+    // Tomorrow's 5 prayers
+    if (tomorrowData?.prayers) {
+      const prayerNames: [string, string][] = [
+        ["fajr", "Fajr"],
+        ["dhuhr", "Dhuhr"],
+        ["asr", "Asr"],
+        ["maghrib", "Maghrib"],
+        ["isha", "Isha"],
+      ];
+
+      prayerNames.forEach(([key, displayName]) => {
+        const prayer =
+          tomorrowData.prayers[key as keyof typeof tomorrowData.prayers];
+        if (prayer) {
+          result.push({
+            name: displayName,
+            time: prayer.time ?? "",
+            rawTime: prayer.time ?? "",
+            end: prayer.end ?? "",
+            isPrayed: !!prayer.isPrayed,
+            skipped: !!prayer.skipped,
+            date: tomorrow,
+          });
+        }
+      });
+    }
+
     return result;
-  }, [yesterdayData, prayerList]);
+  }, [yesterdayData, prayerList, tomorrowData]);
 
   // ---------------------------------------------------------------------------
   // Overlay handlers

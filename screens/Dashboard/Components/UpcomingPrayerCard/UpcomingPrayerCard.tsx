@@ -248,7 +248,7 @@ const UpcomingPrayerCard: React.FC<UpcomingPrayerCardProps> = ({
       {isYesterdayLastPrayerMissed ? (
         <Card className="bg-gold px-3 py-1 rounded-full border border-white/5">
           <Text className="text-emerald-dark text-[12px] font-bold text-center">
-            It will be Updated After ISHA prayer is prayer
+            It will be Updated After the ISHA prayer is prayed
           </Text>
         </Card>
       ) : (
