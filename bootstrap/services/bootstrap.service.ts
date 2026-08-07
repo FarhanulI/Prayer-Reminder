@@ -1,5 +1,4 @@
 export type BootstrapTaskName =
-  | "prayer-log"
   | "prayer-lock"
   | "prayer-notifications"
   | "remote-config"

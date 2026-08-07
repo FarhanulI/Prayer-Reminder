@@ -54,6 +54,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserDocument | null>(null);
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
 
+  // const { clearToken } = useExpoPushToken(user?.profile?.uid);
+
   const logout = useCallback(async () => {
     try {
       if (Platform.OS === "android") {
@@ -68,6 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
+      // await clearToken();
       await AsyncStorage.removeItem(SESSION_KEY);
       await signOut(auth);
     } catch (error) {

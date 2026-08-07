@@ -1,11 +1,11 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { saveOnboardingData } from "@/services/device";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import colors from "../../constants/colors.json";
 import { useAuthContext } from "../../context/AuthProvider";
-import { saveOnboardingData } from "../../features/device.service";
 import { OnboardingData } from "../../types";
 import FirstStep from "./components/FirstStep";
 import SecondStep from "./components/SecondStep";
@@ -20,10 +20,9 @@ const OnBoardingScreen = () => {
   const [commitment, setCommitment] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const {
-    data,
-    isLoading: loadingUserInfo,
-  } = useDashboardData(user?.profile?.uid);
+  const { data, isLoading: loadingUserInfo } = useDashboardData(
+    user?.profile?.uid,
+  );
 
   const prayerOptions = ["5 times", "3-4 times", "1-2 times", "Rarely"];
   const screenTimeOptions = ["< 2h", "2-4h", "4-6h", "6h+"];

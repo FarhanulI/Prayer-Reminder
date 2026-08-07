@@ -1,5 +1,5 @@
-import { useMutation } from '@tanstack/react-query';
-import { createTomorrowPrayerLog } from '@/features/device.service';
+import { createTomorrowPrayerLog } from "@/services/device";
+import { useMutation } from "@tanstack/react-query";
 
 export function useCreateTomorrowPrayerLog() {
   return useMutation({

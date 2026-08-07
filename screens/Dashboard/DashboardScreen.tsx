@@ -1,22 +1,22 @@
 import colors from "@/constants/colors.json";
 import { useAuthContext } from "@/context/AuthProvider";
-import { refreshApplicationData } from "@/features/device.service";
 import { usePrayerLock } from "@/hooks/use-prayer-lock/usePrayerLock";
 import { useCreateTomorrowPrayerLog } from "@/hooks/useCreateTomorrowPrayerLog";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { refreshApplicationData } from "@/services/device";
 import { PrayerLogDocument } from "@/types";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  AppState,
-  Modal,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  View,
+    ActivityIndicator,
+    AppState,
+    Modal,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    View,
 } from "react-native";
 import PrayerLockSetupScreen from "../PrayerLockSetupScreen";
 import PrayerOverlayScreen from "../PrayerOverlayScreen/PrayerOverlayScreen";

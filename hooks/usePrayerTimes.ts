@@ -1,6 +1,6 @@
-import { fetchPrayerTimes } from '@/features/device.service';
-import { PrayerTimesMethodResponse } from '@/types';
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { fetchPrayerTimes } from "@/services/device";
+import { PrayerTimesMethodResponse } from "@/types";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 // Import your fetch function and response type here
 // import { fetchPrayerTimes, PrayerTimesMethodResponse } from './path-to-your-api';
 
@@ -12,10 +12,13 @@ interface UsePrayerTimesProps {
 export const usePrayerTimes = ({
   latitude,
   longitude,
-}: UsePrayerTimesProps): UseQueryResult<PrayerTimesMethodResponse | null, Error> => {
+}: UsePrayerTimesProps): UseQueryResult<
+  PrayerTimesMethodResponse | null,
+  Error
+> => {
   return useQuery({
     // 1. The queryKey uniquely identifies this request based on the coordinates
-    queryKey: ['prayerTimes', latitude, longitude],
+    queryKey: ["prayerTimes", latitude, longitude],
 
     // 2. The queryFn executes your API call
     queryFn: () => fetchPrayerTimes(latitude, longitude),

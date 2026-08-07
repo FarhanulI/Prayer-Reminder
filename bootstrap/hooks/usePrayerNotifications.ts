@@ -8,7 +8,7 @@ import { useTodayAndTomorrowPrayerData } from "./useTodayAndTomorrowPrayerData";
 const STALE_TIME_MS = 1000 * 60 * 5;
 const GC_TIME_MS = 1000 * 60 * 15;
 
-export const usePrayerNotifications = (): BootstrapTaskState => {
+export const usePrayerNotifications = (prayerLogReady: boolean): BootstrapTaskState => {
   const { user } = useAuthContext();
   const uid = user?.profile?.uid ?? null;
   const enabled = !!uid;
@@ -19,7 +19,7 @@ export const usePrayerNotifications = (): BootstrapTaskState => {
     data: prayerData,
     isLoading: dataLoading,
     location,
-  } = useTodayAndTomorrowPrayerData();
+  } = useTodayAndTomorrowPrayerData(prayerLogReady);
 
   // Schedule rolling notifications whenever dependencies change
   const query = useQuery({
@@ -33,7 +33,7 @@ export const usePrayerNotifications = (): BootstrapTaskState => {
       location.latitude,
       location.longitude,
     ],
-    enabled: enabled && !dataLoading && !!prayerData,
+    enabled: enabled && prayerLogReady && !dataLoading && !!prayerData,
     queryFn: async () => {
       if (!prayerData) {
         console.warn("[usePrayerNotifications] No prayer data available");

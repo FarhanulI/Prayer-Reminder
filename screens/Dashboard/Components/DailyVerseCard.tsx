@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { Card } from "@/components/ui/card";
 import colors from "@/constants/colors.json";
 import { useGetRandomAyah } from "@/hooks/Quran/use-get-random-ayah";

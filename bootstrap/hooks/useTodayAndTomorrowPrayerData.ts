@@ -23,7 +23,7 @@ interface TodayAndTomorrowData {
  * This ensures notifications are always scheduled with the latest prayer times
  * for both today and tomorrow.
  */
-export const useTodayAndTomorrowPrayerData = () => {
+export const useTodayAndTomorrowPrayerData = (enabled = true) => {
   const { user } = useAuthContext();
   const uid = user?.profile?.uid ?? null;
   const location = user?.location;
@@ -45,7 +45,7 @@ export const useTodayAndTomorrowPrayerData = () => {
       longitude,
       tomorrowDate,
     ],
-    enabled: !!uid,
+    enabled: !!uid && enabled,
     queryFn: async (): Promise<TodayAndTomorrowData> => {
       if (!uid) {
         return {

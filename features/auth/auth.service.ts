@@ -1,13 +1,13 @@
+import { refreshApplicationData } from "@/services/device";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  User
-} from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
-import { signOutGoogleSession } from './googleSignIn.service';
-import { refreshApplicationData } from '../device.service';
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    User,
+} from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, db } from "../../lib/firebase";
+import { signOutGoogleSession } from "./googleSignIn.service";
 
 /**
  * Logs a user into the application using Firebase Authentication.
@@ -21,12 +21,12 @@ import { refreshApplicationData } from '../device.service';
  */
 export const loginUser = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<User> => {
   const userCredential = await signInWithEmailAndPassword(
     auth,
     email,
-    password
+    password,
   );
 
   const user = userCredential.user;
@@ -55,13 +55,13 @@ export const loginUser = async (
 export const signupUser = async (
   email: string,
   password: string,
-  name: string
+  name: string,
 ): Promise<User> => {
   // Step 1: Create the identity in Firebase Authentication
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
-    password
+    password,
   );
 
   const user = userCredential.user;
@@ -88,20 +88,17 @@ export const signupUser = async (
     // so we do not end up with an orphaned user without a database record.
     await user.delete().catch(() => signOut(auth));
 
-    throw new Error(
-      "Signup failed due to device setup or network issue"
-    );
+    throw new Error("Signup failed due to device setup or network issue");
   }
 
   return user;
 };
 
-
 /**
  * Signs the current user out of their Firebase session.
  * This triggers `onAuthStateChanged` to redirect the application back to the login screen.
  *
- * @returns {Promise<void>} 
+ * @returns {Promise<void>}
  */
 export const logoutUser = async (): Promise<void> => {
   await signOutGoogleSession();

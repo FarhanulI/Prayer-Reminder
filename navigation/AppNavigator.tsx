@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
 
+import { useNotificationNavigation } from "@/hooks/useNotificationNavigation";
 import BookmarksScreen from "@/screens/Quran/BookmarksScreen";
 import { useAuthContext } from "../context/AuthProvider";
 import HistoryScreen from "../screens/History/HistoryScreen";
@@ -87,6 +88,7 @@ const SplashScreen = () => (
 
 const RootNavigator = () => {
   const { authStatus } = useAuthContext();
+  useNotificationNavigation();
 
   if (authStatus === "loading") {
     return <SplashScreen />;

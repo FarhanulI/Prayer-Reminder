@@ -3,25 +3,22 @@ import {
   combineBootstrapStates,
   retryFailedBootstrapTasks,
 } from "../services/bootstrap.service";
+import { usePrayerBootstrap } from "./usePrayerBootstrap";
 import { usePrayerLockBootstrap } from "./usePrayerLockBootstrap";
-import { usePrayerLogBootstrap } from "./usePrayerLogBootstrap";
-import { usePrayerNotifications } from "./usePrayerNotifications";
 import { useRemoteConfigBootstrap } from "./useRemoteConfigBootstrap";
-import { useSubscriptionBootstrap } from "./useSubscriptionBootstrap";
+// import { useSubscriptionBootstrap } from "./useSubscriptionBootstrap";
 
 export const useAppInitialization = (): AppInitializationState => {
-  const prayerLog = usePrayerLogBootstrap();
+  const prayerBootstrap = usePrayerBootstrap();
   const prayerLock = usePrayerLockBootstrap();
-  const prayerNotifications = usePrayerNotifications();
   const remoteConfig = useRemoteConfigBootstrap();
-  const subscriptionSync = useSubscriptionBootstrap();
+  // const subscriptionSync = useSubscriptionBootstrap();
 
   const tasks = [
-    prayerLog,
+    prayerBootstrap,
     prayerLock,
-    prayerNotifications,
     remoteConfig,
-    subscriptionSync,
+    // subscriptionSync,
   ];
 
   const { isLoading, error } = combineBootstrapStates(tasks);

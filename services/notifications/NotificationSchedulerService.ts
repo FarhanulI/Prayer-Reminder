@@ -291,6 +291,8 @@ export class NotificationSchedulerService {
       const { todayData, tomorrowData, currentDate, tomorrowDate, location } =
         params;
 
+      console.log({ todayData });
+
       // Validate at least today's data exists
       if (!validatePrayerData(todayData)) {
         console.warn(
