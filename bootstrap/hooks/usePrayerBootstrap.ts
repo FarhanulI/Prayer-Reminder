@@ -42,10 +42,10 @@ export const usePrayerBootstrap = (): BootstrapTaskState => {
       await createPrayerLogIfNeeded(uid, user?.location ?? null);
       return { success: true };
     },
-    staleTime: LOG_STALE_TIME_MS,
-    gcTime: LOG_GC_TIME_MS,
+    // staleTime: LOG_STALE_TIME_MS,
+    // gcTime: LOG_GC_TIME_MS,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     retry: (failureCount, error) => {
       if (failureCount >= 2) return false;
       return isRecoverableInitializationError(error);
@@ -100,8 +100,6 @@ export const usePrayerBootstrap = (): BootstrapTaskState => {
 
       return result;
     },
-    staleTime: NOTIFICATION_STALE_TIME_MS,
-    gcTime: NOTIFICATION_GC_TIME_MS,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: 0,
